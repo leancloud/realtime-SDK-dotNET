@@ -12,131 +12,38 @@
 
 ## 初始化 SDK
 
-### 1.实现 WebSocketClient 接口
+### WebSocket 库的选择
+
+为了方便用户我们已经内置了一个在 Unity 上比较流行的一个库：[websocket-sharp](https://github.com/sta/websocket-sharp),并且基于这个库实现了 SDK 内置的 `IWebSocketClient` 接口。
+
+### 2.将 「MyWebSocketClient」 作为参数传递给聊天模块初始化的函数
+SDK 内置了一个 `AVInitializeBehaviour`,可以将其拖拽到任意一个 GameObject 上之后，然后输入LeanCloud 一个应用 appId 以及 appKey，然后在这个 GameObject 的 Start 方法里面输入如下代码：
 
 ```cs
-    /// <summary>
-    /// LeanCloud WebSocket 客户端接口
-    /// </summary>
-    public interface IWebSocketClient
-    {
-
-        /// <summary>
-        /// 客户端 WebSocket 长连接是否打开
-        /// </summary>
-        bool IsOpen { get; }
-
-        /// <summary>
-        /// WebSocket 长连接关闭时触发的事件回调
-        /// </summary>
-        event Action OnClosed;
-        /// <summary>
-        /// WebSocket 客户端遇到了错误时触发的事件回调
-        /// </summary>
-        event Action<string> OnError;
-
-        /// <summary>
-        /// 暂时留作日后打开日志跟踪时，当前版本并未调用，无需实现
-        /// </summary>
-        event Action<string> OnLog;
-        /// <summary>
-        /// 云端发送数据包给客户端，WebSocket 接受到时触发的事件回调
-        /// </summary>
-        event Action<string> OnMessage;
-
-        /// <summary>
-        /// 客户端 WebSocket 长连接成功打开时，触发的事件回调
-        /// </summary>
-        event Action OnOpened;
-
-        /// <summary>
-        /// 主动关闭连接
-        /// </summary>
-        void Close();
-
-        /// <summary>
-        /// 打开连接
-        /// </summary>
-        /// <param name="url">wss 地址</param>
-        /// <param name="protocol">子协议</param>
-        void Open(string url, string protocol = null);
-        /// <summary>
-        /// 发送数据包的接口
-        /// </summary>
-        /// <param name="message"></param>
-        void Send(string message);
-    }
-```
-为了方便用户我们已经选用了一个在 Unity 上比较流行的一个库：[websocket-sharp](https://github.com/sta/websocket-sharp),并且基于这个库我们给出实现 `IWebSocketClient` 接口的代码如下，请在您的项目里面创建一个 .cs 文件，命名为「MyWebSokcetClient」 ：
-
-```cs
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using LeanCloud.Realtime.Internal;
-using System;
-using WebSocketSharp;
-
-public class MyWebSockeyClient : IWebSocketClient
+public class LeanMessageTest : MonoBehaviour
 {
-    WebSocket ws;
-    public bool IsOpen
+    AVRealtime realtime;
+
+    void Start()
     {
-        get
+        var config = new AVRealtime.Configuration()
         {
-            return ws.IsAlive;
-        }
-    }
-
-    public event Action OnClosed;
-    public event Action<string> OnError;
-    public event Action<string> OnLog;
-    public event Action<string> OnMessage;
-    public event Action OnOpened;
-
-    public void Close()
-    {
-        ws.CloseAsync();
-    }
-
-    public void Open(string url, string protocol = null)
-    {
-        Debug.Log("url:"+ url);
-        ws = new WebSocket(url);
-        ws.OnOpen += Ws_OnOpen;
-        ws.OnMessage += Ws_OnMessage;
-        ws.OnClose += Ws_OnClose;
-        ws.ConnectAsync();
-    }
-
-    private void Ws_OnClose(object sender, CloseEventArgs e)
-    {
-        this.OnClosed();
-    }
-
-    private void Ws_OnMessage(object sender, MessageEventArgs e)
-    {
-        this.OnMessage(e.Data);
-    }
-
-    private void Ws_OnOpen(object sender, EventArgs e)
-    {
-        Debug.Log("Ws_OnOpen");
-        this.OnOpened();
-    }
-
-    public void Send(string message)
-    {
-        ws.SendAsync(message, (b) =>
-        {
-
-        });
+            ApplicationId = "您的 appId",
+            ApplicationKey = "您的 appKey",
+        };
+        realtime = new AVRealtime(config);
     }
 }
 ```
 
-### 2.将 「MyWebSocketClient」 作为参数传递给聊天模块初始化的函数
-SDK 内置了一个 `AVInitializeBehaviour`,可以将其拖拽到任意一个 GameObject 上之后，然后输入LeanCloud 一个应用 appId 以及 appKey，然后在这个 GameObject 的 Start 方法里面输入如下代码：
+以上两步就是初始化所需要的步骤。下面是关于初始化的几个疑问解答。
+
+### 为什么要输入两次 appId？
+因为我们的聊天和存储逻辑上的分开的，只是因为聊天需要引用到存储 SDK 里面的 HTTP 请求的模块，因此聊天的需要依赖存储，但是并不会过多依赖，这也是为了之后聊天可以单独开源 SDK 做好准备。
+
+### 什么情况下开发者可以自定义实现 IWebSocketClient 接口？ 
+因为根据经验，游戏开发者更在乎的是实时性和互动性，聊天在游戏中的定位更为特殊，我们研究了很多在 Unity 上流行的 WebSocket 的第三方库，多多少少都有一些问题，很多在 .NET 原生上面比较好用的库在 Mono 上都缺乏对应的版本，因此我们选用了开源的 [websocket-sharp](https://github.com/sta/websocket-sharp)，如果开发者对第三方库要求更高的话建议可以购买来试一试：
+[WebSocket for desktop, web and mobile](https://www.assetstore.unity3d.com/en/#!/content/27658)，开发者如果能够掌控客户端的 IWebSocketClient 就可以拥有更多的自主权，开发体验较好，如果开发者自定义实现了 `IWebSocketClient` 接口，可以在初始化的时候指定：
 
 ```cs
 public class LeanMessageTest : MonoBehaviour
@@ -155,15 +62,6 @@ public class LeanMessageTest : MonoBehaviour
     }
 }
 ```
-
-以上两步就是初始化所需要的步骤。下面是关于初始化的几个疑问解答。
-
-### 为什么要输入两次 appId？
-因为我们的聊天和存储逻辑上的分开的，只是因为聊天需要引用到存储 SDK 里面的 HTTP 请求的模块，因此聊天的需要依赖存储，但是并不会过多依赖，这也是为了之后聊天可以单独开源 SDK 做好准备。
-
-### 为什么要开发者自己实现 IWebSocketClient 接口？ 
-因为根据经验，游戏开发者更在乎的是实时性和互动性，聊天在游戏中的定位更为特殊，我们研究了很多在 Unity 上流行的 WebSocket 的第三方库，多多少少都有一些问题，很多在 .NET 原生上面比较好用的库在 Mono 上都缺乏对应的版本，因此我们选用了开源的 [websocket-sharp](https://github.com/sta/websocket-sharp)，如果开发者对第三方库要求更高的话建议可以购买来试一试：
-[WebSocket for desktop, web and mobile](https://www.assetstore.unity3d.com/en/#!/content/27658)，开发者如果能够掌控客户端的 IWebSocketClient 就可以拥有更多的自主权，开发体验较好。
 
 ## 使用
 
@@ -212,24 +110,69 @@ public class LeanMessageTest : MonoBehaviour
 在「法师A」 的界面上放置一个按钮(Button)，然后在按钮的点击事件里面编写如下代码： 
 
 ```cs
+    AVIMConversation currentConveration;
+    public void Create_Clicked()
+    {
+        // 输入对方的 ID
+        var friendId = "2999999";
+        // 以对方的 ID 和自己的 ID 作为成员创建一个对话，类似于
+        currentPlayer.CreateConversationAsync(friendId).ContinueWith(t =>
+        {
+            currentConveration = t.Result;
+        });
+    }
 ```
 
-（先不用点击，还需要后续的步骤配合才能看见效果，别着急）
-
 #### 战士准备好接受消息
-回到 「战士B」 这边的 Unity Editor ，然后在「战士B」登录的界面上，防止一个 InputBox ，然后在登录的代码上加上如下代码：
+回到 「战士B」 这边的 Unity Editor ，然后在「战士B」登录的界面上，放置一个 Button，然后在事件点击中编写如下代码：
 
 ```cs
+    // 战士自身登录
+    avRealtime.CreateClient("2999999").ContinueWith(t =>
+    {
+        currentPlayer = t.Result;
+
+        // 申明一个文本消息的监听者，它只监听协议里面的文本消息
+        var textMessageListener = new AVIMTextMessageListener();
+        // 设置接收到文本消息之后的事件回调
+        textMessageListener.OnTextMessageReceieved += TextMessageListener_OnTextMessageReceieved;
+        // 为当前用户绑定这个监听者
+        currentPlayer.RegisterListener(textMessageListener);
+    });
+    private void TextMessageListener_OnTextMessageReceieved(object sender, AVIMTextMessageEventArgs e)
+    {
+        Debug.Log("received a text message:" + e.TextMessage.TextContent);
+    }
 ``` 
 以上代码是告知 SDK，「战士B」 开始接受消息了，如果有消息收到，请通知监听者(Listener)。
 
 
 #### 法师发送消息
 
-回到「法师A」 这里，在创建对话之后的 Continue 里面继续发送消息（每一个 Task 都是与服务端异步的交互，因此可以使用 Task.Continue 来进行这种链式语法的编程），代码如下：
+回到「法师A」 这里，放置一个发送按钮以及一个文本输入框用来输入消息，它的点击事件代码如下：
 
 ```cs
+    GameObject messageInputField;
+    void Start()
+    {
+        string appId = "uay57kigwe0b6f5n0e1d4z4xhydsml3dor24bzwvzr57wdap";
+        string appKey = "kfgz7jjfsk55r5a8a3y4ttd3je1ko11bkibcikonk32oozww";
+        avRealtime = new AVRealtime(appId, appKey);
+
+        messageInputField = GameObject.FindGameObjectWithTag("message");
+    }
+    public void SendTextMessage()
+    {
+        if (currentConveration != null)
+        {
+            var text = messageInputField.GetComponent<InputField>().text.Trim();
+            AVIMTextMessage textMessage = new AVIMTextMessage(text);
+            currentConveration.SendMessageAsync(textMessage);
+        }
+    }
 ``` 
+
+然后 「战士B」 就可以收到消息了。反过来，如果战士也想发消息给法师，就复制上述步骤即可。 
 
 
 
