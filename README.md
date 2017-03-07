@@ -16,11 +16,12 @@
 
 为了方便用户我们已经内置了一个在 Unity 上比较流行的一个库：[websocket-sharp](https://github.com/sta/websocket-sharp),并且基于这个库实现了 SDK 内置的 `IWebSocketClient` 接口。
 
-### 2.将 「MyWebSocketClient」 作为参数传递给聊天模块初始化的函数
-SDK 内置了一个 `AVInitializeBehaviour`,可以将其拖拽到任意一个 GameObject 上之后，然后输入LeanCloud 一个应用 appId 以及 appKey，然后在这个 GameObject 的 Start 方法里面输入如下代码：
+### 绑定 AVInitializeBehaviour 到 Main Camerra
+SDK 内置了一个 `AVInitializeBehaviour`,可以将其拖拽到 Main Camerra 上之后，然后输入 LeanCloud 一个应用 appId 以及 appKey，新建一个 cs 文件，叫做 `ChatTest.cs`
+然后在 ChatTest 的 Start 方法里面输入如下代码：
 
 ```cs
-public class LeanMessageTest : MonoBehaviour
+public class ChatTest : MonoBehaviour
 {
     AVRealtime realtime;
 
@@ -46,7 +47,7 @@ public class LeanMessageTest : MonoBehaviour
 [WebSocket for desktop, web and mobile](https://www.assetstore.unity3d.com/en/#!/content/27658)，开发者如果能够掌控客户端的 IWebSocketClient 就可以拥有更多的自主权，开发体验较好，如果开发者自定义实现了 `IWebSocketClient` 接口，可以在初始化的时候指定：
 
 ```cs
-public class LeanMessageTest : MonoBehaviour
+public class ChatTest : MonoBehaviour
 {
     AVRealtime realtime;
 
@@ -76,7 +77,7 @@ public class LeanMessageTest : MonoBehaviour
 假设一个玩家的数字 ID 是 `1888888`，那么如下代码将演示他登录到 LeanCloud 聊天系统中：
 
 ```cs
-public class LeanMessageTest : MonoBehaviour
+public class ChatTest : MonoBehaviour
 {
     AVRealtime realtime;
     AVIMClient currentPlayer;
