@@ -1,0 +1,14 @@
+﻿<linker>
+  <assembly fullname="LeanCloud.Core">
+    <namespace fullname="LeanCloud" preserve="all"/>
+    <namespace fullname="LeanCloud.Internal" preserve="all"/>
+  </assembly>
+  <assembly fullname="LeanCloud.Realtime">
+    <namespace fullname="LeanCloud.Realtime" preserve="all"/>
+    <namespace fullname="LeanCloud.Realtime.Internal" preserve="all"/>
+  </assembly>
+  <assembly fullname="LeanCloud.Storage">
+    <namespace fullname="LeanCloud.Storage" preserve="all"/>
+    <namespace fullname="LeanCloud.Storage.Internal" preserve="all"/>
+  </assembly>
+</linker>
