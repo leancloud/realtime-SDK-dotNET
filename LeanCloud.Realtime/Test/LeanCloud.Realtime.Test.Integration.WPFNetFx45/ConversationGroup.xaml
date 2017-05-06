@@ -1,0 +1,78 @@
+﻿<UserControl x:Class="LeanCloud.Realtime.Test.Integration.WPFNetFx45.ConversationGroup"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:LeanCloud.Realtime.Test.Integration.WPFNetFx45"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             mc:Ignorable="d" 
+             xmlns:system="clr-namespace:System;assembly=mscorlib"
+             DataContext="{Binding Chat,Source={StaticResource Locator}}"
+             d:DesignHeight="300" d:DesignWidth="300">
+
+    <StackPanel Margin="16" MinWidth="120">
+        <Grid Margin="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Button Style="{DynamicResource MaterialDesignToolButton}">
+                <materialDesign:PackIcon Kind="Magnify" Opacity=".56" />
+            </Button>
+            <TextBox Grid.Column="1" Margin="8 0 0 0" materialDesign:HintAssist.Hint="输入对话名称，成员" 
+                                     materialDesign:TextFieldAssist.DecorationVisibility="Hidden" BorderThickness="0"
+                                     MinWidth="200" VerticalAlignment="Center" />
+
+            <materialDesign:DialogHost DialogClosing="On_UserSelectedDialog_Closing"
+                                Grid.Column="3" Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <materialDesign:DialogHost.DialogContent>
+                    <StackPanel Margin="16">
+                        <ContentControl x:Name="UserSelectBox" Content="{Binding UserSelectBox}"/>
+                    </StackPanel>
+                </materialDesign:DialogHost.DialogContent>
+                <Button Style="{DynamicResource MaterialDesignToolButton}"
+                    Command="{x:Static materialDesign:DialogHost.OpenDialogCommand}"
+                    Grid.Column="2">
+                    <Viewbox Width="24" Height="24">
+                        <Canvas Width="26" Height="26">
+                            <Path Data="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" Fill="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType=Button}, Path=Foreground}" />
+                        </Canvas>
+                    </Viewbox>
+                </Button>
+            </materialDesign:DialogHost>
+        </Grid>
+        <ItemsControl ItemsSource="{Binding SessionGroups}" Margin="0 10">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <materialDesign:Card Grid.Row="1" Background="{DynamicResource MaterialDesignBackground}">
+                        <Expander HorizontalAlignment="Stretch"
+                                  Header="{Binding Name}">
+                            <StackPanel Orientation="Vertical">
+                                <ListBox  ItemsSource="{Binding Sessions}">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="20,2">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition/>
+                                                    <ColumnDefinition/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="#" Grid.Column="0" />
+                                                <TextBlock Text="{Binding Name}" Grid.Column="1">
+                                                    <TextBlock.InputBindings>
+                                                        <MouseBinding Command="{Binding OnClicked}" 
+                                                                      MouseAction="LeftClick" />
+                                                    </TextBlock.InputBindings>
+                                                </TextBlock>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </StackPanel>
+                        </Expander>
+                    </materialDesign:Card>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </StackPanel>
+</UserControl>
