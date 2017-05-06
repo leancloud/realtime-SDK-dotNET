@@ -1,0 +1,95 @@
+﻿<UserControl x:Class="LeanCloud.Realtime.Test.Integration.WPFNetFx45.Chat"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:LeanCloud.Realtime.Test.Integration.WPFNetFx45"
+             mc:Ignorable="d" 
+             xmlns:system="clr-namespace:System;assembly=mscorlib"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             DataContext="{Binding Chat,Source={StaticResource Locator}}"
+             d:DesignHeight="720" d:DesignWidth="300">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Button.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Card.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.CheckBox.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Flipper.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Popupbox.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid Margin="16" MinWidth="160">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="9*"/>
+        </Grid.RowDefinitions>
+        <materialDesign:Card Grid.Row="0" Margin="0 4">
+            <Grid Margin="16">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0"
+                           Visibility="{Binding SelectedSession.Display,Converter={StaticResource BooleanToVisibilityConverter}}"
+                           Style="{StaticResource MaterialDesignBody2TextBlock}" 
+                           Text="{Binding SelectedSession.Name}"/>
+                <Grid Grid.Row="0" Visibility="{Binding SelectedSession.NameEditing,Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="8*"/>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="1*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="ConversationName" Grid.Column="0"
+                         materialDesign:HintAssist.Hint="对话名称"
+                         Text="{Binding SelectedSession.Name,Mode=TwoWay}"/>
+                    <Button Content="保存" Grid.Column="1" Command="{Binding SelectedSession.SaveAsync}"/>
+                    <Button Content="取消" Grid.Column="2" Command="{Binding SelectedSession.OnCancelEditName}"/>
+                </Grid>
+
+                <StackPanel Grid.Row="0" Orientation="Horizontal" 
+                            Visibility="{Binding SelectedSession.Display,Converter={StaticResource BooleanToVisibilityConverter}}"
+                            HorizontalAlignment="Right">
+                    <materialDesign:PopupBox HorizontalAlignment="Right" Style="{StaticResource MaterialDesignToolForegroundPopupBox}">
+                        <StackPanel>
+                            <Button Content="修改群聊名称" Command="{Binding SelectedSession.OnStartEditName}"/>
+                            <Button Content="邀请加入" Command="{Binding SelectedSession.RunInviteDialogCommand}"/>
+                            <Button Content="退出" Command="{Binding Exit}"/>
+                        </StackPanel>
+                    </materialDesign:PopupBox>
+                </StackPanel>
+            </Grid>
+        </materialDesign:Card>
+        <materialDesign:Card Grid.IsSharedSizeScope="True" Grid.Row="1">
+            <ListBox Margin="16" ItemsSource="{Binding SelectedSession.MessagesInSession}" IsSynchronizedWithCurrentItem="True" SelectedItem="{Binding SelectedSession.SelectedItem}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition SharedSizeGroup="Checkerz" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <Button Style="{StaticResource MaterialDesignFloatingActionMiniButton}"
+                                    VerticalAlignment="Center"
+                                    Content="{Binding Code}" 
+                                    ToolTip="MaterialDesignFloatingActionMiniButton" >
+                            </Button>
+                            <StackPanel Margin="8 0 0 0" Grid.Column="1">
+                                <TextBlock FontWeight="Bold" Text="{Binding Sender}" />
+                                <TextBlock Text="{Binding Text}" />
+                            </StackPanel>
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </materialDesign:Card>
+        <materialDesign:DialogHost Identifier="RootDialog"  Grid.Row="1">
+        </materialDesign:DialogHost>
+        <materialDesign:Snackbar MessageQueue="{Binding SelectedSession.MessageQueue,Mode=TwoWay}" 
+                                 Grid.Row="1"
+                                 x:Name="NoticeSnackbar" />
+    </Grid>
+</UserControl>

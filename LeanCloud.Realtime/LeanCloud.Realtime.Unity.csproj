@@ -1,0 +1,125 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{932D8AE3-F5F0-4B01-9CE2-00208472AEE8}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>LeanCloud.Realtime</RootNamespace>
+    <AssemblyName>LeanCloud.Realtime</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\Unity\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;UNITY</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Debug\Unity\LeanCloud.Realtime.XML</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\Unity\</OutputPath>
+    <DefineConstants>TRACE;UNITY</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Release\Unity\LeanCloud.Realtime.XML</DocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="websocket-sharp, Version=1.0.2.29520, Culture=neutral, PublicKeyToken=5660b08a1845a91e, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Internal\WebSocket\Unity\websocket-sharp.dll</HintPath>
+    </Reference>
+    <Reference Include="AssemblyLister">
+      <HintPath>Unity.libs\AssemblyLister.dll</HintPath>
+    </Reference>
+    <Reference Include="LeanCloud.Core">
+      <HintPath>Unity.libs\LeanCloud.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="LeanCloud.Storage">
+      <HintPath>Unity.libs\LeanCloud.Storage.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Compat">
+      <HintPath>Unity.libs\Unity.Compat.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Tasks">
+      <HintPath>Unity.libs\Unity.Tasks.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>Unity.libs\UnityEngine.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Internal\AVIMCorePlugins.cs" />
+    <Compile Include="Internal\Command\AckCommand.cs" />
+    <Compile Include="Internal\Command\AVIMCommand.cs" />
+    <Compile Include="Internal\Command\AVIMCommandRunner.cs" />
+    <Compile Include="Internal\Command\ConversationCommand.cs" />
+    <Compile Include="Internal\Command\IAVIMCommandRunner.cs" />
+    <Compile Include="Internal\Command\MessageCommand.cs" />
+    <Compile Include="Internal\Command\SessionCommand.cs" />
+    <Compile Include="Internal\DataEngine\Controller\DateTimeEngine.cs" />
+    <Compile Include="Internal\DataEngine\Controller\DictionaryEngine.cs" />
+    <Compile Include="Internal\DataEngine\Controller\StringEngine.cs" />
+    <Compile Include="Internal\IAVIMPlatformHooks.cs" />
+    <Compile Include="Internal\Message\Subclassing\FreeStyleMessageClassInfo.cs" />
+    <Compile Include="Internal\Message\Subclassing\FreeStyleMessageClassingController.cs" />
+    <Compile Include="Internal\Message\Subclassing\IFreeStyleMessageClassingController.cs" />
+    <Compile Include="Internal\Protocol\AVIMProtocol.cs" />
+    <Compile Include="Internal\Router\AVRouterController.cs" />
+    <Compile Include="Internal\Router\IAVRouterController.cs" />
+    <Compile Include="Internal\Router\State\RouterState.cs" />
+    <Compile Include="Internal\WebSocket\IWebSocketClient.cs" />
+    <Compile Include="Internal\WebSocket\Unity\DefaultWebSocketClient.Unity.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Public\AVIMAudioMessage.cs" />
+    <Compile Include="Public\AVIMClient.cs" />
+    <Compile Include="Public\AVIMConversation.cs" />
+    <Compile Include="Public\AVIMConversationListener.cs" />
+    <Compile Include="Public\AVIMConversationQuery.cs" />
+    <Compile Include="Public\AVIMEventArgs.cs" />
+    <Compile Include="Public\AVIMException.cs" />
+    <Compile Include="Public\AVIMImageMessage.cs" />
+    <Compile Include="Public\AVIMMessage.cs" />
+    <Compile Include="Public\AVIMMessageClassNameAttribute.cs" />
+    <Compile Include="Public\AVIMMessageFieldNameAttribute.cs" />
+    <Compile Include="Public\AVIMNotice.cs" />
+    <Compile Include="Public\AVIMSignature.cs" />
+    <Compile Include="Public\AVIMTextMessage.cs" />
+    <Compile Include="Public\AVIMTypedMessage.cs" />
+    <Compile Include="Public\AVRealtime.cs" />
+    <Compile Include="Public\IAVIMListener.cs" />
+    <Compile Include="Public\IAVIMMessage.cs" />
+    <Compile Include="Public\AVIMMessageListener.cs" />
+    <Compile Include="Public\ICacheEngine.cs" />
+    <Compile Include="Public\ISignatureFactory.cs" />
+    <Compile Include="Public\Listener\OfflineMessageListener.cs" />
+    <Compile Include="Public\Listener\SessionListener.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Internal\Encoding\" />
+    <Folder Include="Internal\Object\" />
+    <Folder Include="Internal\Query\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Internal\WebSocket\Unity\websocket-sharp.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
