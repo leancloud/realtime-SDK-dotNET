@@ -11,9 +11,9 @@ namespace LeanCloud.Realtime.Internal
 {
     internal class AVRouterController : IAVRouterController
     {
-        const string routerUrl = "http://router.g0.push.leancloud.cn/v1/route?appId={0}&secure=1";
+        const string routerUrl = "http://router.g0.push.leancloud.cn/v1/route?appId={0}";
         const string routerKey = "LeanCloud_RouterState";
-        public Task<PushRouterState> GetAsync(CancellationToken cancellationToken)
+        public Task<PushRouterState> GetAsync(bool secure = true, CancellationToken cancellationToken = default(CancellationToken))
         {
             //return Task.FromResult(new PushRouterState()
             //{
@@ -26,7 +26,7 @@ namespace LeanCloud.Realtime.Internal
 
                  if (cache == null || cache.expire < DateTime.Now.UnixTimeStampSeconds())
                  {
-                     task = QueryAsync(cancellationToken);
+                     task = QueryAsync(secure, cancellationToken);
                  }
 
                  return task;
@@ -62,10 +62,15 @@ namespace LeanCloud.Realtime.Internal
                 return Task.FromResult<PushRouterState>(null);
             }
         }
-        Task<PushRouterState> QueryAsync(CancellationToken cancellationToken)
+        Task<PushRouterState> QueryAsync(bool secure, CancellationToken cancellationToken)
         {
             var appRouter = AVPlugins.Instance.AppRouterController.Get();
-            var routerHost = string.Format("https://{0}/v1/route?appId={1}&secure=1", appRouter.RealtimeRouterServer,AVClient.CurrentConfiguration.ApplicationId) ?? appRouter.RealtimeRouterServer ?? string.Format(routerUrl, AVClient.CurrentConfiguration.ApplicationId);
+            var routerHost = string.Format("https://{0}/v1/route?appId={1}", appRouter.RealtimeRouterServer, AVClient.CurrentConfiguration.ApplicationId) ?? appRouter.RealtimeRouterServer ?? string.Format(routerUrl, AVClient.CurrentConfiguration.ApplicationId);
+
+            if (secure)
+            {
+                routerHost += "&secure=1";
+            }
 
             return AVClient.RequestAsync(uri: new Uri(routerHost),
                 method: "GET",

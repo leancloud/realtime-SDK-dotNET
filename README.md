@@ -10,15 +10,17 @@
 请严格遵守 Apache License Version 2.0 相关的授权协议。
 
 ## 代码贡献
-
+
 ### 开发工具
 
 - Mac ：推荐 [Visual Studio for Mac](https://www.visualstudio.com/vs/visual-studio-mac/)
 - Windows ：Visual Studio 2015 （2017 未经测试，据说有坑)
-- Linux [Mono Develop](http://www.monodevelop.com/download/) 和 [Visual Studio Code](https://code.visualstudio.com/download)
+- Linux :[Mono Develop](http://www.monodevelop.com/download/) 和 [Visual Studio Code](https://code.visualstudio.com/download)
 
 ### 代码风格
 遵照微软的官方标准即可，没有特殊要求
+
+
 
 
 
