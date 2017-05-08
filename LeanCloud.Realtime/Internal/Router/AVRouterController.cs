@@ -69,7 +69,7 @@ namespace LeanCloud.Realtime.Internal
 
             if (secure)
             {
-                routerHost += "secure=1";
+                routerHost += "&secure=1";
             }
 
             return AVClient.RequestAsync(uri: new Uri(routerHost),
