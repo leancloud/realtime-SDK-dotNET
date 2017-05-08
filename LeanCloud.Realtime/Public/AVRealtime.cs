@@ -282,21 +282,13 @@ namespace LeanCloud.Realtime
         }
         #endregion
 
-        /// <summary>
-        /// 创建 Client
-        /// </summary>
-        /// <param name="clientId"></param>
-        /// <param name="tag"></param>
-        /// <param name="deviceId">设备唯一的 Id。如果是 iOS 设备，需要将 iOS 推送使用的 DeviceToken 作为 deviceId 传入</param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        public Task<AVIMClient> CreateClient(
-            string clientId,
+
+        public Task<AVIMClient> CreateClientAsync(string clientId,
             string tag = null,
             string deviceId = null,
+            bool secure = true,
             CancellationToken cancellationToken = default(CancellationToken))
         {
-
             _clientId = clientId;
             _tag = tag;
             if (_tag != null)
@@ -306,42 +298,60 @@ namespace LeanCloud.Realtime
             }
 
             if (string.IsNullOrEmpty(clientId)) throw new Exception("当前 ClientId 为空，无法登录服务器。");
-            return OpenAsync(cancellationToken).OnSuccess(t =>
-            {
-                ToggleNotification(true);
+            return OpenAsync(secure, cancellationToken).OnSuccess(t =>
+             {
+                 var cmd = new SessionCommand()
+                 .UA(VersionString)
+                 .Tag(tag)
+                 .Argument("deviceId", deviceId)
+                 .Option("open")
+                 .PeerId(clientId);
 
-                var cmd = new SessionCommand()
-                .UA(VersionString)
-                .Tag(tag)
-                .Argument("deviceId", deviceId)
-                .Option("open")
-                .PeerId(clientId);
+                 return AttachSignature(cmd, this.SignatureFactory.CreateConnectSignature(clientId)).OnSuccess(_ =>
+                 {
+                     return AVIMCommandRunner.RunCommandAsync(cmd);
+                 }).Unwrap();
 
-                return AttachSignature(cmd, this.SignatureFactory.CreateConnectSignature(clientId)).OnSuccess(_ =>
-                {
-                    return AVIMCommandRunner.RunCommandAsync(cmd);
-                }).Unwrap();
+             }).Unwrap().OnSuccess(s =>
+             {
+                 if (s.Exception != null)
+                 {
+                     var imException = s.Exception.InnerException as AVIMException;
+                 }
+                 state = Status.Online;
+                 var response = s.Result.Item2;
+                 if (response.ContainsKey("st"))
+                 {
+                     _sesstionToken = response["st"] as string;
+                 }
+                 if (response.ContainsKey("stTtl"))
+                 {
+                     var stTtl = long.Parse(response["stTtl"].ToString());
+                     _sesstionTokenExpire = DateTime.Now.UnixTimeStampSeconds() + stTtl;
+                 }
+                 var client = new AVIMClient(clientId, tag, this);
+                 return client;
+             });
+        }
 
-            }).Unwrap().OnSuccess(s =>
-            {
-                if (s.Exception != null)
-                {
-                    var imException = s.Exception.InnerException as AVIMException;
-                }
-                state = Status.Online;
-                var response = s.Result.Item2;
-                if (response.ContainsKey("st"))
-                {
-                    _sesstionToken = response["st"] as string;
-                }
-                if (response.ContainsKey("stTtl"))
-                {
-                    var stTtl = long.Parse(response["stTtl"].ToString());
-                    _sesstionTokenExpire = DateTime.Now.UnixTimeStampSeconds() + stTtl;
-                }
-                var client = new AVIMClient(clientId, tag, this);
-                return client;
-            });
+        /// <summary>
+        /// 创建 Client
+        /// </summary>
+        /// <param name="clientId"></param>
+        /// <param name="tag"></param>
+        /// <param name="deviceId">设备唯一的 Id。如果是 iOS 设备，需要将 iOS 推送使用的 DeviceToken 作为 deviceId 传入</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        [Obsolete("CreateClient is deprecated, please use CreateClientAsync instead.")]
+        public Task<AVIMClient> CreateClient(
+            string clientId,
+            string tag = null,
+            string deviceId = null,
+            bool secure = true,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+
+            return this.CreateClientAsync(clientId, tag, deviceId, secure, cancellationToken);
         }
 
         /// <summary>
@@ -362,7 +372,6 @@ namespace LeanCloud.Realtime
                 PCLWebsocketClient.OnError -= WebsocketClient_OnError;
                 PCLWebsocketClient.OnMessage -= WebSocketClient_OnMessage;
             }
-
         }
 
         private void WebsocketClient_OnClosed(int arg1, string arg2, string arg3)
@@ -419,16 +428,17 @@ namespace LeanCloud.Realtime
         /// </summary>
         /// <returns>The async.</returns>
         /// <param name="cancellationToken">Cancellation token.</param>
-        public Task OpenAsync(CancellationToken cancellationToken = default(CancellationToken))
+        public Task OpenAsync(bool secure = true, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (state == Status.Online) return Task.FromResult(true);
-            return RouterController.GetAsync(cancellationToken).OnSuccess(_ =>
-            {
-                _wss = _.Result.server;
-                state = Status.Connecting;
-                return OpenAsync(_.Result.server, cancellationToken);
-            }).Unwrap();
+            return RouterController.GetAsync(secure, cancellationToken).OnSuccess(_ =>
+             {
+                 _wss = _.Result.server;
+                 state = Status.Connecting;
+                 return OpenAsync(_.Result.server, cancellationToken);
+             }).Unwrap();
         }
+
 
         /// <summary>
         /// 打开 WebSocket 链接
@@ -436,16 +446,16 @@ namespace LeanCloud.Realtime
         /// <param name="wss">websocket server address</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        internal Task OpenAsync(string wss, CancellationToken cancellationToken = default(CancellationToken))
+        public Task OpenAsync(string url, CancellationToken cancellationToken = default(CancellationToken))
         {
-            AVRealtime.PrintLog(wss + " connecting...");
+            AVRealtime.PrintLog(url + " connecting...");
             var tcs = new TaskCompletionSource<bool>();
             Action<string> onError = null;
             onError = ((reason) =>
             {
                 PCLWebsocketClient.OnError -= onError;
                 tcs.SetResult(false);
-                tcs.TrySetException(new AVIMException(AVIMException.ErrorCode.FromServer, "try to open websocket at " + wss + "failed.The reason is " + reason, null));
+                tcs.TrySetException(new AVIMException(AVIMException.ErrorCode.FromServer, "try to open websocket at " + url + "failed.The reason is " + reason, null));
             });
 
             Action onOpend = null;
@@ -454,12 +464,22 @@ namespace LeanCloud.Realtime
                 PCLWebsocketClient.OnError -= onError;
                 PCLWebsocketClient.OnOpened -= onOpend;
                 tcs.SetResult(true);
-                AVRealtime.PrintLog(wss + " connected.");
+                state = Status.Online;
+                ToggleNotification(true);
+                AVRealtime.PrintLog(url + " connected.");
             });
 
             PCLWebsocketClient.OnOpened += onOpend;
             PCLWebsocketClient.OnError += onError;
+#if UNITY
+            LeanCloud.Storage.Internal.Dispatcher.Instance.Post(() =>
+            {
+                PCLWebsocketClient.Open(url);
+            });
+#else
             PCLWebsocketClient.Open(wss);
+#endif
+
             return tcs.Task;
         }
 

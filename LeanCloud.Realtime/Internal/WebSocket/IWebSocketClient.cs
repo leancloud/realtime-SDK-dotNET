@@ -12,7 +12,6 @@ namespace LeanCloud.Realtime.Internal
     /// </summary>
     public interface IWebSocketClient
     {
-
         /// <summary>
         /// 客户端 WebSocket 长连接是否打开
         /// </summary>
