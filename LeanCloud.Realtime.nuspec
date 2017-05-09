@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package 
+    xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+    <metadata>
+        <id>LeanCloud.Realtime</id>
+        <version>0.0.0.0</version>
+        <authors>LeanCloud</authors>
+        <owners>LeanCloud</owners>
+        <licenseUrl>https://leancloud.cn/terms.html</licenseUrl>
+        <projectUrl>http://www.leancloud.cn</projectUrl>
+        <iconUrl>https://leancloud.cn/images/static/press/Logo%20-%20Avatar.png</iconUrl>
+        <requireLicenseAcceptance>true</requireLicenseAcceptance>
+        <description>The official LeanCloud Realtime SDK for .NET 4.5 or later.Support Windows Classic Desktop(WinForms &amp; WPF) &amp; Windows Mobile &amp; Xamarin iOS &amp; Xamarin Android &amp; Xamarin Forms.</description>
+        <copyright>Copyright © LeanCloud 2012 - 2017</copyright>
+        <language>en-US</language>
+        <tags>LeanCloud paas baas storage realtime websocket message im cloud</tags>
+        <dependencies>
+            <dependency id="LeanCloud.Storage" version="2017.4.28.1" />
+            <dependency id="Websockets.Pcl" version="1.1.9"/>
+        </dependencies>
+    </metadata>
+    <files>
+        <!--.NET45 -->
+        <file src="LeanCloud.Realtime\bin\Release\LeanCloud.Realtime.dll" target="lib\net45"/>
+        <file src="LeanCloud.Realtime\bin\Release\LeanCloud.Realtime.xml" target="lib\net45"/>
+        <!--UWP -->
+        <file src="LeanCloud.Realtime\bin\Release\LeanCloud.Realtime.dll" target="lib\uap10.0"/>
+        <file src="LeanCloud.Realtime\bin\Release\LeanCloud.Realtime.xml" target="lib\uap10.0"/>
+        <!--Porable -->
+        <file src="LeanCloud.Realtime\bin\Release\LeanCloud.Realtime.dll" target="lib\portable-net45+win+wp80+MonoAndroid10+xamarinios10+MonoTouch10"/>
+        <file src="LeanCloud.Realtime\bin\Release\LeanCloud.Realtime.xml" target="lib\portable-net45+win+wp80+MonoAndroid10+xamarinios10+MonoTouch10"/>
+    </files>
+</package>
