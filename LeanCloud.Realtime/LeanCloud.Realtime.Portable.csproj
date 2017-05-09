@@ -87,11 +87,15 @@
     <Compile Include="Public\ICacheEngine.cs" />
     <Compile Include="Public\Listener\OfflineMessageListener.cs" />
     <Compile Include="Public\Listener\SessionListener.cs" />
+    <Compile Include="Internal\Timer\IAVTimer.cs" />
+    <Compile Include="Internal\Timer\Portable\AVTimer.Portable.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Internal\Encoding\" />
     <Folder Include="Internal\Object\" />
     <Folder Include="Internal\Query\" />
+    <Folder Include="Internal\Timer\" />
+    <Folder Include="Internal\Timer\Portable\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
