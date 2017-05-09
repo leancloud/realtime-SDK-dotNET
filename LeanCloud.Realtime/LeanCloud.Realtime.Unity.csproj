@@ -102,11 +102,15 @@
     <Compile Include="Public\ISignatureFactory.cs" />
     <Compile Include="Public\Listener\OfflineMessageListener.cs" />
     <Compile Include="Public\Listener\SessionListener.cs" />
+    <Compile Include="Internal\Timer\IAVTimer.cs" />
+    <Compile Include="Internal\Timer\Unity\AVTimer.Unity.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Internal\Encoding\" />
     <Folder Include="Internal\Object\" />
     <Folder Include="Internal\Query\" />
+    <Folder Include="Internal\Timer\" />
+    <Folder Include="Internal\Timer\Unity\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Internal\WebSocket\Unity\websocket-sharp.dll" />

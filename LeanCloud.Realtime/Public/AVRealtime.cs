@@ -97,7 +97,7 @@ namespace LeanCloud.Realtime
             Reconnecting = 3
         }
 
-        private AVRealtime.Status state;
+        private AVRealtime.Status state = Status.None;
         public AVRealtime.Status State
         {
             get
@@ -175,9 +175,16 @@ namespace LeanCloud.Realtime
         private void WebSocketClient_OnMessage(string obj)
         {
             AVRealtime.PrintLog("websocket<=" + obj);
-            var estimatedData = Json.Parse(obj) as IDictionary<string, object>;
-            var notice = new AVIMNotice(estimatedData);
-            m_NoticeReceived?.Invoke(this, notice);
+            try
+            {
+                var estimatedData = Json.Parse(obj) as IDictionary<string, object>;
+                var notice = new AVIMNotice(estimatedData);
+                m_NoticeReceived?.Invoke(this, notice);
+            }
+            catch (Exception ex)
+            {
+                PrintLog("received websocket data with a invalid JSON-format.");
+            }
         }
 
         /// <summary>
@@ -282,7 +289,15 @@ namespace LeanCloud.Realtime
         }
         #endregion
 
-
+        /// <summary>
+        /// 创建 Client
+        /// </summary>
+        /// <param name="clientId"></param>
+        /// <param name="tag"></param>
+        /// <param name="deviceId">设备唯一的 Id。如果是 iOS 设备，需要将 iOS 推送使用的 DeviceToken 作为 deviceId 传入</param>
+        /// <param name="secure">是否强制加密 wss 链接</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public Task<AVIMClient> CreateClientAsync(string clientId,
             string tag = null,
             string deviceId = null,
@@ -317,8 +332,11 @@ namespace LeanCloud.Realtime
                  if (s.Exception != null)
                  {
                      var imException = s.Exception.InnerException as AVIMException;
+                     throw imException;
                  }
                  state = Status.Online;
+                 ToggleNotification(true);
+                 ToggleHeartBeating(true);
                  var response = s.Result.Item2;
                  if (response.ContainsKey("st"))
                  {
@@ -340,6 +358,7 @@ namespace LeanCloud.Realtime
         /// <param name="clientId"></param>
         /// <param name="tag"></param>
         /// <param name="deviceId">设备唯一的 Id。如果是 iOS 设备，需要将 iOS 推送使用的 DeviceToken 作为 deviceId 传入</param>
+        /// <param name="secure">是否强制加密 wss 链接</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         [Obsolete("CreateClient is deprecated, please use CreateClientAsync instead.")]
@@ -374,11 +393,38 @@ namespace LeanCloud.Realtime
             }
         }
 
-        private void WebsocketClient_OnClosed(int arg1, string arg2, string arg3)
+
+        string _beatPacket = "{}";
+        IAVTimer timer;
+        public void ToggleHeartBeating(bool toggle = true, double interval = 30000, string beatPacket = "{}")
         {
-            PrintLog(string.Format("websocket closed with code is {0},reason is {1} and detail is {2}", arg1, arg2, arg3));
-            var args = new AVIMDisconnectEventArgs(arg1, arg2, arg3);
-            m_OnDisconnected?.Invoke(this, args);
+            if (!string.Equals(_beatPacket, beatPacket)) _beatPacket = beatPacket;
+            if (toggle)
+            {
+                if (timer == null)
+                {
+                    timer = new AVTimer();
+                    timer.Elapsed += SendHeartBeatingPacket;
+                    timer.Interval = interval;
+                    timer.Start();
+                }
+                if (timer.Interval != interval)
+                {
+                    timer.Interval = interval;
+                }
+            }
+            else
+            {
+                if (timer != null)
+                {
+                    timer.Stop();
+                }
+            }
+        }
+        void SendHeartBeatingPacket(object sender, TimerEventArgs e)
+        {
+            PCLWebsocketClient.Send(this._beatPacket);
+            PrintLog(DateTime.Now.UnixTimeStampSeconds().ToString() + ";" + timer.Interval.ToString());
         }
 
         /// <summary>
@@ -405,13 +451,17 @@ namespace LeanCloud.Realtime
              }).Unwrap().OnSuccess(s =>
              {
                  var result = s.Result;
+
                  if (result.Item1 == 0)
                  {
                      state = Status.Online;
+                     ToggleNotification(true);
+                     ToggleHeartBeating(true);
                  }
                  else
                  {
                      state = Status.Offline;
+                     PrintLog("autoreconnecting failed.");
                  }
              });
         }
@@ -464,21 +514,12 @@ namespace LeanCloud.Realtime
                 PCLWebsocketClient.OnError -= onError;
                 PCLWebsocketClient.OnOpened -= onOpend;
                 tcs.SetResult(true);
-                state = Status.Online;
-                ToggleNotification(true);
                 AVRealtime.PrintLog(url + " connected.");
             });
 
             PCLWebsocketClient.OnOpened += onOpend;
             PCLWebsocketClient.OnError += onError;
-#if UNITY
-            LeanCloud.Storage.Internal.Dispatcher.Instance.Post(() =>
-            {
-                PCLWebsocketClient.Open(url);
-            });
-#else
-            PCLWebsocketClient.Open(wss);
-#endif
+            PCLWebsocketClient.Open(url);
 
             return tcs.Task;
         }
@@ -510,13 +551,33 @@ namespace LeanCloud.Realtime
         }
 
         #region log out and clean event subscribtion
+        private void WebsocketClient_OnClosed(int arg1, string arg2, string arg3)
+        {
+            state = Status.Offline;
+            Dispose();
+            PrintLog(string.Format("websocket closed with code is {0},reason is {1} and detail is {2}", arg1, arg2, arg3));
+            var args = new AVIMDisconnectEventArgs(arg1, arg2, arg3);
+            m_OnDisconnected?.Invoke(this, args);
+        }
         internal void LogOut()
         {
             this.State = Status.Offline;
-            ToggleNotification(false);
-            m_NoticeReceived = null;
-            m_OnDisconnected = null;
+            Dispose();
             PCLWebsocketClient.Close();
+        }
+        internal void Dispose()
+        {
+            ToggleNotification(false);
+            ToggleHeartBeating(false);
+            foreach (Delegate d in m_NoticeReceived.GetInvocationList())
+            {
+                m_NoticeReceived -= (EventHandler<AVIMNotice>)d;
+            }
+            foreach (Delegate d in m_OnDisconnected.GetInvocationList())
+            {
+                m_OnDisconnected -= (EventHandler<AVIMDisconnectEventArgs>)d;
+            }
+
         }
         #endregion
 
