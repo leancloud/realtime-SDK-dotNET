@@ -385,6 +385,8 @@ namespace LeanCloud.Realtime
           IAVIMMessage message,
           AVIMSendOptions options = default(AVIMSendOptions))
         {
+			if (this.LinkedRealtime.State != AVRealtime.Status.Online) throw new Exception("未能连接到服务器，无法发送消息。");
+
             var messageBody = message.Serialize();
 
             message.ConversationId = conversation.ConversationId;
