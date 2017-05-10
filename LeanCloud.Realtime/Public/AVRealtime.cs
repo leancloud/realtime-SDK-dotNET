@@ -239,7 +239,6 @@ namespace LeanCloud.Realtime
         {
             lock (mutex)
             {
-                AVClient.Initialize(config.ApplicationId, config.ApplicationKey);
                 CurrentConfiguration = config;
                 if (CurrentConfiguration.WebSocketClient != null)
                 {

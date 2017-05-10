@@ -141,7 +141,7 @@ namespace LeanCloud.Realtime
         {
             get
             {
-                if (_currentClient == null) throw new NullReferenceException("当前对话没有关联有效的 AVClient。");
+                if (_currentClient == null) throw new NullReferenceException("当前对话没有关联有效的 AVIMClient。");
                 return _currentClient;
             }
             set
@@ -441,7 +441,6 @@ namespace LeanCloud.Realtime
         public Task<IAVIMMessage> SendMessageAsync(IAVIMMessage avMessage, AVIMSendOptions options)
         {
             if (this.CurrentClient == null) throw new Exception("当前对话未指定有效 AVIMClient，无法发送消息。");
-            if (this.CurrentClient.LinkedRealtime.State != AVRealtime.Status.Online) throw new Exception("未能连接到服务器，无法发送消息。");
             return this.CurrentClient.SendMessageAsync(this, avMessage, options);
         }
         #endregion
