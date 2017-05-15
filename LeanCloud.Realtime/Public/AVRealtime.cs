@@ -335,7 +335,7 @@ namespace LeanCloud.Realtime
                  }
                  state = Status.Online;
                  ToggleNotification(true);
-                 ToggleHeartBeating(true);
+                 ToggleHeartBeating(_heartBeatingToggle);
                  var response = s.Result.Item2;
                  if (response.ContainsKey("st"))
                  {
@@ -394,11 +394,13 @@ namespace LeanCloud.Realtime
 
 
         string _beatPacket = "{}";
+        bool _heartBeatingToggle = true;
         IAVTimer timer;
         public void ToggleHeartBeating(bool toggle = true, double interval = 30000, string beatPacket = "{}")
         {
+            this._heartBeatingToggle = toggle;
             if (!string.Equals(_beatPacket, beatPacket)) _beatPacket = beatPacket;
-            if (toggle)
+            if (this._heartBeatingToggle)
             {
                 if (timer == null)
                 {
@@ -416,14 +418,18 @@ namespace LeanCloud.Realtime
             {
                 if (timer != null)
                 {
+                    timer.Enabled = false;
                     timer.Stop();
                 }
             }
         }
         void SendHeartBeatingPacket(object sender, TimerEventArgs e)
         {
-            PCLWebsocketClient.Send(this._beatPacket);
-            PrintLog(DateTime.Now.UnixTimeStampSeconds().ToString() + ";" + timer.Interval.ToString());
+            if (this._heartBeatingToggle)
+            {
+                PCLWebsocketClient.Send(this._beatPacket);
+                PrintLog(DateTime.Now.UnixTimeStampSeconds().ToString() + ";" + timer.Interval.ToString());
+            }
         }
 
         /// <summary>
@@ -455,7 +461,7 @@ namespace LeanCloud.Realtime
                  {
                      state = Status.Online;
                      ToggleNotification(true);
-                     ToggleHeartBeating(true);
+                     ToggleHeartBeating(this._heartBeatingToggle);
                  }
                  else
                  {
