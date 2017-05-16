@@ -303,52 +303,55 @@ namespace LeanCloud.Realtime
             bool secure = true,
             CancellationToken cancellationToken = default(CancellationToken))
         {
-            _clientId = clientId;
-            _tag = tag;
-            if (_tag != null)
+            lock (mutex)
             {
-                if (deviceId == null)
-                    throw new ArgumentNullException(deviceId, "当 tag 不为空时，必须传入当前设备不变的唯一 id(deviceId)");
+                _clientId = clientId;
+                _tag = tag;
+                if (_tag != null)
+                {
+                    if (deviceId == null)
+                        throw new ArgumentNullException(deviceId, "当 tag 不为空时，必须传入当前设备不变的唯一 id(deviceId)");
+                }
+
+                if (string.IsNullOrEmpty(clientId)) throw new Exception("当前 ClientId 为空，无法登录服务器。");
+                return OpenAsync(secure, cancellationToken).OnSuccess(t =>
+                 {
+                     var cmd = new SessionCommand()
+                     .UA(VersionString)
+                     .Tag(tag)
+                     .Argument("deviceId", deviceId)
+                     .Option("open")
+                     .PeerId(clientId);
+
+                     return AttachSignature(cmd, this.SignatureFactory.CreateConnectSignature(clientId)).OnSuccess(_ =>
+                     {
+                         return AVIMCommandRunner.RunCommandAsync(cmd);
+                     }).Unwrap();
+
+                 }).Unwrap().OnSuccess(s =>
+                 {
+                     if (s.Exception != null)
+                     {
+                         var imException = s.Exception.InnerException as AVIMException;
+                         throw imException;
+                     }
+                     state = Status.Online;
+                     ToggleNotification(true);
+                     ToggleHeartBeating(_heartBeatingToggle);
+                     var response = s.Result.Item2;
+                     if (response.ContainsKey("st"))
+                     {
+                         _sesstionToken = response["st"] as string;
+                     }
+                     if (response.ContainsKey("stTtl"))
+                     {
+                         var stTtl = long.Parse(response["stTtl"].ToString());
+                         _sesstionTokenExpire = DateTime.Now.UnixTimeStampSeconds() + stTtl;
+                     }
+                     var client = new AVIMClient(clientId, tag, this);
+                     return client;
+                 });
             }
-
-            if (string.IsNullOrEmpty(clientId)) throw new Exception("当前 ClientId 为空，无法登录服务器。");
-            return OpenAsync(secure, cancellationToken).OnSuccess(t =>
-             {
-                 var cmd = new SessionCommand()
-                 .UA(VersionString)
-                 .Tag(tag)
-                 .Argument("deviceId", deviceId)
-                 .Option("open")
-                 .PeerId(clientId);
-
-                 return AttachSignature(cmd, this.SignatureFactory.CreateConnectSignature(clientId)).OnSuccess(_ =>
-                 {
-                     return AVIMCommandRunner.RunCommandAsync(cmd);
-                 }).Unwrap();
-
-             }).Unwrap().OnSuccess(s =>
-             {
-                 if (s.Exception != null)
-                 {
-                     var imException = s.Exception.InnerException as AVIMException;
-                     throw imException;
-                 }
-                 state = Status.Online;
-                 ToggleNotification(true);
-                 ToggleHeartBeating(true);
-                 var response = s.Result.Item2;
-                 if (response.ContainsKey("st"))
-                 {
-                     _sesstionToken = response["st"] as string;
-                 }
-                 if (response.ContainsKey("stTtl"))
-                 {
-                     var stTtl = long.Parse(response["stTtl"].ToString());
-                     _sesstionTokenExpire = DateTime.Now.UnixTimeStampSeconds() + stTtl;
-                 }
-                 var client = new AVIMClient(clientId, tag, this);
-                 return client;
-             });
         }
 
         /// <summary>
@@ -394,11 +397,13 @@ namespace LeanCloud.Realtime
 
 
         string _beatPacket = "{}";
+        bool _heartBeatingToggle = true;
         IAVTimer timer;
         public void ToggleHeartBeating(bool toggle = true, double interval = 30000, string beatPacket = "{}")
         {
+            this._heartBeatingToggle = toggle;
             if (!string.Equals(_beatPacket, beatPacket)) _beatPacket = beatPacket;
-            if (toggle)
+            if (this._heartBeatingToggle)
             {
                 if (timer == null)
                 {
@@ -416,14 +421,18 @@ namespace LeanCloud.Realtime
             {
                 if (timer != null)
                 {
+                    timer.Enabled = false;
                     timer.Stop();
                 }
             }
         }
         void SendHeartBeatingPacket(object sender, TimerEventArgs e)
         {
-            PCLWebsocketClient.Send(this._beatPacket);
-            PrintLog(DateTime.Now.UnixTimeStampSeconds().ToString() + ";" + timer.Interval.ToString());
+            if (this._heartBeatingToggle)
+            {
+                PCLWebsocketClient.Send(this._beatPacket);
+                PrintLog(DateTime.Now.UnixTimeStampSeconds().ToString() + ";" + timer.Interval.ToString());
+            }
         }
 
         /// <summary>
@@ -455,7 +464,7 @@ namespace LeanCloud.Realtime
                  {
                      state = Status.Online;
                      ToggleNotification(true);
-                     ToggleHeartBeating(true);
+                     ToggleHeartBeating(this._heartBeatingToggle);
                  }
                  else
                  {

@@ -40,12 +40,6 @@
     <Reference Include="AssemblyLister">
       <HintPath>Unity.libs\AssemblyLister.dll</HintPath>
     </Reference>
-    <Reference Include="LeanCloud.Core">
-      <HintPath>Unity.libs\LeanCloud.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="LeanCloud.Storage">
-      <HintPath>Unity.libs\LeanCloud.Storage.dll</HintPath>
-    </Reference>
     <Reference Include="Unity.Compat">
       <HintPath>Unity.libs\Unity.Compat.dll</HintPath>
     </Reference>
@@ -54,6 +48,12 @@
     </Reference>
     <Reference Include="UnityEngine">
       <HintPath>Unity.libs\UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="LeanCloud.Storage">
+      <HintPath>Unity.libs\LeanCloud.Storage.dll</HintPath>
+    </Reference>
+    <Reference Include="LeanCloud.Core">
+      <HintPath>Unity.libs\LeanCloud.Core.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

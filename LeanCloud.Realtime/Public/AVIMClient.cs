@@ -471,7 +471,8 @@ namespace LeanCloud.Realtime
                 .Members(membersAsList)
                 .Option(action)
                 .PeerId(clientId);
-            return this.LinkedRealtime.AttachSignature(cmd, LinkedRealtime.SignatureFactory.CreateConversationSignature(conversation.ConversationId, ClientId, members, ConversationSignatureAction.Add)).OnSuccess(_ =>
+            
+            return this.LinkedRealtime.AttachSignature(cmd, LinkedRealtime.SignatureFactory.CreateConversationSignature(conversation.ConversationId, ClientId, membersAsList, ConversationSignatureAction.Add)).OnSuccess(_ =>
             {
                 return AVRealtime.AVIMCommandRunner.RunCommandAsync(cmd).OnSuccess(t =>
                 {
