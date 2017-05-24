@@ -433,7 +433,7 @@ namespace LeanCloud.Realtime
 #if MONO || UNITY
                 Dispatcher.Instance.Post(() => 
                 {
-                    KeepLive();
+                    KeepAlive();
                 });
 #else
                 KeepLive();
@@ -442,7 +442,7 @@ namespace LeanCloud.Realtime
 			}
         }
 
-        public void KeepLive()
+        public void KeepAlive()
         {
 			PCLWebsocketClient.Send(this._beatPacket);
         }
