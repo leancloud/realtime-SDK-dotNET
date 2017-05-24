@@ -399,7 +399,7 @@ namespace LeanCloud.Realtime
         string _beatPacket = "{}";
         bool _heartBeatingToggle = true;
         IAVTimer timer;
-        public void ToggleHeartBeating(bool toggle = true, double interval = 30000, string beatPacket = "{}")
+        public void ToggleHeartBeating(bool toggle = true, double interval = 1800000, string beatPacket = "{}")
         {
             this._heartBeatingToggle = toggle;
             if (!string.Equals(_beatPacket, beatPacket)) _beatPacket = beatPacket;
@@ -430,9 +430,21 @@ namespace LeanCloud.Realtime
         {
             if (this._heartBeatingToggle)
             {
-                PCLWebsocketClient.Send(this._beatPacket);
-                PrintLog(DateTime.Now.UnixTimeStampSeconds().ToString() + ";" + timer.Interval.ToString());
-            }
+#if MONO || UNITY
+                Dispatcher.Instance.Post(() => 
+                {
+                    KeepLive();
+                });
+#else
+                KeepLive();
+#endif
+
+			}
+        }
+
+        public void KeepLive()
+        {
+			PCLWebsocketClient.Send(this._beatPacket);
         }
 
         /// <summary>
