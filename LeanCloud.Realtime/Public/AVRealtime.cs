@@ -66,6 +66,8 @@ namespace LeanCloud.Realtime
             }
         }
 
+        public event EventHandler<AVIMMessageEventArgs> OnOfflineMessageReceived;
+
         /// <summary>
         /// 与云端通讯的状态
         /// </summary>
@@ -305,6 +307,11 @@ namespace LeanCloud.Realtime
         {
             lock (mutex)
             {
+                var client = new AVIMClient(clientId, tag, this);
+                if (this.OnOfflineMessageReceived != null)
+                {
+                    client.OnOfflineMessageReceived += this.OnOfflineMessageReceived;
+                }
                 _clientId = clientId;
                 _tag = tag;
                 if (_tag != null)
@@ -348,7 +355,6 @@ namespace LeanCloud.Realtime
                          var stTtl = long.Parse(response["stTtl"].ToString());
                          _sesstionTokenExpire = DateTime.Now.UnixTimeStampSeconds() + stTtl;
                      }
-                     var client = new AVIMClient(clientId, tag, this);
                      return client;
                  });
             }
@@ -439,12 +445,12 @@ namespace LeanCloud.Realtime
                 KeepAlive();
 #endif
 
-			}
+            }
         }
 
         public void KeepAlive()
         {
-			PCLWebsocketClient.Send(this._beatPacket);
+            PCLWebsocketClient.Send(this._beatPacket);
         }
 
         /// <summary>
