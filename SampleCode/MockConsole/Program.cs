@@ -30,14 +30,14 @@ namespace MockConsole
         {
             AVClient.Initialize(appId, appKey);
             realtime = new AVRealtime(appId, appKey);
-            Console.WriteLine(clientId + " connecting...");
-            realtime.CreateClientAsync(clientId).OnSuccess(t =>
-            {
-                client = t.Result;
-                Console.WriteLine(clientId + " connected.");
-            });
+            AVRealtime.WebSocketLog(Console.Write);
         }
-
+        public async void CreateClient(string clientId)
+        {
+            Console.WriteLine(clientId + " connecting...");
+            client = await realtime.CreateClientAsync(clientId);
+            Console.WriteLine(clientId + " connected.");
+        }
         public async void CreateConversation()
         {
             conversation = await client.CreateConversationAsync("Jerry", name: "Tom 和 Jerry 的私聊对话");
@@ -51,11 +51,38 @@ namespace MockConsole
 
         public void RegisterListener()
         {
-            client.OnMessageReceived += (sender, e) => 
+            client.OnMessageReceived += (sender, e) =>
             {
-                
+                if (e.Message is AVIMTextMessage)
+                {
+                    Console.WriteLine("received text message :" + ((AVIMTextMessage)e.Message).Content);
+                }
             };
         }
+
+        public void RegisterOfflineListener()
+        {
+            client.OnOfflineMessageReceived += (sender, e) =>
+            {
+                Console.WriteLine("received offline message :" + e.Message.GetType());
+            };
+        }
+
+        public async void CreateChatRoom()
+        {
+            var chatRoom = await client.CreateConversationAsync(members: new string[] { "Jerry", "Harry" }, isTransient: true);
+        }
+
+        public async void CreateGroupChat()
+        {
+            var groupChat = await client.CreateConversationAsync(members: new string[] { "Jerry", "Harry" });
+            await client.InviteAsync(groupChat, "Bob");
+
+            await client.KickAsync(groupChat, "Harry");
+
+            await client.LeftAsync(groupChat);
+        }
+
 
     }
 }
