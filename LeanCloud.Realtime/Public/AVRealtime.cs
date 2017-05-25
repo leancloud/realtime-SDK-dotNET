@@ -436,7 +436,7 @@ namespace LeanCloud.Realtime
                     KeepAlive();
                 });
 #else
-                KeepLive();
+                KeepAlive();
 #endif
 
 			}
