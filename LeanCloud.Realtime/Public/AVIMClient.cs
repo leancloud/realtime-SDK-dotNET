@@ -348,31 +348,21 @@ namespace LeanCloud.Realtime
         /// </summary>
         /// <param name="conversation">目标对话</param>
         /// <param name="message">消息体</param>
-        /// <param name="receipt">是否需要送达回执</param>
-        /// <param name="transient">是否是暂态消息，暂态消息不返回送达回执(ack)，不保留离线消息，不触发离线推送</param>
-        /// <param name="priority">消息等级，默认是1，可选值还有 2 ，3</param>
-        /// <param name="will">标记该消息是否为下线通知消息</param>
-        /// <param name="pushData">如果消息的接收者已经下线了，这个字段的内容就会被离线推送到接收者
-        /// <remarks>例如，一张图片消息的离线消息内容可以类似于：[您收到一条图片消息，点击查看] 这样的推送内容，参照微信的做法</remarks>
         /// <returns></returns>
-        public Task<IAVIMMessage> SendMessageAsync(
-            AVIMConversation conversation,
-            IAVIMMessage message,
-            bool receipt = true,
-            bool transient = false,
-            int priority = 1,
-            bool will = false,
-            IDictionary<string, object> pushData = null)
+		public Task<IAVIMMessage> SendMessageAsync(
+          AVIMConversation conversation,
+          IAVIMMessage message)
         {
             return this.SendMessageAsync(conversation, message, new AVIMSendOptions()
             {
-                Receipt = receipt,
-                Transient = transient,
-                Priority = priority,
-                Will = will,
-                PushData = pushData,
+                Receipt = true,
+                Transient = false,
+                Priority = 1,
+                Will = false,
+                PushData = null,
             });
         }
+
         /// <summary>
         /// 向目标对话发送消息
         /// </summary>
@@ -383,9 +373,9 @@ namespace LeanCloud.Realtime
         public Task<IAVIMMessage> SendMessageAsync(
           AVIMConversation conversation,
           IAVIMMessage message,
-          AVIMSendOptions options = default(AVIMSendOptions))
+          AVIMSendOptions options)
         {
-			if (this.LinkedRealtime.State != AVRealtime.Status.Online) throw new Exception("未能连接到服务器，无法发送消息。");
+            if (this.LinkedRealtime.State != AVRealtime.Status.Online) throw new Exception("未能连接到服务器，无法发送消息。");
 
             var messageBody = message.Serialize();
 
@@ -471,7 +461,7 @@ namespace LeanCloud.Realtime
                 .Members(membersAsList)
                 .Option(action)
                 .PeerId(clientId);
-            
+
             return this.LinkedRealtime.AttachSignature(cmd, LinkedRealtime.SignatureFactory.CreateConversationSignature(conversation.ConversationId, ClientId, membersAsList, ConversationSignatureAction.Add)).OnSuccess(_ =>
             {
                 return AVRealtime.AVIMCommandRunner.RunCommandAsync(cmd).OnSuccess(t =>

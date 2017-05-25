@@ -513,7 +513,6 @@ namespace LeanCloud.Realtime
         /// <summary>
         /// 打开 WebSocket 链接
         /// </summary>
-        /// <param name="wss">websocket server address</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         public Task OpenAsync(string url, CancellationToken cancellationToken = default(CancellationToken))
