@@ -185,7 +185,16 @@ namespace LeanCloud.Realtime
             }
             catch (Exception ex)
             {
-                PrintLog("received websocket data with a invalid JSON-format.");
+                if (ex.InnerException != null)
+                {
+                    PrintLog(ex.InnerException.Source);
+                }
+                if (ex.Source != null)
+                {
+                    PrintLog(ex.Source);
+                }
+
+                PrintLog(ex.Message);
             }
         }
 
@@ -405,7 +414,7 @@ namespace LeanCloud.Realtime
         string _beatPacket = "{}";
         bool _heartBeatingToggle = true;
         IAVTimer timer;
-        public void ToggleHeartBeating(bool toggle = true, double interval = 1800000, string beatPacket = "{}")
+        public void ToggleHeartBeating(bool toggle = true, double interval = 180000, string beatPacket = "{}")
         {
             this._heartBeatingToggle = toggle;
             if (!string.Equals(_beatPacket, beatPacket)) _beatPacket = beatPacket;
@@ -437,7 +446,7 @@ namespace LeanCloud.Realtime
             if (this._heartBeatingToggle)
             {
 #if MONO || UNITY
-                Dispatcher.Instance.Post(() => 
+                Dispatcher.Instance.Post(() =>
                 {
                     KeepAlive();
                 });

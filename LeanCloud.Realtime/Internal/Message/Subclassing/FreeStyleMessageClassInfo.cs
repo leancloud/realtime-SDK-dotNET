@@ -14,6 +14,8 @@ namespace LeanCloud.Realtime.Internal
         private ConstructorInfo Constructor { get; set; }
         //private MethodInfo ValidateMethod { get; set; }
 
+        public int TypeInt { get; set; }
+
         public FreeStyleMessageClassInfo(Type type, ConstructorInfo constructor)
         {
             TypeInfo = type.GetTypeInfo();
@@ -23,11 +25,18 @@ namespace LeanCloud.Realtime.Internal
               .Where(t => t.Item2 != null)
               .Select(t => Tuple.Create(t.Item1, t.Item2.FieldName))
               .ToDictionary(t => t.Item1.Name, t => t.Item2);
-            //ValidateMethod = ReflectionHelpers.GetMethod(type, "Validate", new Type[] { typeof(IDictionary<string, object>) });
         }
         public bool Validate(string msgStr)
         {
             var instance = Instantiate(msgStr);
+            if (instance is AVIMTypedMessage)
+            {
+                var msg = Json.Parse(msgStr) as IDictionary<string, object>;
+                if (msg.ContainsKey(AVIMProtocol.LCTYPE))
+                {
+                    return msg[AVIMProtocol.LCTYPE].ToString() == TypeInt.ToString();
+                }
+            }
             return instance.Validate(msgStr);
         }
 
@@ -35,12 +44,18 @@ namespace LeanCloud.Realtime.Internal
         {
             var rtn = (IAVIMMessage)Constructor.Invoke(null);
             return rtn;
-           
+
         }
         public static string GetMessageClassName(TypeInfo type)
         {
             var attribute = type.GetCustomAttribute<AVIMMessageClassNameAttribute>();
             return attribute != null ? attribute.ClassName : null;
+        }
+
+        public static int GetTypedInteger(TypeInfo type)
+        {
+            var attribute = type.GetCustomAttribute<AVIMTypedMessageTypeIntAttribute>();
+            return attribute != null ? attribute.TypeInteger : 0;
         }
     }
 }

@@ -12,6 +12,7 @@ namespace LeanCloud.Realtime
     /// 纯文本信息
     /// </summary>
     [AVIMMessageClassName("_AVIMTextMessage")]
+    [AVIMTypedMessageTypeInt(-1)]
     public class AVIMTextMessage : AVIMTypedMessage
     {
         /// <summary>
@@ -31,8 +32,9 @@ namespace LeanCloud.Realtime
         }
 
         /// <summary>
-        /// 文本内容
+        /// 文本类型标记
         /// </summary>
+        [Obsolete("LCType is deprecated, please use AVIMTypedMessageTypeInt instead.")]
         [AVIMMessageFieldName("_lctype")]
         public int LCType
         {
@@ -46,16 +48,15 @@ namespace LeanCloud.Realtime
         public AVIMTextMessage(string textContent)
             : this()
         {
-            LCType = -1;
             TextContent = textContent;
         }
 
-        public override bool Validate(string msgStr)
-        {
-            if (!base.Validate(msgStr)) return false;
-            var msg = Json.Parse(msgStr) as IDictionary<string, object>;
-            
-            return msg[AVIMProtocol.LCTYPE].ToString() == "-1".ToString();
-        }
+        //public override bool Validate(string msgStr)
+        //{
+        //    if (!base.Validate(msgStr)) return false;
+        //    var msg = Json.Parse(msgStr) as IDictionary<string, object>;
+
+        //    return msg[AVIMProtocol.LCTYPE].ToString() == "-1".ToString();
+        //}
     }
 }
