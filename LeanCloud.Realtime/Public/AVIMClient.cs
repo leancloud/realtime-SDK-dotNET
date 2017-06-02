@@ -203,7 +203,6 @@ namespace LeanCloud.Realtime
 
         private void SessionListener_OnSessionClosed(int arg1, string arg2, string arg3)
         {
-            this.LinkedRealtime.LogOut();
             if (m_OnSessionClosed != null)
             {
                 var args = new AVIMSessionClosedEventArgs()
@@ -214,6 +213,8 @@ namespace LeanCloud.Realtime
                 };
                 m_OnSessionClosed(this, args);
             }
+            AVRealtime.PrintLog("SessionListener_OnSessionClosed invoked.");
+            //this.LinkedRealtime.LogOut();
         }
 
         private void MessageListener_OnMessageReceived(object sender, AVIMMessageEventArgs e)

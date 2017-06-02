@@ -104,6 +104,7 @@
     <Compile Include="Public\Listener\SessionListener.cs" />
     <Compile Include="Internal\Timer\IAVTimer.cs" />
     <Compile Include="Internal\Timer\Unity\AVTimer.Unity.cs" />
+    <Compile Include="Public\AVIMTypedMessageTypeIntAttribute.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Internal\Encoding\" />

@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using LeanCloud;
 using LeanCloud.Realtime;
 using LeanCloud.Storage.Internal;
@@ -15,6 +15,7 @@ namespace MockConsole
             string appId = "uay57kigwe0b6f5n0e1d4z4xhydsml3dor24bzwvzr57wdap";
             string appKey = "kfgz7jjfsk55r5a8a3y4ttd3je1ko11bkibcikonk32oozww";
             string clientId = "junwu";
+
 
             var helper = new LeanCloudRealtimeHelper(appId, appKey, clientId);
 

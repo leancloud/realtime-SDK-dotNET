@@ -84,12 +84,18 @@ namespace LeanCloud.Realtime.Internal
             var type = subclass.GetType();
             var result = new Dictionary<string, object>();
             var className = GetClassName(type);
+            var typeInt = GetTypeInt(type);
             var propertMappings = GetPropertyMappings(className);
             foreach (var propertyPair in propertMappings)
             {
                 var propertyInfo = ReflectionHelpers.GetProperty(type, propertyPair.Key);
                 var operation = propertyInfo.GetValue(subclass, null);
-                result[propertyPair.Value] = PointerOrLocalIdEncoder.Instance.Encode(operation);
+                if (operation != null)
+                    result[propertyPair.Value] = PointerOrLocalIdEncoder.Instance.Encode(operation);
+            }
+            if (typeInt != 0)
+            {
+                result[AVIMProtocol.LCTYPE] = typeInt;
             }
             return result;
         }
@@ -107,6 +113,7 @@ namespace LeanCloud.Realtime.Internal
                 throw new ArgumentException("Cannot register a type that is not a implementation of IAVIMMessage");
             }
             var className = GetClassName(type);
+            var typeInt = GetTypeInt(type);
             try
             {
                 mutex.EnterWriteLock();
@@ -115,7 +122,12 @@ namespace LeanCloud.Realtime.Internal
                 {
                     throw new ArgumentException("Cannot register a type that does not implement the default constructor!");
                 }
-                registeredInterfaces[className] = new FreeStyleMessageClassInfo(type, constructor);
+                var classInfo = new FreeStyleMessageClassInfo(type, constructor);
+                if (typeInt != 0)
+                {
+                    classInfo.TypeInt = typeInt;
+                }
+                registeredInterfaces[className] = classInfo;
             }
             finally
             {
@@ -127,6 +139,10 @@ namespace LeanCloud.Realtime.Internal
             return type == typeof(IAVIMMessage)
               ? messageClassName
               : FreeStyleMessageClassInfo.GetMessageClassName(type.GetTypeInfo());
+        }
+        public int GetTypeInt(Type type)
+        {
+            return type == typeof(AVIMTypedMessage) ? 0 : FreeStyleMessageClassInfo.GetTypedInteger(type.GetTypeInfo());
         }
         public IDictionary<String, String> GetPropertyMappings(String className)
         {
