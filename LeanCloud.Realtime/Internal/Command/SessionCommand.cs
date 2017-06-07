@@ -31,6 +31,12 @@ namespace LeanCloud.Realtime.Internal
             return new SessionCommand(this.Argument("tag", tag));
         }
 
+        public SessionCommand DeviceId(string deviceId)
+        {
+            if (string.IsNullOrEmpty(deviceId)) return new SessionCommand(this);
+			return new SessionCommand(this.Argument("deviceId", deviceId));
+        }
+
         public SessionCommand R(int r)
         {
             return new SessionCommand(this.Argument("r", r));

@@ -630,7 +630,7 @@ namespace LeanCloud.Realtime
             lock (mutex)
             {
                 var ackCommand = new AckCommand()
-                    .ReadAck().MessageId(msgId)
+                        .ReadAck().MessageId(msgId)
                     .ConversationId(convId)
                     .PeerId(this.ClientId);
 

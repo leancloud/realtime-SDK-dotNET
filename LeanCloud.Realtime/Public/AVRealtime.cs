@@ -24,6 +24,7 @@ namespace LeanCloud.Realtime
         private long _sesstionTokenExpire;
         private string _clientId;
         private string _tag;
+        private int retriedTimes;
 
         private static AVRealtime _instance;
         public static AVRealtime Instance
@@ -180,8 +181,12 @@ namespace LeanCloud.Realtime
             try
             {
                 var estimatedData = Json.Parse(obj) as IDictionary<string, object>;
-                var notice = new AVIMNotice(estimatedData);
-                m_NoticeReceived?.Invoke(this, notice);
+                var validator = AVIMNotice.IsValidLeanCloudProtocol(estimatedData);
+                if (validator)
+                {
+                    var notice = new AVIMNotice(estimatedData);
+                    m_NoticeReceived?.Invoke(this, notice);
+                }
             }
             catch (Exception ex)
             {
@@ -333,11 +338,12 @@ namespace LeanCloud.Realtime
                 return OpenAsync(secure, cancellationToken).OnSuccess(t =>
                  {
                      var cmd = new SessionCommand()
-                     .UA(VersionString)
-                     .Tag(tag)
-                     .Argument("deviceId", deviceId)
-                     .Option("open")
-                     .PeerId(clientId);
+                        .UA(VersionString)
+                        .Tag(tag)
+                        .DeviceId(deviceId)
+                        .Option("open")
+                        .PeerId(clientId);
+
 
                      return AttachSignature(cmd, this.SignatureFactory.CreateConnectSignature(clientId)).OnSuccess(_ =>
                      {
@@ -414,52 +420,39 @@ namespace LeanCloud.Realtime
         string _beatPacket = "{}";
         bool _heartBeatingToggle = true;
         IAVTimer timer;
-        public void ToggleHeartBeating(bool toggle = true, double interval = 180000, string beatPacket = "{}")
+        public void ToggleHeartBeating(bool toggle = true, double interval = 60000, string beatPacket = "{}")
         {
             this._heartBeatingToggle = toggle;
             if (!string.Equals(_beatPacket, beatPacket)) _beatPacket = beatPacket;
-            if (this._heartBeatingToggle)
+
+            if (timer == null)
             {
-                if (timer == null)
-                {
-                    timer = new AVTimer();
-                    timer.Elapsed += SendHeartBeatingPacket;
-                    timer.Interval = interval;
-                    timer.Start();
-                }
-                if (timer.Interval != interval)
-                {
-                    timer.Interval = interval;
-                }
-            }
-            else
-            {
-                if (timer != null)
-                {
-                    timer.Enabled = false;
-                    timer.Stop();
-                }
+                timer = new AVTimer();
+                timer.Elapsed += SendHeartBeatingPacket;
+                timer.Interval = interval;
+                timer.Start();
+                PrintLog("auto ToggleHeartBeating stared.");
             }
         }
         void SendHeartBeatingPacket(object sender, TimerEventArgs e)
         {
-            if (this._heartBeatingToggle)
-            {
+            PrintLog("timer ToggleHeartBeating ticked.");
 #if MONO || UNITY
-                Dispatcher.Instance.Post(() =>
-                {
-                    KeepAlive();
-                });
-#else
+            Dispatcher.Instance.Post(() =>
+            {
                 KeepAlive();
+            });
+#else
+            KeepAlive();
 #endif
-
-            }
         }
 
         public void KeepAlive()
         {
-            PCLWebsocketClient.Send(this._beatPacket);
+            if (this._heartBeatingToggle)
+            {
+                PCLWebsocketClient.Send(this._beatPacket);
+            }
         }
 
         /// <summary>
@@ -485,19 +478,7 @@ namespace LeanCloud.Realtime
                  }).Unwrap();
              }).Unwrap().OnSuccess(s =>
              {
-                 var result = s.Result;
-
-                 if (result.Item1 == 0)
-                 {
-                     state = Status.Online;
-                     ToggleNotification(true);
-                     ToggleHeartBeating(this._heartBeatingToggle);
-                 }
-                 else
-                 {
-                     state = Status.Offline;
-                     PrintLog("autoreconnecting failed.");
-                 }
+                 state = Status.Online;
              });
         }
 
@@ -588,7 +569,6 @@ namespace LeanCloud.Realtime
         private void WebsocketClient_OnClosed(int arg1, string arg2, string arg3)
         {
             state = Status.Offline;
-            Dispose();
             PrintLog(string.Format("websocket closed with code is {0},reason is {1} and detail is {2}", arg1, arg2, arg3));
             var args = new AVIMDisconnectEventArgs(arg1, arg2, arg3);
             m_OnDisconnected?.Invoke(this, args);
