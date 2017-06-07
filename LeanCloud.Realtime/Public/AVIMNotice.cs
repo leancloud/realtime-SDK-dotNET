@@ -31,5 +31,12 @@ namespace LeanCloud.Realtime
             this.RawData = estimatedData;
             this.CommandName = estimatedData["cmd"].ToString();
         }
+
+        public static bool IsValidLeanCloudProtocol(IDictionary<string, object> estimatedData)
+        {
+            if (estimatedData == null) return false;
+            if (estimatedData.Count == 0) return false;
+            return true;
+        }
     }
 }

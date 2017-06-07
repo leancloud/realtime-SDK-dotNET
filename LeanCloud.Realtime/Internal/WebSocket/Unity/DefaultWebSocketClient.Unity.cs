@@ -20,6 +20,7 @@ namespace LeanCloud.Realtime.Internal
         {
             get
             {
+                if (ws == null) { return false; }
                 return ws.IsAlive;
             }
         }
