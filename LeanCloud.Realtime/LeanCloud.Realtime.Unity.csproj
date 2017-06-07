@@ -112,6 +112,7 @@
     <Folder Include="Internal\Query\" />
     <Folder Include="Internal\Timer\" />
     <Folder Include="Internal\Timer\Unity\" />
+    <Folder Include="Public\Unity\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Internal\WebSocket\Unity\websocket-sharp.dll" />

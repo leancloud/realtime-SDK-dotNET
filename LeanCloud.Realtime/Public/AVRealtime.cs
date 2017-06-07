@@ -471,7 +471,7 @@ namespace LeanCloud.Realtime
                  .SessionToken(this._sesstionToken)
                  .Option("open")
                  .PeerId(_clientId);
-
+                 AVRealtime.PrintLog("reopen sesstion with sesstion token :" + _sesstionToken);
                  return AttachSignature(cmd, this.SignatureFactory.CreateConnectSignature(_clientId)).OnSuccess(_ =>
                  {
                      return AVIMCommandRunner.RunCommandAsync(cmd);
@@ -513,6 +513,11 @@ namespace LeanCloud.Realtime
         /// <returns></returns>
         public Task OpenAsync(string url, CancellationToken cancellationToken = default(CancellationToken))
         {
+            if (PCLWebsocketClient.IsOpen)
+            {
+                AVRealtime.PrintLog(url + "is already connectd.");
+                return Task.FromResult(0);
+            }
             AVRealtime.PrintLog(url + " connecting...");
             var tcs = new TaskCompletionSource<bool>();
             Action<string> onError = null;
