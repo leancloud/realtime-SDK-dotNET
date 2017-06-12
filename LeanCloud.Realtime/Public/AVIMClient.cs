@@ -468,7 +468,11 @@ namespace LeanCloud.Realtime
                 return AVRealtime.AVIMCommandRunner.RunCommandAsync(cmd).OnSuccess(t =>
                 {
                     var result = t.Result;
-                    conversation.MemberIds = conversation.MemberIds.Concat(membersAsList);
+                    if (!conversation.IsTransient)
+                    {
+                        if (conversation.MemberIds == null) conversation.MemberIds = new List<string>();
+                        conversation.MemberIds = conversation.MemberIds.Concat(membersAsList);
+                    }
                     return result;
                 });
             }).Unwrap();
