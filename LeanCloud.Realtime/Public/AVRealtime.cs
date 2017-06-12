@@ -588,15 +588,20 @@ namespace LeanCloud.Realtime
         {
             ToggleNotification(false);
             ToggleHeartBeating(false);
-            foreach (Delegate d in m_NoticeReceived.GetInvocationList())
+            if (m_NoticeReceived != null)
             {
-                m_NoticeReceived -= (EventHandler<AVIMNotice>)d;
+                foreach (Delegate d in m_NoticeReceived.GetInvocationList())
+                {
+                    m_NoticeReceived -= (EventHandler<AVIMNotice>)d;
+                }
             }
-            foreach (Delegate d in m_OnDisconnected.GetInvocationList())
+            if (m_OnDisconnected != null)
             {
-                m_OnDisconnected -= (EventHandler<AVIMDisconnectEventArgs>)d;
+                foreach (Delegate d in m_OnDisconnected.GetInvocationList())
+                {
+                    m_OnDisconnected -= (EventHandler<AVIMDisconnectEventArgs>)d;
+                }
             }
-
         }
         #endregion
 
