@@ -24,15 +24,17 @@ namespace SayHi
             Websockets.Net.WebsocketConnection.Link();
             AVRealtime.WebSocketLog(AppendLogs);
             AVClient.Initialize("s01a0v363ltv1a63yoj4wx34616kvp33nhjtbre4pydc66zt", "ext6lwnff90qdr1pfdlgvfigh7syciwqmc9zf0gph3nqcwj7");
+
+            lbx_messages.DisplayMember = "Content";
+            lbx_messages.ValueMember = "Id";
+            lbx_messages.DataSource = data;
         }
 
         private async void btn_logIn_Click(object sender, EventArgs e)
         {
             client = await realtime.CreateClientAsync(txb_clientId.Text.Trim());
             client.OnMessageReceived += Client_OnMessageReceived;
-            lbx_messages.DisplayMember = "Content";
-            lbx_messages.ValueMember = "Id";
-            lbx_messages.DataSource = data;
+
         }
 
         private void Client_OnMessageReceived(object sender, AVIMMessageEventArgs e)
@@ -40,7 +42,7 @@ namespace SayHi
             if (e.Message is AVIMMessage)
             {
                 var baseMeseage = e.Message as AVIMMessage;
-               
+
                 lbx_messages.Invoke((MethodInvoker)(() =>
                 {
                     data.Add(baseMeseage);
@@ -59,7 +61,23 @@ namespace SayHi
 
         private async void btn_create_Click(object sender, EventArgs e)
         {
-            conversation = await client.CreateConversationAsync(txb_friend.Text.Trim());
+            var isTransient = ckb_isTransient.Checked;
+            conversation = await client.CreateConversationAsync(txb_friend.Text.Trim(), isTransient: isTransient);
+        }
+
+        private async void btn_join_Click(object sender, EventArgs e)
+        {
+            //var convId = this.txb_convId.Text.Trim();
+            //this.conversation = await client.GetConversationAsync(convId, true);
+            //await client.JoinAsync(this.conversation);
+
+            AVIMClient avIMClient = await realtime.CreateClientAsync("junwu");
+            avIMClient.OnMessageReceived += Client_OnMessageReceived;
+            AVIMConversation avIMConversation = await avIMClient.GetConversationAsync("5940e71b8fd9c5cf89fb91b7", true);
+            if (avIMConversation != null)
+            {
+                await avIMConversation.JoinAsync();
+            }
         }
     }
 }

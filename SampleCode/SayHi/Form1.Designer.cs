@@ -39,6 +39,9 @@
             this.aVIMMessageBindingSource = new System.Windows.Forms.BindingSource(this.components);
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.txb_logs = new System.Windows.Forms.TextBox();
+            this.btn_join = new System.Windows.Forms.Button();
+            this.txb_convId = new System.Windows.Forms.TextBox();
+            this.ckb_isTransient = new System.Windows.Forms.CheckBox();
             this.grpbx_selector.SuspendLayout();
             this.groupBox2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.aVIMMessageBindingSource)).BeginInit();
@@ -57,6 +60,9 @@
             // 
             // grpbx_selector
             // 
+            this.grpbx_selector.Controls.Add(this.ckb_isTransient);
+            this.grpbx_selector.Controls.Add(this.txb_convId);
+            this.grpbx_selector.Controls.Add(this.btn_join);
             this.grpbx_selector.Controls.Add(this.btn_create);
             this.grpbx_selector.Controls.Add(this.txb_friend);
             this.grpbx_selector.Controls.Add(this.txb_clientId);
@@ -70,7 +76,7 @@
             // 
             // btn_create
             // 
-            this.btn_create.Location = new System.Drawing.Point(16, 148);
+            this.btn_create.Location = new System.Drawing.Point(16, 159);
             this.btn_create.Name = "btn_create";
             this.btn_create.Size = new System.Drawing.Size(162, 23);
             this.btn_create.TabIndex = 3;
@@ -134,6 +140,34 @@
             this.txb_logs.Size = new System.Drawing.Size(871, 201);
             this.txb_logs.TabIndex = 0;
             // 
+            // btn_join
+            // 
+            this.btn_join.Location = new System.Drawing.Point(16, 264);
+            this.btn_join.Name = "btn_join";
+            this.btn_join.Size = new System.Drawing.Size(162, 23);
+            this.btn_join.TabIndex = 4;
+            this.btn_join.Text = "Join";
+            this.btn_join.UseVisualStyleBackColor = true;
+            this.btn_join.Click += new System.EventHandler(this.btn_join_Click);
+            // 
+            // txb_convId
+            // 
+            this.txb_convId.Location = new System.Drawing.Point(16, 227);
+            this.txb_convId.Name = "txb_convId";
+            this.txb_convId.Size = new System.Drawing.Size(162, 20);
+            this.txb_convId.TabIndex = 5;
+            this.txb_convId.Text = "5940e71b8fd9c5cf89fb91b7";
+            // 
+            // ckb_isTransient
+            // 
+            this.ckb_isTransient.AutoSize = true;
+            this.ckb_isTransient.Location = new System.Drawing.Point(16, 136);
+            this.ckb_isTransient.Name = "ckb_isTransient";
+            this.ckb_isTransient.Size = new System.Drawing.Size(62, 17);
+            this.ckb_isTransient.TabIndex = 6;
+            this.ckb_isTransient.Text = "聊天室";
+            this.ckb_isTransient.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -166,6 +200,9 @@
         private System.Windows.Forms.BindingSource aVIMMessageBindingSource;
         private System.Windows.Forms.TextBox txb_friend;
         private System.Windows.Forms.Button btn_create;
+        private System.Windows.Forms.TextBox txb_convId;
+        private System.Windows.Forms.Button btn_join;
+        private System.Windows.Forms.CheckBox ckb_isTransient;
     }
 }
 
