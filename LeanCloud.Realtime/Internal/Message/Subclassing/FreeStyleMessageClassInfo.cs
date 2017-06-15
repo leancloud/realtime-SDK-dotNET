@@ -31,10 +31,13 @@ namespace LeanCloud.Realtime.Internal
             var instance = Instantiate(msgStr);
             if (instance is AVIMTypedMessage)
             {
-                var msg = Json.Parse(msgStr) as IDictionary<string, object>;
-                if (msg.ContainsKey(AVIMProtocol.LCTYPE))
+                var msgDic = Json.Parse(msgStr) as IDictionary<string, object>;
+                if (msgDic != null)
                 {
-                    return msg[AVIMProtocol.LCTYPE].ToString() == TypeInt.ToString();
+                    if (msgDic.ContainsKey(AVIMProtocol.LCTYPE))
+                    {
+                        return msgDic[AVIMProtocol.LCTYPE].ToString() == TypeInt.ToString();
+                    }
                 }
             }
             return instance.Validate(msgStr);

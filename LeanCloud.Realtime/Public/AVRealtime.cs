@@ -335,8 +335,12 @@ namespace LeanCloud.Realtime
                 }
 
                 if (string.IsNullOrEmpty(clientId)) throw new Exception("当前 ClientId 为空，无法登录服务器。");
+
+                AVRealtime.PrintLog("begin OpenAsync.");
                 return OpenAsync(secure, cancellationToken).OnSuccess(t =>
                  {
+                     AVRealtime.PrintLog("OpenAsync OnSuccess. begin send open sesstion cmd.");
+
                      var cmd = new SessionCommand()
                         .UA(VersionString)
                         .Tag(tag)
@@ -344,34 +348,38 @@ namespace LeanCloud.Realtime
                         .Option("open")
                         .PeerId(clientId);
 
+                     AVRealtime.PrintLog("sesstion cmd build completed.");
+                     AVRealtime.PrintLog("this.SignatureFactory " + (this.SignatureFactory != null).ToString());
+                     return AttachSignature(cmd, this.SignatureFactory.CreateConnectSignature(clientId));
 
-                     return AttachSignature(cmd, this.SignatureFactory.CreateConnectSignature(clientId)).OnSuccess(_ =>
-                     {
-                         return AVIMCommandRunner.RunCommandAsync(cmd);
-                     }).Unwrap();
-
-                 }).Unwrap().OnSuccess(s =>
+                 }).Unwrap().OnSuccess(x =>
                  {
-                     if (s.Exception != null)
-                     {
-                         var imException = s.Exception.InnerException as AVIMException;
-                         throw imException;
-                     }
-                     state = Status.Online;
-                     ToggleNotification(true);
-                     ToggleHeartBeating(_heartBeatingToggle);
-                     var response = s.Result.Item2;
-                     if (response.ContainsKey("st"))
-                     {
-                         _sesstionToken = response["st"] as string;
-                     }
-                     if (response.ContainsKey("stTtl"))
-                     {
-                         var stTtl = long.Parse(response["stTtl"].ToString());
-                         _sesstionTokenExpire = DateTime.Now.UnixTimeStampSeconds() + stTtl;
-                     }
-                     return client;
-                 });
+                     AVRealtime.PrintLog("AttachSignature OnSuccess.");
+                     var cmd = x.Result;
+                     return AVIMCommandRunner.RunCommandAsync(cmd);
+                 }).Unwrap().OnSuccess(s =>
+                  {
+                      AVRealtime.PrintLog("sesstion opened.");
+                      if (s.Exception != null)
+                      {
+                          var imException = s.Exception.InnerException as AVIMException;
+                          throw imException;
+                      }
+                      state = Status.Online;
+                      ToggleNotification(true);
+                      ToggleHeartBeating(_heartBeatingToggle);
+                      var response = s.Result.Item2;
+                      if (response.ContainsKey("st"))
+                      {
+                          _sesstionToken = response["st"] as string;
+                      }
+                      if (response.ContainsKey("stTtl"))
+                      {
+                          var stTtl = long.Parse(response["stTtl"].ToString());
+                          _sesstionTokenExpire = DateTime.Now.UnixTimeStampSeconds() + stTtl;
+                      }
+                      return client;
+                  });
             }
         }
 
@@ -496,11 +504,17 @@ namespace LeanCloud.Realtime
         /// <param name="cancellationToken">Cancellation token.</param>
         public Task OpenAsync(bool secure = true, CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (state == Status.Online) return Task.FromResult(true);
+            if (state == Status.Online)
+            {
+                AVRealtime.PrintLog("state is Status.Online.");
+                return Task.FromResult(true);
+            }
+
             return RouterController.GetAsync(secure, cancellationToken).OnSuccess(_ =>
              {
                  _wss = _.Result.server;
                  state = Status.Connecting;
+                 AVRealtime.PrintLog("push router give a url :" + _wss);
                  return OpenAsync(_.Result.server, cancellationToken);
              }).Unwrap();
         }
@@ -546,6 +560,7 @@ namespace LeanCloud.Realtime
 
         internal Task<AVIMCommand> AttachSignature(AVIMCommand command, Task<AVIMSignature> SignatureTask)
         {
+            AVRealtime.PrintLog("AttachSignature started.");
             var tcs = new TaskCompletionSource<AVIMCommand>();
             if (SignatureTask == null)
             {
@@ -560,6 +575,7 @@ namespace LeanCloud.Realtime
                     command.Argument("t", signature.Timestamp);
                     command.Argument("n", signature.Nonce);
                     command.Argument("s", signature.SignatureContent);
+                    AVRealtime.PrintLog("AttachSignature ended.t:" + signature.Timestamp + ";n:" + signature.Nonce + ";s:" + signature.SignatureContent);
                 }
                 return command;
             });
