@@ -177,7 +177,7 @@ namespace LeanCloud.Realtime
 
         private void WebSocketClient_OnMessage(string obj)
         {
-            AVRealtime.PrintLog("websocket<=" + obj);
+            PrintLog("websocket<=" + obj);
             try
             {
                 var estimatedData = Json.Parse(obj) as IDictionary<string, object>;
