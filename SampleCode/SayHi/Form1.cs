@@ -14,7 +14,9 @@ namespace SayHi
 {
     public partial class Form1 : Form
     {
-        AVRealtime realtime = new AVRealtime("s01a0v363ltv1a63yoj4wx34616kvp33nhjtbre4pydc66zt", "ext6lwnff90qdr1pfdlgvfigh7syciwqmc9zf0gph3nqcwj7");
+        string appId = "3knLr8wGGKUBiXpVAwDnryNT-gzGzoHsz";
+        string appkey = "3RpBhjoPXJjVWvPnVmPyFExt";
+        AVRealtime realtime;
         AVIMClient client;
         AVIMConversation conversation;
         BindingList<AVIMMessage> data = new BindingList<AVIMMessage>();
@@ -23,8 +25,8 @@ namespace SayHi
             InitializeComponent();
             Websockets.Net.WebsocketConnection.Link();
             AVRealtime.WebSocketLog(AppendLogs);
-            AVClient.Initialize("s01a0v363ltv1a63yoj4wx34616kvp33nhjtbre4pydc66zt", "ext6lwnff90qdr1pfdlgvfigh7syciwqmc9zf0gph3nqcwj7");
-
+            AVClient.Initialize(appId, appkey);
+            realtime = new AVRealtime(appId, appkey);
             lbx_messages.DisplayMember = "Content";
             lbx_messages.ValueMember = "Id";
             lbx_messages.DataSource = data;
@@ -34,7 +36,6 @@ namespace SayHi
         {
             client = await realtime.CreateClientAsync(txb_clientId.Text.Trim());
             client.OnMessageReceived += Client_OnMessageReceived;
-
         }
 
         private void Client_OnMessageReceived(object sender, AVIMMessageEventArgs e)
@@ -67,17 +68,17 @@ namespace SayHi
 
         private async void btn_join_Click(object sender, EventArgs e)
         {
-            //var convId = this.txb_convId.Text.Trim();
-            //this.conversation = await client.GetConversationAsync(convId, true);
-            //await client.JoinAsync(this.conversation);
+            var convId = this.txb_convId.Text.Trim();
+            this.conversation = await client.GetConversationAsync(convId, true);
+            await client.JoinAsync(this.conversation);
 
-            AVIMClient avIMClient = await realtime.CreateClientAsync("junwu");
-            avIMClient.OnMessageReceived += Client_OnMessageReceived;
-            AVIMConversation avIMConversation = await avIMClient.GetConversationAsync("5940e71b8fd9c5cf89fb91b7", true);
-            if (avIMConversation != null)
-            {
-                await avIMConversation.JoinAsync();
-            }
+            //AVIMClient avIMClient = await realtime.CreateClientAsync("junwu");
+            //avIMClient.OnMessageReceived += Client_OnMessageReceived;
+            //AVIMConversation avIMConversation = await avIMClient.GetConversationAsync("5940e71b8fd9c5cf89fb91b7", true);
+            //if (avIMConversation != null)
+            //{
+            //    await avIMConversation.JoinAsync();
+            //}
         }
     }
 }
