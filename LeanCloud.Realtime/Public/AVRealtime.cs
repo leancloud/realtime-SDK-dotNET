@@ -35,19 +35,39 @@ namespace LeanCloud.Realtime
             }
         }
 
-        public static IAVIMCommandRunner AVIMCommandRunner
-        {
-            get
-            {
-                return AVIMCorePlugins.Instance.IMCommandRunner;
-            }
-        }
 
+
+		private IAVIMCommandRunner avIMCommandRunner;
+
+		public IAVIMCommandRunner AVIMCommandRunner
+		{
+			get
+			{
+				lock (mutex)
+				{
+					avIMCommandRunner = avIMCommandRunner ?? new AVIMCommandRunner(this.PCLWebsocketClient);
+					return avIMCommandRunner;
+				}
+			}
+		}
+        private IWebSocketClient webSocketController;
         internal IWebSocketClient PCLWebsocketClient
         {
             get
             {
-                return AVIMCorePlugins.Instance.WebSocketController;
+                lock (mutex)
+                {
+                    webSocketController = webSocketController ?? new DefaultWebSocketClient();
+                    return webSocketController;
+
+                }
+            }
+            set
+            {
+                lock (mutex)
+                {
+                    webSocketController = value;
+                }
             }
         }
 
@@ -258,7 +278,7 @@ namespace LeanCloud.Realtime
                 CurrentConfiguration = config;
                 if (CurrentConfiguration.WebSocketClient != null)
                 {
-                    AVIMCorePlugins.Instance.WebSocketController = CurrentConfiguration.WebSocketClient;
+                    webSocketController = CurrentConfiguration.WebSocketClient;
                 }
                 if (CurrentConfiguration.SignatureFactory != null)
                 {

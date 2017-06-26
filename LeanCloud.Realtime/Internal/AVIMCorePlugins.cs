@@ -39,50 +39,6 @@ namespace LeanCloud.Realtime.Internal
             }
         }
 
-        private IWebSocketClient webSocketController;
-
-        public IWebSocketClient WebSocketController
-        {
-            get
-            {
-                lock (mutex)
-                {
-                    webSocketController = webSocketController ?? new DefaultWebSocketClient();
-                    return webSocketController;
-//#if MONO || UNITY
-//                    if (webSocketController == null)
-//                    {
-//                        throw new NullReferenceException("must set a WebSocket client when call AVRealtime.Initialize(config)");
-//                    }
-//                    return webSocketController;
-//#else
-//                    webSocketController = webSocketController ?? new DefaultWebSocketClient();
-//                    return webSocketController;
-//#endif
-
-                }
-            }
-            internal set
-            {
-                lock (mutex)
-                {
-                    webSocketController = value;
-                }
-            }
-        }
-        private IAVIMCommandRunner imCommandRunner;
-
-        public IAVIMCommandRunner IMCommandRunner
-        {
-            get
-            {
-                lock (mutex)
-                {
-                    imCommandRunner = imCommandRunner ?? new AVIMCommandRunner(this.WebSocketController);
-                    return imCommandRunner;
-                }
-            }
-        }
 
         private IFreeStyleMessageClassingController freeStyleClassingController;
         public IFreeStyleMessageClassingController FreeStyleClassingController

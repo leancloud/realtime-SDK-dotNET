@@ -234,7 +234,7 @@ namespace LeanCloud.Realtime
                     .ConversationId(e.Message.ConversationId)
                     .PeerId(this.ClientId);
 
-                AVRealtime.AVIMCommandRunner.RunCommandAsync(ackCommand);
+                this.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(ackCommand);
             }
         }
         #region listener 
@@ -266,20 +266,20 @@ namespace LeanCloud.Realtime
 
             return LinkedRealtime.AttachSignature(convCmd, LinkedRealtime.SignatureFactory.CreateStartConversationSignature(this.clientId, conversation.MemberIds)).OnSuccess(_ =>
              {
-                 return AVRealtime.AVIMCommandRunner.RunCommandAsync(convCmd).OnSuccess(t =>
-                 {
-                     var result = t.Result;
-                     if (result.Item1 < 1)
-                     {
-                         var members = conversation.MemberIds.ToList();
-                         members.Add(ClientId);
-                         conversation = new AVIMConversation(source: conversation, creator: ClientId, isUnique: isUnique, members: members);
-                         conversation.MergeFromPushServer(result.Item2);
-                         conversation.CurrentClient = this;
-                     }
+                 return this.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(convCmd).OnSuccess(t =>
+                  {
+                      var result = t.Result;
+                      if (result.Item1 < 1)
+                      {
+                          var members = conversation.MemberIds.ToList();
+                          members.Add(ClientId);
+                          conversation = new AVIMConversation(source: conversation, creator: ClientId, isUnique: isUnique, members: members);
+                          conversation.MergeFromPushServer(result.Item2);
+                          conversation.CurrentClient = this;
+                      }
 
-                     return conversation;
-                 });
+                      return conversation;
+                  });
              }).Unwrap();
         }
 
@@ -397,7 +397,7 @@ namespace LeanCloud.Realtime
             }
             var directCmd = cmd.PeerId(this.ClientId);
 
-            return AVRealtime.AVIMCommandRunner.RunCommandAsync(directCmd).ContinueWith<IAVIMMessage>(t =>
+            return this.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(directCmd).ContinueWith<IAVIMMessage>(t =>
             {
                 if (t.IsFaulted)
                 {
@@ -429,7 +429,7 @@ namespace LeanCloud.Realtime
                 .Option("mute")
                 .PeerId(this.ClientId);
 
-            return AVRealtime.AVIMCommandRunner.RunCommandAsync(convCmd);
+            return this.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(convCmd);
         }
         /// <summary>
         /// 当前用户对目标对话取消静音，恢复该对话的离线消息推送
@@ -443,7 +443,7 @@ namespace LeanCloud.Realtime
                 .Option("unmute")
                 .PeerId(this.ClientId);
 
-            return AVRealtime.AVIMCommandRunner.RunCommandAsync(convCmd);
+            return this.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(convCmd);
         }
         #endregion
 
@@ -465,7 +465,7 @@ namespace LeanCloud.Realtime
 
             return this.LinkedRealtime.AttachSignature(cmd, LinkedRealtime.SignatureFactory.CreateConversationSignature(conversation.ConversationId, ClientId, membersAsList, ConversationSignatureAction.Add)).OnSuccess(_ =>
             {
-                return AVRealtime.AVIMCommandRunner.RunCommandAsync(cmd).OnSuccess(t =>
+                return this.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(cmd).OnSuccess(t =>
                 {
                     var result = t.Result;
                     if (!conversation.IsTransient)
@@ -600,7 +600,7 @@ namespace LeanCloud.Realtime
             {
                 logsCmd = logsCmd.Argument("tt", afterTimeStampPoint.Value.UnixTimeStampSeconds());
             }
-            return AVRealtime.AVIMCommandRunner.RunCommandAsync(logsCmd).OnSuccess(t =>
+            return this.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(logsCmd).OnSuccess(t =>
             {
                 var rtn = new List<IAVIMMessage>();
                 var result = t.Result.Item2;
@@ -638,7 +638,7 @@ namespace LeanCloud.Realtime
                     .ConversationId(convId)
                     .PeerId(this.ClientId);
 
-                return AVRealtime.AVIMCommandRunner.RunCommandAsync(ackCommand);
+                return this.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(ackCommand);
             }
         }
 
@@ -653,7 +653,7 @@ namespace LeanCloud.Realtime
               .Option("max-read")
               .PeerId(clientId);
 
-            return AVRealtime.AVIMCommandRunner.RunCommandAsync(cmd).OnSuccess(t =>
+            return this.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(cmd).OnSuccess(t =>
             {
                 var result = t.Result;
                 long maxReadTimestamp = -1;
@@ -691,7 +691,7 @@ namespace LeanCloud.Realtime
                 .SessionPeerIds(queryIds)
                 .Option("query");
 
-            return AVRealtime.AVIMCommandRunner.RunCommandAsync(cmd).OnSuccess(t =>
+            return this.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(cmd).OnSuccess(t =>
             {
                 var result = t.Result;
                 List<Tuple<string, bool>> rtn = new List<Tuple<string, bool>>();
@@ -714,7 +714,7 @@ namespace LeanCloud.Realtime
         public Task CloseAsync()
         {
             var cmd = new SessionCommand().Option("close");
-            return AVRealtime.AVIMCommandRunner.RunCommandAsync(cmd).ContinueWith(t =>
+            return this.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(cmd).ContinueWith(t =>
             {
                 this.LinkedRealtime.LogOut();
             });
