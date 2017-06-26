@@ -397,7 +397,7 @@ namespace LeanCloud.Realtime
             var convCmd = cmd.Option("update")
                 .PeerId(this.CurrentClient.ClientId);
 
-            return AVRealtime.AVIMCommandRunner.RunCommandAsync(convCmd);
+            return this.CurrentClient.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(convCmd);
 
         }
         #endregion
