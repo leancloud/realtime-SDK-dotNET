@@ -35,8 +35,6 @@ namespace LeanCloud.Realtime
             }
         }
 
-
-
 		private IAVIMCommandRunner avIMCommandRunner;
 
 		public IAVIMCommandRunner AVIMCommandRunner

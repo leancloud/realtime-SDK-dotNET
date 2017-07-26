@@ -120,7 +120,7 @@ namespace LeanCloud.Realtime
         public override Task<IEnumerable<AVIMConversation>> FindAsync(CancellationToken cancellationToken)
         {
             var convCmd = this.GenerateQueryCommand();
-            return AVRealtime.Instance.AVIMCommandRunner.RunCommandAsync(convCmd).OnSuccess(t => 
+            return CurrentClient.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(convCmd).OnSuccess(t => 
             {
                 var result = t.Result.Item2;
 
