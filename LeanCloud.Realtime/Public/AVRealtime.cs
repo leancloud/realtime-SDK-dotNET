@@ -12,6 +12,7 @@ using System.Threading;
 
 namespace LeanCloud.Realtime
 {
+
     /// <summary>
     /// 实时消息的框架类
     /// 包含了 WebSocket 连接以及事件通知的管理
@@ -24,30 +25,21 @@ namespace LeanCloud.Realtime
         private long _sesstionTokenExpire;
         private string _clientId;
         private string _tag;
-        private int retriedTimes;
 
-        private static AVRealtime _instance;
-        public static AVRealtime Instance
+        private IAVIMCommandRunner avIMCommandRunner;
+
+        public IAVIMCommandRunner AVIMCommandRunner
         {
             get
             {
-                return _instance;
+                lock (mutex)
+                {
+                    avIMCommandRunner = avIMCommandRunner ?? new AVIMCommandRunner(this.PCLWebsocketClient);
+                    return avIMCommandRunner;
+                }
             }
         }
 
-		private IAVIMCommandRunner avIMCommandRunner;
-
-		public IAVIMCommandRunner AVIMCommandRunner
-		{
-			get
-			{
-				lock (mutex)
-				{
-					avIMCommandRunner = avIMCommandRunner ?? new AVIMCommandRunner(this.PCLWebsocketClient);
-					return avIMCommandRunner;
-				}
-			}
-		}
         private IWebSocketClient webSocketController;
         internal IWebSocketClient PCLWebsocketClient
         {
@@ -115,7 +107,12 @@ namespace LeanCloud.Realtime
             /// <summary>
             /// 正在重连
             /// </summary>
-            Reconnecting = 3
+            Reconnecting = 3,
+
+            /// <summary>
+            /// 已主动关闭
+            /// </summary>
+            Closed = 99,
         }
 
         private AVRealtime.Status state = Status.None;
@@ -130,6 +127,25 @@ namespace LeanCloud.Realtime
                 state = value;
             }
         }
+
+        public struct AVIMReconnectOptions
+        {
+            /// <summary>
+            /// 重连的时间间隔，单位是秒
+            /// </summary>
+            public long Interval { get; set; }
+
+            /// <summary>
+            /// 重连的次数
+            /// </summary>
+            public int Retry { get; set; }
+        }
+
+        /// <summary>
+        /// 重连选项
+        /// </summary>
+        public AVIMReconnectOptions ReconnectOptions { get; set; }
+
         private ISignatureFactory _signatureFactory;
 
         /// <summary>
@@ -172,6 +188,38 @@ namespace LeanCloud.Realtime
             remove
             {
                 m_OnDisconnected -= value;
+            }
+        }
+
+        private EventHandler<AVIMReconnectingEventArgs> m_OnReconnecting;
+        /// <summary>
+        /// 正在重连时触发的事件
+        /// </summary>
+        public event EventHandler<AVIMReconnectingEventArgs> OnReconnecting
+        {
+            add
+            {
+                m_OnReconnecting += value;
+            }
+            remove
+            {
+                m_OnReconnecting -= value;
+            }
+        }
+
+        private EventHandler<AVIMReconnectedEventArgs> m_OnReconnected;
+        /// <summary>
+        /// 重连之后触发的事件
+        /// </summary>
+        public event EventHandler<AVIMReconnectedEventArgs> OnReconnected
+        {
+            add
+            {
+                m_OnReconnected += value;
+            }
+            remove
+            {
+                m_OnReconnected -= value;
             }
         }
 
@@ -282,11 +330,15 @@ namespace LeanCloud.Realtime
                 {
                     this.SignatureFactory = CurrentConfiguration.SignatureFactory;
                 }
+                ReconnectOptions = new AVIMReconnectOptions()
+                {
+                    Interval = 5,
+                    Retry = 120
+                };
                 RegisterMessageType<AVIMMessage>();
                 RegisterMessageType<AVIMTypedMessage>();
                 RegisterMessageType<AVIMTextMessage>();
             }
-            _instance = this;
         }
 
         /// <summary>
@@ -480,13 +532,64 @@ namespace LeanCloud.Realtime
                 PCLWebsocketClient.Send(this._beatPacket);
             }
         }
+        IAVTimer reconnectTimer;
+        bool autoReconnectionStarted = false;
+        public void StartAutoReconnect()
+        {
+            if (!autoReconnectionStarted)
+            {
+                autoReconnectionStarted = true;
+                reconnectTimer = new AVTimer();
+                reconnectTimer.Interval = this.ReconnectOptions.Interval * 1000;
+                reconnectTimer.Elapsed += ReconnectTimer_Elapsed;
+                reconnectTimer.Start();
+                reconnectTimer.Enabled = true;
+            }
+        }
 
+        private void ReconnectTimer_Elapsed(object sender, TimerEventArgs e)
+        {
+            var timer = sender as AVTimer;
+            if (state == Status.Offline)
+            {
+                if (timer != null)
+                {
+                    if (timer.Executed <= this.ReconnectOptions.Retry)
+                    {
+                        AutoReconnect();
+                        timer.Executed += 1;
+                    }
+                    else
+                    {
+                        timer = null;
+                        autoReconnectionStarted = false;
+                    }
+                }
+                else
+                {
+                    AutoReconnect();
+                }
+            }
+            else if (state == Status.Online)
+            {
+                if (timer != null)
+                    timer.Stop();
+            }
+        }
         /// <summary>
         /// 自动重连
         /// </summary>
         /// <returns></returns>
         public Task AutoReconnect()
         {
+            var reconnectingArgs = new AVIMReconnectingEventArgs()
+            {
+                ClientId = _clientId,
+                IsAuto = true,
+                SessionToken = _sesstionToken
+            };
+            m_OnReconnecting?.Invoke(this, reconnectingArgs);
+
             return OpenAsync(_wss).ContinueWith(t =>
              {
                  state = Status.Reconnecting;
@@ -502,11 +605,30 @@ namespace LeanCloud.Realtime
                  {
                      return AVIMCommandRunner.RunCommandAsync(cmd);
                  }).Unwrap();
-             }).Unwrap().OnSuccess(s =>
+             }).Unwrap().ContinueWith(s =>
              {
-                 state = Status.Online;
+                 var reconnectedArgs = new AVIMReconnectedEventArgs()
+                 {
+                     ClientId = _clientId,
+                     IsAuto = true,
+                     SessionToken = _sesstionToken,
+                 };
+                 autoReconnectionStarted = false;
+                 reconnectTimer = null;
+                 if (s.Exception != null)
+                 {
+                     state = Status.Offline;
+                 }
+                 else
+                 {
+                     state = Status.Online;
+                 }
+                 reconnectedArgs.IsSuccess = state == Status.Online;
+                 m_OnReconnected?.Invoke(this, reconnectedArgs);
              });
         }
+
+
 
         #region register IAVIMMessage
         public void RegisterMessageType<T>() where T : IAVIMMessage
@@ -607,17 +729,28 @@ namespace LeanCloud.Realtime
         #region log out and clean event subscribtion
         private void WebsocketClient_OnClosed(int arg1, string arg2, string arg3)
         {
-            state = Status.Offline;
-            PrintLog(string.Format("websocket closed with code is {0},reason is {1} and detail is {2}", arg1, arg2, arg3));
-            var args = new AVIMDisconnectEventArgs(arg1, arg2, arg3);
-            m_OnDisconnected?.Invoke(this, args);
+            if (State != Status.Closed)
+            {
+                state = Status.Offline;
+                PrintLog(string.Format("websocket closed with code is {0},reason is {1} and detail is {2}", arg1, arg2, arg3));
+                var args = new AVIMDisconnectEventArgs(arg1, arg2, arg3);
+                m_OnDisconnected?.Invoke(this, args);
+
+                // 如果断线产生的原因是客户端掉线而不是服务端踢下线，则应该开始自动重连
+                if (arg1 == 0)
+                {
+                    StartAutoReconnect();
+                }
+            }
         }
+
         internal void LogOut()
         {
-            this.State = Status.Offline;
+            State = Status.Closed;
             Dispose();
             PCLWebsocketClient.Close();
         }
+
         internal void Dispose()
         {
             ToggleNotification(false);

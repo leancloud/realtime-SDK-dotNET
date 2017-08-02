@@ -8,17 +8,23 @@ namespace LeanCloud.Realtime.Internal
         /// </summary>
         void Start();
 
-		/// <summary>
-		/// Stop this timer.
-		/// </summary>
-		void Stop();
+        /// <summary>
+        /// Stop this timer.
+        /// </summary>
+        void Stop();
+
         bool Enabled { get; set; }
 
-		/// <summary>
-		/// The number of milliseconds between timer events.
-		/// </summary>
-		/// <value>The interval.</value>
-		double Interval { get; set; }
+        /// <summary>
+        /// The number of milliseconds between timer events.
+        /// </summary>
+        /// <value>The interval.</value>
+        double Interval { get; set; }
+
+        /// <summary>
+        /// 已经执行了多少次
+        /// </summary>
+        long Executed { get; }
 
         /// <summary>
         /// Occurs when elapsed.

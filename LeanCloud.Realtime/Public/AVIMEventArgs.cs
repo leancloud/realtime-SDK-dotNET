@@ -40,6 +40,53 @@ namespace LeanCloud.Realtime
         }
     }
 
+    /// <summary>
+    /// 开始重连之后触发正在重连的事件通知，提供给监听者的事件参数
+    /// </summary>
+    public class AVIMReconnectingEventArgs : EventArgs
+    {
+        /// <summary>
+        ///  是否由 SDK 内部机制启动的自动重连
+        /// </summary>
+        public bool IsAuto { get; set; }
+
+        /// <summary>
+        /// 重连的 client Id
+        /// </summary>
+        public string ClientId { get; set; }
+
+        /// <summary>
+        /// 重连时使用的 SessionToken
+        /// </summary>
+        public string SessionToken { get; set; }
+    }
+
+    /// <summary>
+    /// 重连之后的事件回调，有可能失败，也有可能成功
+    /// </summary>
+    public class AVIMReconnectedEventArgs : EventArgs
+    {
+        /// <summary>
+        ///  是否由 SDK 内部机制启动的自动重连
+        /// </summary>
+        public bool IsAuto { get; set; }
+
+        /// <summary>
+        /// 重连的 client Id
+        /// </summary>
+        public string ClientId { get; set; }
+
+        /// <summary>
+        /// 重连时使用的 SessionToken
+        /// </summary>
+        public string SessionToken { get; set; }
+
+        /// <summary>
+        /// 重连是否成功
+        /// </summary>
+        public bool IsSuccess { get; set; }
+    }
+
 
     public class AVIMMessageEventArgs : EventArgs
     {

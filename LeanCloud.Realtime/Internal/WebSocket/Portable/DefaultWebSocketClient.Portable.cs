@@ -20,6 +20,9 @@ namespace LeanCloud.Realtime.Internal
         public DefaultWebSocketClient()
         {
             connection = WebSocketFactory.Create();
+            connection.OnOpened += Connection_OnOpened;
+            connection.OnMessage += Connection_OnMessage;
+            connection.OnClosed += Connection_OnClosed;
         }
 
         public event Action<int, string, string> OnClosed;
@@ -52,9 +55,6 @@ namespace LeanCloud.Realtime.Internal
             if (connection != null)
             {
                 connection.Open(url, protocol);
-                connection.OnOpened += Connection_OnOpened;
-                connection.OnMessage += Connection_OnMessage;
-                connection.OnClosed += Connection_OnClosed;
             }
         }
 

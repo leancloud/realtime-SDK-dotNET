@@ -27,6 +27,7 @@ namespace SayHi
             AVRealtime.WebSocketLog(AppendLogs);
             AVClient.Initialize(appId, appkey);
             realtime = new AVRealtime(appId, appkey);
+
             lbx_messages.DisplayMember = "Content";
             lbx_messages.ValueMember = "Id";
             lbx_messages.DataSource = data;
@@ -79,6 +80,11 @@ namespace SayHi
             //{
             //    await avIMConversation.JoinAsync();
             //}
+        }
+
+        private void btn_Pause_Click(object sender, EventArgs e)
+        {
+            client.CloseAsync();
         }
     }
 }

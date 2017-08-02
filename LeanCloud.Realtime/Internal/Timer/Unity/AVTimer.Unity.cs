@@ -3,12 +3,13 @@ using System.Timers;
 
 namespace LeanCloud.Realtime.Internal
 {
-    public class AVTimer:IAVTimer
+    public class AVTimer : IAVTimer
     {
         public AVTimer()
         {
             timer = new Timer();
         }
+
         Timer timer;
 
         public bool Enabled
@@ -35,6 +36,21 @@ namespace LeanCloud.Realtime.Internal
             }
         }
 
+        long executed;
+
+        public long Executed
+        {
+            get
+            {
+                return executed;
+            }
+
+            internal set
+            {
+                executed = value;
+            }
+        }
+
         public void Start()
         {
             timer.Start();
@@ -51,14 +67,14 @@ namespace LeanCloud.Realtime.Internal
             {
                 timer.Elapsed += (object sender, ElapsedEventArgs e) =>
                 {
-                    value(sender, new TimerEventArgs(e.SignalTime));
+                    value(this, new TimerEventArgs(e.SignalTime));
                 };
             }
             remove
             {
                 timer.Elapsed -= (object sender, ElapsedEventArgs e) =>
                 {
-                    value(sender, new TimerEventArgs(e.SignalTime));
+                    value(this, new TimerEventArgs(e.SignalTime));
                 }; ;
             }
         }
