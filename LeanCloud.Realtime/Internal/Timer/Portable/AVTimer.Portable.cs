@@ -4,31 +4,33 @@ using System.Threading;
 
 namespace LeanCloud.Realtime.Internal
 {
-    internal delegate void TimerCallback(object state);
+    internal delegate void TimerCallback();
 
     internal sealed class Timer : CancellationTokenSource, IDisposable
     {
-        internal Timer(TimerCallback callback, object state, int dueTime, int period)
+        TimerCallback exe;
+        int Interval { get; set; }
+        
+        internal Timer(TimerCallback callback, int interval, bool enable)
         {
-            Task.Delay(dueTime, Token).ContinueWith((t, s) =>
-            {
-                var tuple = (Tuple<TimerCallback, object>)s;
+            exe = callback;
+            Interval = interval;
 
-                while (Enabled)
-                {
-                    if (IsCancellationRequested)
-                        break;
-                    Task.Run(() => tuple.Item1(tuple.Item2));
-                    Task.Delay(period);
-                }
-            },
-            Tuple.Create(callback, state),
-            CancellationToken.None,
-            TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.OnlyOnRanToCompletion,
-            TaskScheduler.Default);
+            Enabled = enable;
+            Execute();
         }
 
-        public new void Dispose() { base.Cancel(); }
+        Task Execute()
+        {
+            if (Enabled)
+                return Task.Delay(Interval).ContinueWith(t =>
+                {
+                    exe();
+                    return this.Execute();
+                });
+            else
+                return Task.FromResult(0);
+        }
 
         public bool Enabled
         {
@@ -62,12 +64,30 @@ namespace LeanCloud.Realtime.Internal
             get; set;
         }
 
+        long executed;
+
+        public long Executed
+        {
+            get
+            {
+                return executed;
+            }
+
+            internal set
+            {
+                executed = value;
+            }
+        }
+
         public void Start()
         {
-            if (timer == null) timer = new Timer((state) =>
+            if (timer == null)
             {
-                Elapsed(this, new TimerEventArgs(DateTime.Now));
-            }, this, (int)Interval, (int)Interval);
+                timer = new Timer(() =>
+                {
+                    Elapsed(this, new TimerEventArgs(DateTime.Now));
+                }, (int)Interval, true);
+            }
         }
 
         public void Stop()

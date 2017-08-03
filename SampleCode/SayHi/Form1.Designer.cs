@@ -31,21 +31,22 @@
             this.components = new System.ComponentModel.Container();
             this.btn_logIn = new System.Windows.Forms.Button();
             this.grpbx_selector = new System.Windows.Forms.GroupBox();
+            this.ckb_isTransient = new System.Windows.Forms.CheckBox();
+            this.txb_convId = new System.Windows.Forms.TextBox();
+            this.btn_join = new System.Windows.Forms.Button();
             this.btn_create = new System.Windows.Forms.Button();
             this.txb_friend = new System.Windows.Forms.TextBox();
             this.txb_clientId = new System.Windows.Forms.TextBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.lbx_messages = new System.Windows.Forms.ListBox();
-            this.aVIMMessageBindingSource = new System.Windows.Forms.BindingSource(this.components);
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.txb_logs = new System.Windows.Forms.TextBox();
-            this.btn_join = new System.Windows.Forms.Button();
-            this.txb_convId = new System.Windows.Forms.TextBox();
-            this.ckb_isTransient = new System.Windows.Forms.CheckBox();
+            this.aVIMMessageBindingSource = new System.Windows.Forms.BindingSource(this.components);
+            this.btn_Pause = new System.Windows.Forms.Button();
             this.grpbx_selector.SuspendLayout();
             this.groupBox2.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.aVIMMessageBindingSource)).BeginInit();
             this.groupBox3.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.aVIMMessageBindingSource)).BeginInit();
             this.SuspendLayout();
             // 
             // btn_logIn
@@ -60,6 +61,7 @@
             // 
             // grpbx_selector
             // 
+            this.grpbx_selector.Controls.Add(this.btn_Pause);
             this.grpbx_selector.Controls.Add(this.ckb_isTransient);
             this.grpbx_selector.Controls.Add(this.txb_convId);
             this.grpbx_selector.Controls.Add(this.btn_join);
@@ -73,6 +75,34 @@
             this.grpbx_selector.TabIndex = 1;
             this.grpbx_selector.TabStop = false;
             this.grpbx_selector.Text = "操作框";
+            // 
+            // ckb_isTransient
+            // 
+            this.ckb_isTransient.AutoSize = true;
+            this.ckb_isTransient.Location = new System.Drawing.Point(16, 136);
+            this.ckb_isTransient.Name = "ckb_isTransient";
+            this.ckb_isTransient.Size = new System.Drawing.Size(62, 17);
+            this.ckb_isTransient.TabIndex = 6;
+            this.ckb_isTransient.Text = "聊天室";
+            this.ckb_isTransient.UseVisualStyleBackColor = true;
+            // 
+            // txb_convId
+            // 
+            this.txb_convId.Location = new System.Drawing.Point(16, 227);
+            this.txb_convId.Name = "txb_convId";
+            this.txb_convId.Size = new System.Drawing.Size(162, 20);
+            this.txb_convId.TabIndex = 5;
+            this.txb_convId.Text = "5940e71b8fd9c5cf89fb91b7";
+            // 
+            // btn_join
+            // 
+            this.btn_join.Location = new System.Drawing.Point(16, 264);
+            this.btn_join.Name = "btn_join";
+            this.btn_join.Size = new System.Drawing.Size(162, 23);
+            this.btn_join.TabIndex = 4;
+            this.btn_join.Text = "Join";
+            this.btn_join.UseVisualStyleBackColor = true;
+            this.btn_join.Click += new System.EventHandler(this.btn_join_Click);
             // 
             // btn_create
             // 
@@ -118,10 +148,6 @@
             this.lbx_messages.Size = new System.Drawing.Size(653, 381);
             this.lbx_messages.TabIndex = 0;
             // 
-            // aVIMMessageBindingSource
-            // 
-            this.aVIMMessageBindingSource.DataSource = typeof(LeanCloud.Realtime.AVIMMessage);
-            // 
             // groupBox3
             // 
             this.groupBox3.Controls.Add(this.txb_logs);
@@ -140,33 +166,19 @@
             this.txb_logs.Size = new System.Drawing.Size(871, 201);
             this.txb_logs.TabIndex = 0;
             // 
-            // btn_join
+            // aVIMMessageBindingSource
             // 
-            this.btn_join.Location = new System.Drawing.Point(16, 264);
-            this.btn_join.Name = "btn_join";
-            this.btn_join.Size = new System.Drawing.Size(162, 23);
-            this.btn_join.TabIndex = 4;
-            this.btn_join.Text = "Join";
-            this.btn_join.UseVisualStyleBackColor = true;
-            this.btn_join.Click += new System.EventHandler(this.btn_join_Click);
+            this.aVIMMessageBindingSource.DataSource = typeof(LeanCloud.Realtime.AVIMMessage);
             // 
-            // txb_convId
+            // btn_Pause
             // 
-            this.txb_convId.Location = new System.Drawing.Point(16, 227);
-            this.txb_convId.Name = "txb_convId";
-            this.txb_convId.Size = new System.Drawing.Size(162, 20);
-            this.txb_convId.TabIndex = 5;
-            this.txb_convId.Text = "5940e71b8fd9c5cf89fb91b7";
-            // 
-            // ckb_isTransient
-            // 
-            this.ckb_isTransient.AutoSize = true;
-            this.ckb_isTransient.Location = new System.Drawing.Point(16, 136);
-            this.ckb_isTransient.Name = "ckb_isTransient";
-            this.ckb_isTransient.Size = new System.Drawing.Size(62, 17);
-            this.ckb_isTransient.TabIndex = 6;
-            this.ckb_isTransient.Text = "聊天室";
-            this.ckb_isTransient.UseVisualStyleBackColor = true;
+            this.btn_Pause.Location = new System.Drawing.Point(16, 328);
+            this.btn_Pause.Name = "btn_Pause";
+            this.btn_Pause.Size = new System.Drawing.Size(162, 23);
+            this.btn_Pause.TabIndex = 7;
+            this.btn_Pause.Text = "Pause";
+            this.btn_Pause.UseVisualStyleBackColor = true;
+            this.btn_Pause.Click += new System.EventHandler(this.btn_Pause_Click);
             // 
             // Form1
             // 
@@ -181,9 +193,9 @@
             this.grpbx_selector.ResumeLayout(false);
             this.grpbx_selector.PerformLayout();
             this.groupBox2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.aVIMMessageBindingSource)).EndInit();
             this.groupBox3.ResumeLayout(false);
             this.groupBox3.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.aVIMMessageBindingSource)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -203,6 +215,7 @@
         private System.Windows.Forms.TextBox txb_convId;
         private System.Windows.Forms.Button btn_join;
         private System.Windows.Forms.CheckBox ckb_isTransient;
+        private System.Windows.Forms.Button btn_Pause;
     }
 }
 
