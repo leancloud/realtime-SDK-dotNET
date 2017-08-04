@@ -28,6 +28,10 @@ namespace LeanCloud.Realtime
 
         private IAVIMCommandRunner avIMCommandRunner;
 
+
+        /// <summary>
+        /// 
+        /// </summary>
         public IAVIMCommandRunner AVIMCommandRunner
         {
             get
@@ -77,6 +81,9 @@ namespace LeanCloud.Realtime
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public event EventHandler<AVIMMessageEventArgs> OnOfflineMessageReceived;
 
         /// <summary>
@@ -110,6 +117,11 @@ namespace LeanCloud.Realtime
             Reconnecting = 3,
 
             /// <summary>
+            /// websocket 连接已被打开
+            /// </summary>
+            Opened = 98,
+
+            /// <summary>
             /// 已主动关闭
             /// </summary>
             Closed = 99,
@@ -128,6 +140,9 @@ namespace LeanCloud.Realtime
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public struct AVIMReconnectOptions
         {
             /// <summary>
@@ -223,6 +238,23 @@ namespace LeanCloud.Realtime
             }
         }
 
+        private EventHandler<AVIMReconnectFailedArgs> m_OnReconnectFailed;
+
+        /// <summary>
+        /// 重连失败之后触发的事件
+        /// </summary>
+        public event EventHandler<AVIMReconnectFailedArgs> OnReconnectFailed
+        {
+            add
+            {
+                m_OnReconnectFailed += value;
+            }
+            remove
+            {
+                m_OnReconnectFailed -= value;
+            }
+        }
+
         private EventHandler<AVIMNotice> m_NoticeReceived;
         public event EventHandler<AVIMNotice> NoticeReceived
         {
@@ -235,11 +267,6 @@ namespace LeanCloud.Realtime
                 m_NoticeReceived -= value;
             }
         }
-
-        //public void On(string eventName, Action<IDictionary<string, object>> data)
-        //{
-
-        //}
 
         private void WebSocketClient_OnMessage(string obj)
         {
@@ -418,13 +445,10 @@ namespace LeanCloud.Realtime
                         .Option("open")
                         .PeerId(clientId);
 
-                     AVRealtime.PrintLog("sesstion cmd build completed.");
-                     AVRealtime.PrintLog("this.SignatureFactory " + (this.SignatureFactory != null).ToString());
                      return AttachSignature(cmd, this.SignatureFactory.CreateConnectSignature(clientId));
 
                  }).Unwrap().OnSuccess(x =>
                  {
-                     AVRealtime.PrintLog("AttachSignature OnSuccess.");
                      var cmd = x.Result;
                      return AVIMCommandRunner.RunCommandAsync(cmd);
                  }).Unwrap().OnSuccess(s =>
@@ -498,6 +522,12 @@ namespace LeanCloud.Realtime
         string _beatPacket = "{}";
         bool _heartBeatingToggle = true;
         IAVTimer timer;
+        /// <summary>
+        /// 主动发送心跳包
+        /// </summary>
+        /// <param name="toggle">是否开启</param>
+        /// <param name="interval">时间间隔</param>
+        /// <param name="beatPacket">心跳包的内容，默认是个空的 {}</param>
         public void ToggleHeartBeating(bool toggle = true, double interval = 60000, string beatPacket = "{}")
         {
             this._heartBeatingToggle = toggle;
@@ -534,6 +564,9 @@ namespace LeanCloud.Realtime
         }
         IAVTimer reconnectTimer;
         bool autoReconnectionStarted = false;
+        /// <summary>
+        /// 开始自动重连
+        /// </summary>
         public void StartAutoReconnect()
         {
             if (!autoReconnectionStarted)
@@ -582,6 +615,7 @@ namespace LeanCloud.Realtime
         /// <returns></returns>
         public Task AutoReconnect()
         {
+
             var reconnectingArgs = new AVIMReconnectingEventArgs()
             {
                 ClientId = _clientId,
@@ -592,39 +626,78 @@ namespace LeanCloud.Realtime
 
             return OpenAsync(_wss).ContinueWith(t =>
              {
-                 state = Status.Reconnecting;
-                 var cmd = new SessionCommand()
-                 .UA(VersionString)
-                 .Tag(_tag)
-                 .R(1)
-                 .SessionToken(this._sesstionToken)
-                 .Option("open")
-                 .PeerId(_clientId);
-                 AVRealtime.PrintLog("reopen sesstion with sesstion token :" + _sesstionToken);
-                 return AttachSignature(cmd, this.SignatureFactory.CreateConnectSignature(_clientId)).OnSuccess(_ =>
+                 if (t.IsFaulted || t.Exception != null)
                  {
-                     return AVIMCommandRunner.RunCommandAsync(cmd);
-                 }).Unwrap();
-             }).Unwrap().ContinueWith(s =>
+                     state = Status.Reconnecting;
+                     var reconnectFailedArgs = new AVIMReconnectFailedArgs()
+                     {
+                         ClientId = _clientId,
+                         IsAuto = true,
+                         SessionToken = _sesstionToken,
+                         FailedCode = 0
+                     };
+                     m_OnReconnectFailed?.Invoke(this, reconnectFailedArgs);
+                     state = Status.Offline;
+                     return Task.FromResult(false);
+                 }
+                 else
+                 {
+                     if (t.Result)
+                     {
+                         state = Status.Opened;
+                         var sessionCMD = new SessionCommand()
+                         .UA(VersionString).R(1);
+
+                         if (string.IsNullOrEmpty(_tag))
+                         {
+                             sessionCMD = sessionCMD.Tag(_tag).SessionToken(this._sesstionToken);
+                         }
+
+                         var cmd = sessionCMD.Option("open")
+                          .PeerId(_clientId);
+
+                         AVRealtime.PrintLog("reopen sesstion with sesstion token :" + _sesstionToken);
+                         return AttachSignature(cmd, this.SignatureFactory.CreateConnectSignature(_clientId)).OnSuccess(_ =>
+                         {
+                             return AVIMCommandRunner.RunCommandAsync(cmd);
+                         }).Unwrap().OnSuccess(c =>
+                         {
+                             return true;
+                         });
+                     }
+                     else return Task.FromResult(false);
+                 }
+
+             }).Unwrap().OnSuccess(s =>
              {
-                 var reconnectedArgs = new AVIMReconnectedEventArgs()
+                 if (s.IsFaulted || s.Exception != null)
                  {
-                     ClientId = _clientId,
-                     IsAuto = true,
-                     SessionToken = _sesstionToken,
-                 };
-                 autoReconnectionStarted = false;
-                 reconnectTimer = null;
-                 if (s.Exception != null)
-                 {
+                     var reconnectFailedArgs = new AVIMReconnectFailedArgs()
+                     {
+                         ClientId = _clientId,
+                         IsAuto = true,
+                         SessionToken = _sesstionToken,
+                         FailedCode = 1
+                     };
+                     m_OnReconnectFailed?.Invoke(this, reconnectFailedArgs);
                      state = Status.Offline;
                  }
                  else
                  {
-                     state = Status.Online;
+                     if (s.Result)
+                     {
+                         autoReconnectionStarted = false;
+                         reconnectTimer = null;
+                         var reconnectedArgs = new AVIMReconnectedEventArgs()
+                         {
+                             ClientId = _clientId,
+                             IsAuto = true,
+                             SessionToken = _sesstionToken,
+                         };
+                         state = Status.Online;
+                         m_OnReconnected?.Invoke(this, reconnectedArgs);
+                     }
                  }
-                 reconnectedArgs.IsSuccess = state == Status.Online;
-                 m_OnReconnected?.Invoke(this, reconnectedArgs);
              });
         }
 
@@ -659,18 +732,18 @@ namespace LeanCloud.Realtime
              }).Unwrap();
         }
 
-
         /// <summary>
         /// 打开 WebSocket 链接
         /// </summary>
+        /// <param name="url"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public Task OpenAsync(string url, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<bool> OpenAsync(string url, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (PCLWebsocketClient.IsOpen)
             {
                 AVRealtime.PrintLog(url + "is already connectd.");
-                return Task.FromResult(0);
+                return Task.FromResult(true);
             }
             AVRealtime.PrintLog(url + " connecting...");
             var tcs = new TaskCompletionSource<bool>();
@@ -678,20 +751,30 @@ namespace LeanCloud.Realtime
             onError = ((reason) =>
             {
                 PCLWebsocketClient.OnError -= onError;
-                tcs.SetResult(false);
+                tcs.TrySetResult(false);
                 tcs.TrySetException(new AVIMException(AVIMException.ErrorCode.FromServer, "try to open websocket at " + url + "failed.The reason is " + reason, null));
             });
+
+            Action<int, string, string> onClosed = null;
+            onClosed = (reason, arg0, arg1) =>
+            {
+                PCLWebsocketClient.OnClosed -= onClosed;
+                tcs.TrySetResult(false);
+                tcs.TrySetException(new AVIMException(AVIMException.ErrorCode.FromServer, "try to open websocket at " + url + "failed.The reason is " + reason, null));
+            };
 
             Action onOpend = null;
             onOpend = (() =>
             {
                 PCLWebsocketClient.OnError -= onError;
+                PCLWebsocketClient.OnClosed -= onClosed;
                 PCLWebsocketClient.OnOpened -= onOpend;
-                tcs.SetResult(true);
+                tcs.TrySetResult(true);
                 AVRealtime.PrintLog(url + " connected.");
             });
 
             PCLWebsocketClient.OnOpened += onOpend;
+            PCLWebsocketClient.OnClosed += onClosed;
             PCLWebsocketClient.OnError += onError;
             PCLWebsocketClient.Open(url);
 
