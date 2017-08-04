@@ -539,7 +539,7 @@ namespace LeanCloud.Realtime
                 timer.Elapsed += SendHeartBeatingPacket;
                 timer.Interval = interval;
                 timer.Start();
-                PrintLog("auto ToggleHeartBeating stared.");
+                PrintLog("auto ToggleHeartBeating started.");
             }
         }
         void SendHeartBeatingPacket(object sender, TimerEventArgs e)
@@ -747,6 +747,8 @@ namespace LeanCloud.Realtime
             }
             AVRealtime.PrintLog(url + " connecting...");
             var tcs = new TaskCompletionSource<bool>();
+
+
             Action<string> onError = null;
             onError = ((reason) =>
             {
@@ -760,6 +762,7 @@ namespace LeanCloud.Realtime
             {
                 PCLWebsocketClient.OnClosed -= onClosed;
                 tcs.TrySetResult(false);
+                AVRealtime.PrintLog(url + " connect failed.");
                 tcs.TrySetException(new AVIMException(AVIMException.ErrorCode.FromServer, "try to open websocket at " + url + "failed.The reason is " + reason, null));
             };
 
