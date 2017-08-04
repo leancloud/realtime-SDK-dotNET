@@ -32,7 +32,7 @@ namespace LeanCloud.Realtime
         {
 
         }
-        public AVIMDisconnectEventArgs(int _code,string _reason, string _detail)
+        public AVIMDisconnectEventArgs(int _code, string _reason, string _detail)
         {
             this.Code = _code;
             this.Reason = _reason;
@@ -62,7 +62,7 @@ namespace LeanCloud.Realtime
     }
 
     /// <summary>
-    /// 重连之后的事件回调，有可能失败，也有可能成功
+    /// 重连成功之后的事件回调
     /// </summary>
     public class AVIMReconnectedEventArgs : EventArgs
     {
@@ -80,13 +80,35 @@ namespace LeanCloud.Realtime
         /// 重连时使用的 SessionToken
         /// </summary>
         public string SessionToken { get; set; }
-
-        /// <summary>
-        /// 重连是否成功
-        /// </summary>
-        public bool IsSuccess { get; set; }
     }
 
+    /// <summary>
+    /// 重连失败之后的事件回调参数
+    /// </summary>
+    public class AVIMReconnectFailedArgs : EventArgs
+    {
+        /// <summary>
+        ///  是否由 SDK 内部机制启动的自动重连
+        /// </summary>
+        public bool IsAuto { get; set; }
+
+        /// <summary>
+        /// 重连的 client Id
+        /// </summary>
+        public string ClientId { get; set; }
+
+        /// <summary>
+        /// 重连时使用的 SessionToken
+        /// </summary>
+        public string SessionToken { get; set; }
+
+        /// <summary>
+        /// 失败的原因
+        /// 0. 客户端网络断开
+        /// 1. sessionToken 错误或者失效，需要重新创建 client
+        /// </summary>
+        public int FailedCode { get; set; }
+    }
 
     public class AVIMMessageEventArgs : EventArgs
     {
