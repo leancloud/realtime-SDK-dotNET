@@ -755,23 +755,26 @@ namespace LeanCloud.Realtime
                 tcs.TrySetException(new AVIMException(AVIMException.ErrorCode.FromServer, "try to open websocket at " + url + "failed.The reason is " + reason, null));
             });
 
+            Action onOpend = null;
+            onOpend = (() =>
+            {
+                PCLWebsocketClient.OnError -= onError;
+                PCLWebsocketClient.OnOpened -= onOpend;
+                tcs.TrySetResult(true);
+                AVRealtime.PrintLog(url + " connected.");
+            });
+
             Action<int, string, string> onClosed = null;
             onClosed = (reason, arg0, arg1) =>
             {
+                PCLWebsocketClient.OnError -= onError;
+                PCLWebsocketClient.OnOpened -= onOpend;
                 PCLWebsocketClient.OnClosed -= onClosed;
                 tcs.TrySetResult(false);
                 tcs.TrySetException(new AVIMException(AVIMException.ErrorCode.FromServer, "try to open websocket at " + url + "failed.The reason is " + reason, null));
             };
 
-            Action onOpend = null;
-            onOpend = (() =>
-            {
-                PCLWebsocketClient.OnError -= onError;
-                PCLWebsocketClient.OnClosed -= onClosed;
-                PCLWebsocketClient.OnOpened -= onOpend;
-                tcs.TrySetResult(true);
-                AVRealtime.PrintLog(url + " connected.");
-            });
+
 
             PCLWebsocketClient.OnOpened += onOpend;
             PCLWebsocketClient.OnClosed += onClosed;
