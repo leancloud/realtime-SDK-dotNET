@@ -539,7 +539,7 @@ namespace LeanCloud.Realtime
                 timer.Elapsed += SendHeartBeatingPacket;
                 timer.Interval = interval;
                 timer.Start();
-                PrintLog("auto ToggleHeartBeating started.");
+                PrintLog("auto ToggleHeartBeating stared.");
             }
         }
         void SendHeartBeatingPacket(object sender, TimerEventArgs e)
@@ -596,16 +596,6 @@ namespace LeanCloud.Realtime
                     {
                         timer = null;
                         autoReconnectionStarted = false;
-
-                        var reconnectFailedArgs = new AVIMReconnectFailedArgs()
-                        {
-                            ClientId = _clientId,
-                            IsAuto = true,
-                            SessionToken = _sesstionToken,
-                            FailedCode = -1,
-                        };
-                        m_OnReconnectFailed?.Invoke(this, reconnectFailedArgs);
-                        state = Status.Offline;
                     }
                 }
                 else
@@ -757,8 +747,6 @@ namespace LeanCloud.Realtime
             }
             AVRealtime.PrintLog(url + " connecting...");
             var tcs = new TaskCompletionSource<bool>();
-
-
             Action<string> onError = null;
             onError = ((reason) =>
             {
@@ -767,24 +755,26 @@ namespace LeanCloud.Realtime
                 tcs.TrySetException(new AVIMException(AVIMException.ErrorCode.FromServer, "try to open websocket at " + url + "failed.The reason is " + reason, null));
             });
 
-            Action<int, string, string> onClosed = null;
-            onClosed = (reason, arg0, arg1) =>
-            {
-                PCLWebsocketClient.OnClosed -= onClosed;
-                tcs.TrySetResult(false);
-                AVRealtime.PrintLog(url + " connect failed.");
-                tcs.TrySetException(new AVIMException(AVIMException.ErrorCode.FromServer, "try to open websocket at " + url + "failed.The reason is " + reason, null));
-            };
-
             Action onOpend = null;
             onOpend = (() =>
             {
                 PCLWebsocketClient.OnError -= onError;
-                PCLWebsocketClient.OnClosed -= onClosed;
                 PCLWebsocketClient.OnOpened -= onOpend;
                 tcs.TrySetResult(true);
                 AVRealtime.PrintLog(url + " connected.");
             });
+
+            Action<int, string, string> onClosed = null;
+            onClosed = (reason, arg0, arg1) =>
+            {
+                PCLWebsocketClient.OnError -= onError;
+                PCLWebsocketClient.OnOpened -= onOpend;
+                PCLWebsocketClient.OnClosed -= onClosed;
+                tcs.TrySetResult(false);
+                tcs.TrySetException(new AVIMException(AVIMException.ErrorCode.FromServer, "try to open websocket at " + url + "failed.The reason is " + reason, null));
+            };
+
+
 
             PCLWebsocketClient.OnOpened += onOpend;
             PCLWebsocketClient.OnClosed += onClosed;
