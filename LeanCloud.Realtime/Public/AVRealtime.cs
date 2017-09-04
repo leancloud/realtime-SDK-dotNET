@@ -596,6 +596,16 @@ namespace LeanCloud.Realtime
                     {
                         timer = null;
                         autoReconnectionStarted = false;
+
+                        var reconnectFailedArgs = new AVIMReconnectFailedArgs()
+                        {
+                            ClientId = _clientId,
+                            IsAuto = true,
+                            SessionToken = _sesstionToken,
+                            FailedCode = -1
+                        };
+                        m_OnReconnectFailed?.Invoke(this, reconnectFailedArgs);
+                        state = Status.Offline;
                     }
                 }
                 else
