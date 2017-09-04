@@ -544,7 +544,7 @@ namespace LeanCloud.Realtime
         /// <returns></returns>
         public Task KickAsync(AVIMConversation conversation, string member = null, IEnumerable<string> members = null)
         {
-            return this.OperateMembersAsync(conversation, "add", member, members);
+            return this.OperateMembersAsync(conversation, "remove", member, members);
         }
         #endregion
         #endregion
