@@ -211,6 +211,11 @@ namespace LeanCloud.Realtime
                     Reason = arg2,
                     Detail = arg3
                 };
+                if (args.Code == 4115 || args.Code == 4111)
+                {
+                    this._realtime.sessionConflict = true;
+                }
+
                 m_OnSessionClosed(this, args);
             }
             AVRealtime.PrintLog("SessionListener_OnSessionClosed invoked.");

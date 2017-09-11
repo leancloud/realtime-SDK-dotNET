@@ -564,12 +564,22 @@ namespace LeanCloud.Realtime
         }
         IAVTimer reconnectTimer;
         bool autoReconnectionStarted = false;
+        public bool sessionConflict = false;
+
+        public bool CanReconnect
+        {
+            get
+            {
+                return !sessionConflict;
+            }
+        }
+
         /// <summary>
         /// 开始自动重连
         /// </summary>
         public void StartAutoReconnect()
         {
-            if (!autoReconnectionStarted)
+            if (!autoReconnectionStarted && CanReconnect)
             {
                 autoReconnectionStarted = true;
                 reconnectTimer = new AVTimer();
@@ -587,7 +597,7 @@ namespace LeanCloud.Realtime
             {
                 if (timer != null)
                 {
-                    if (timer.Executed <= this.ReconnectOptions.Retry)
+                    if (timer.Executed <= this.ReconnectOptions.Retry && CanReconnect)
                     {
                         AutoReconnect();
                         timer.Executed += 1;
@@ -610,7 +620,8 @@ namespace LeanCloud.Realtime
                 }
                 else
                 {
-                    AutoReconnect();
+                    if (CanReconnect)
+                        AutoReconnect();
                 }
             }
             else if (state == Status.Online)
