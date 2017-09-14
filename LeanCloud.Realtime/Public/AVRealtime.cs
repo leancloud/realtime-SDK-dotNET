@@ -9,6 +9,7 @@ using System.Reflection;
 using LeanCloud.Realtime.Internal;
 using LeanCloud.Storage.Internal;
 using System.Threading;
+using LeanCloud.Core.Internal;
 
 namespace LeanCloud.Realtime
 {
@@ -24,7 +25,19 @@ namespace LeanCloud.Realtime
         private string _sesstionToken;
         private long _sesstionTokenExpire;
         private string _clientId;
+        private string _deviceId;
+        private bool _secure;
         private string _tag;
+
+        public bool IsSesstionTokenExpired
+        {
+            get
+            {
+                return DateTime.Now.UnixTimeStampSeconds() > _sesstionTokenExpire;
+            }
+        }
+
+
 
         private IAVIMCommandRunner avIMCommandRunner;
 
@@ -425,6 +438,7 @@ namespace LeanCloud.Realtime
                 }
                 _clientId = clientId;
                 _tag = tag;
+                _deviceId = deviceId;
                 if (_tag != null)
                 {
                     if (deviceId == null)
@@ -630,6 +644,50 @@ namespace LeanCloud.Realtime
                     timer.Stop();
             }
         }
+
+        internal Task LogInAsync(string clientId,
+            string tag = null,
+            string deviceId = null,
+            bool secure = true,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var cmd = new SessionCommand()
+                .UA(VersionString)
+                .Tag(tag)
+                .DeviceId(deviceId)
+                .Option("open")
+                .PeerId(clientId);
+
+            var result = AttachSignature(cmd, this.SignatureFactory.CreateConnectSignature(clientId)).OnSuccess(_ =>
+            {
+                return AVIMCommandRunner.RunCommandAsync(cmd);
+            }).Unwrap().OnSuccess(t =>
+            {
+                AVRealtime.PrintLog("sesstion opened.");
+                if (t.Exception != null)
+                {
+                    var imException = t.Exception.InnerException as AVIMException;
+                    throw imException;
+                }
+                state = Status.Online;
+                ToggleNotification(true);
+                ToggleHeartBeating(_heartBeatingToggle);
+                var response = t.Result.Item2;
+                if (response.ContainsKey("st"))
+                {
+                    _sesstionToken = response["st"] as string;
+                }
+                if (response.ContainsKey("stTtl"))
+                {
+                    var stTtl = long.Parse(response["stTtl"].ToString());
+                    _sesstionTokenExpire = DateTime.Now.UnixTimeStampSeconds() + stTtl;
+                }
+                return t.Result;
+            });
+
+            return result;
+        }
+
         /// <summary>
         /// 自动重连
         /// </summary>
@@ -666,25 +724,33 @@ namespace LeanCloud.Realtime
                      if (t.Result)
                      {
                          state = Status.Opened;
-                         var sessionCMD = new SessionCommand()
-                         .UA(VersionString).R(1);
 
-                         if (string.IsNullOrEmpty(_tag))
+                         if (this.IsSesstionTokenExpired)
                          {
-                             sessionCMD = sessionCMD.Tag(_tag).SessionToken(this._sesstionToken);
+                             AVRealtime.PrintLog("sesstion is expired, auto relogin with clientId :" + _clientId);
+                             return this.LogInAsync(_clientId, this._tag, this._deviceId, this._secure).OnSuccess(o =>
+                             {
+                                 return true;
+                             });
                          }
-
-                         var cmd = sessionCMD.Option("open")
-                          .PeerId(_clientId);
-
-                         AVRealtime.PrintLog("reopen sesstion with sesstion token :" + _sesstionToken);
-                         return AttachSignature(cmd, this.SignatureFactory.CreateConnectSignature(_clientId)).OnSuccess(_ =>
+                         else
                          {
-                             return AVIMCommandRunner.RunCommandAsync(cmd);
-                         }).Unwrap().OnSuccess(c =>
-                         {
-                             return true;
-                         });
+                             var sessionCMD = new SessionCommand().UA(VersionString).R(1);
+
+                             if (string.IsNullOrEmpty(_tag))
+                             {
+                                 sessionCMD = sessionCMD.Tag(_tag).SessionToken(this._sesstionToken);
+                             }
+
+                             var cmd = sessionCMD.Option("open")
+                              .PeerId(_clientId);
+
+                             AVRealtime.PrintLog("reopen sesstion with sesstion token :" + _sesstionToken);
+                             return AVIMCommandRunner.RunCommandAsync(cmd).OnSuccess(c =>
+                             {
+                                 return true;
+                             });
+                         }
                      }
                      else return Task.FromResult(false);
                  }
