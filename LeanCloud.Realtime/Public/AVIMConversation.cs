@@ -445,6 +445,10 @@ namespace LeanCloud.Realtime
         }
         #endregion
 
+        #region recall message
+
+        #endregion
+
         #region message listener and event notify
         public void RegisterListener(IAVIMListener listener)
         {

@@ -23,5 +23,7 @@ namespace LeanCloud.Realtime
         string Id { get; set; }
         long ServerTimestamp { get; set; }
         long RcpTimestamp { get; set; }
+
+
     }
 }
