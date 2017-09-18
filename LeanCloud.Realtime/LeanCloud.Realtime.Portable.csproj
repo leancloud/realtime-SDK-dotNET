@@ -121,10 +121,10 @@
       <HintPath>packages\Websockets.Pcl.1.1.9\lib\portable-net45+win+wpa81+wp80+MonoAndroid10+xamarinios10\WebSockets.PCL.dll</HintPath>
     </Reference>
     <Reference Include="LeanCloud.Core">
-      <HintPath>packages\LeanCloud.Storage.2017.5.16.5\lib\portable-net45+win+wp80+MonoAndroid10+xamarinios10+MonoTouch10\LeanCloud.Core.dll</HintPath>
+      <HintPath>packages\LeanCloud.Storage.2017.9.15.2\lib\portable-net45+win+wp80+MonoAndroid10+xamarinios10+MonoTouch10\LeanCloud.Core.dll</HintPath>
     </Reference>
     <Reference Include="LeanCloud.Storage">
-      <HintPath>packages\LeanCloud.Storage.2017.5.16.5\lib\portable-net45+win+wp80+MonoAndroid10+xamarinios10+MonoTouch10\LeanCloud.Storage.dll</HintPath>
+      <HintPath>packages\LeanCloud.Storage.2017.9.15.2\lib\portable-net45+win+wp80+MonoAndroid10+xamarinios10+MonoTouch10\LeanCloud.Storage.dll</HintPath>
     </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
