@@ -431,21 +431,7 @@ namespace LeanCloud.Realtime
         {
             lock (mutex)
             {
-                var client = new AVIMClient(clientId, tag, this);
-                if (this.OnOfflineMessageReceived != null)
-                {
-                    client.OnOfflineMessageReceived += this.OnOfflineMessageReceived;
-                }
-                _clientId = clientId;
-                _tag = tag;
-                _deviceId = deviceId;
-                if (_tag != null)
-                {
-                    if (deviceId == null)
-                        throw new ArgumentNullException(deviceId, "当 tag 不为空时，必须传入当前设备不变的唯一 id(deviceId)");
-                }
-
-                if (string.IsNullOrEmpty(clientId)) throw new Exception("当前 ClientId 为空，无法登录服务器。");
+                var client = PreLogIn(clientId, tag, deviceId);
 
                 AVRealtime.PrintLog("begin OpenAsync.");
                 return OpenAsync(secure, cancellationToken).OnSuccess(t =>
@@ -490,6 +476,74 @@ namespace LeanCloud.Realtime
                   });
             }
         }
+
+        /// <summary>
+        /// Creates the client async.
+        /// </summary>
+        /// <returns>The client async.</returns>
+        /// <param name="user">User.</param>
+        /// <param name="tag">Tag.</param>
+        /// <param name="deviceId">Device identifier.</param>
+        /// <param name="secure">If set to <c>true</c> secure.</param>
+        public Task<AVIMClient> CreateClientAsync(AVUser user = null,
+                                                  string tag = null,
+                                                  string deviceId = null,
+                                                  bool secure = true)
+        {
+
+            var userTask = Task.FromResult(user);
+            if (user == null)
+                userTask = AVUser.GetCurrentUserAsync();
+            
+            AVIMClient client = null;
+            return userTask.OnSuccess(u =>
+            {
+                var theUser = u.Result;
+                return AVCloud.RequestRealtimeSignatureAsync(theUser);
+            }).Unwrap().OnSuccess(signTask =>
+            {
+                var signResult = signTask.Result;
+                var clientId = signResult.ClientId;
+                var nonce = signResult.Nonce;
+                var singnature = signResult.Signature;
+                var ts = signResult.Timestamp;
+
+                client = PreLogIn(clientId, tag, deviceId);
+
+                return this.OpenSessionAsync(clientId, tag, deviceId, nonce, ts, singnature, secure);
+            }).Unwrap().OnSuccess(s =>
+            {
+				ToggleNotification(true);
+				ToggleHeartBeating(_heartBeatingToggle);
+
+				return client;
+            });
+        }
+
+        #region pre-login
+        internal AVIMClient PreLogIn(string clientId,
+            string tag = null,
+            string deviceId = null)
+        {
+            var client = new AVIMClient(clientId, tag, this);
+            if (this.OnOfflineMessageReceived != null)
+            {
+                client.OnOfflineMessageReceived += this.OnOfflineMessageReceived;
+            }
+            _clientId = clientId;
+            _tag = tag;
+            _deviceId = deviceId;
+            if (_tag != null)
+            {
+                if (deviceId == null)
+                    throw new ArgumentNullException(deviceId, "当 tag 不为空时，必须传入当前设备不变的唯一 id(deviceId)");
+            }
+
+            if (string.IsNullOrEmpty(clientId)) throw new Exception("当前 ClientId 为空，无法登录服务器。");
+
+            return client;
+        }
+        #endregion
 
         /// <summary>
         /// 创建 Client
@@ -651,17 +705,64 @@ namespace LeanCloud.Realtime
             bool secure = true,
             CancellationToken cancellationToken = default(CancellationToken))
         {
+            lock (mutex)
+            {
+                var cmd = new SessionCommand()
+                           .UA(VersionString)
+                           .Tag(tag)
+                           .DeviceId(deviceId)
+                           .Option("open")
+                           .PeerId(clientId);
+
+                var result = AttachSignature(cmd, this.SignatureFactory.CreateConnectSignature(clientId)).OnSuccess(_ =>
+                {
+                    return AVIMCommandRunner.RunCommandAsync(cmd);
+                }).Unwrap().OnSuccess(t =>
+                {
+                    AVRealtime.PrintLog("sesstion opened.");
+                    if (t.Exception != null)
+                    {
+                        var imException = t.Exception.InnerException as AVIMException;
+                        throw imException;
+                    }
+                    state = Status.Online;
+                    var response = t.Result.Item2;
+                    if (response.ContainsKey("st"))
+                    {
+                        _sesstionToken = response["st"] as string;
+                    }
+                    if (response.ContainsKey("stTtl"))
+                    {
+                        var stTtl = long.Parse(response["stTtl"].ToString());
+                        _sesstionTokenExpire = DateTime.Now.UnixTimeStampSeconds() + stTtl;
+                    }
+                    return t.Result;
+                });
+
+                return result;
+            }
+
+        }
+
+        internal Task OpenSessionAsync(string clientId,
+            string tag = null,
+            string deviceId = null,
+            string nonce = null,
+            long timestamp = 0,
+            string signature = null,
+            bool secure = true)
+        {
             var cmd = new SessionCommand()
                 .UA(VersionString)
                 .Tag(tag)
                 .DeviceId(deviceId)
                 .Option("open")
-                .PeerId(clientId);
+                .PeerId(clientId)
+                .Argument("n", nonce)
+                .Argument("t", timestamp)
+                .Argument("s", signature);
 
-            var result = AttachSignature(cmd, this.SignatureFactory.CreateConnectSignature(clientId)).OnSuccess(_ =>
-            {
-                return AVIMCommandRunner.RunCommandAsync(cmd);
-            }).Unwrap().OnSuccess(t =>
+            return AVIMCommandRunner.RunCommandAsync(cmd).OnSuccess(t =>
             {
                 AVRealtime.PrintLog("sesstion opened.");
                 if (t.Exception != null)
@@ -670,8 +771,6 @@ namespace LeanCloud.Realtime
                     throw imException;
                 }
                 state = Status.Online;
-                ToggleNotification(true);
-                ToggleHeartBeating(_heartBeatingToggle);
                 var response = t.Result.Item2;
                 if (response.ContainsKey("st"))
                 {
@@ -685,8 +784,8 @@ namespace LeanCloud.Realtime
                 return t.Result;
             });
 
-            return result;
         }
+
 
         /// <summary>
         /// 自动重连
