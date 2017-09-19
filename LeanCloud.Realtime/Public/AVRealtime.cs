@@ -500,9 +500,9 @@ namespace LeanCloud.Realtime
             {
                 var theUser = u.Result;
                 return AVCloud.RequestRealtimeSignatureAsync(theUser);
-            }).Unwrap().OnSuccess(_ =>
+            }).Unwrap().OnSuccess(signTask =>
             {
-                var signResult = _.Result;
+                var signResult = signTask.Result;
                 var clientId = signResult.ClientId;
                 var nonce = signResult.Nonce;
                 var singnature = signResult.Signature;
