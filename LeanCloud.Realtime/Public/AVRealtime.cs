@@ -454,11 +454,6 @@ namespace LeanCloud.Realtime
                  }).Unwrap().OnSuccess(s =>
                   {
                       AVRealtime.PrintLog("sesstion opened.");
-                      if (s.Exception != null)
-                      {
-                          var imException = s.Exception.InnerException as AVIMException;
-                          throw imException;
-                      }
                       state = Status.Online;
                       ToggleNotification(true);
                       ToggleHeartBeating(_heartBeatingToggle);
