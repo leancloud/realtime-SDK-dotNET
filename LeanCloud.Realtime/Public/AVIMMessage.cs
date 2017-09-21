@@ -17,7 +17,7 @@ namespace LeanCloud.Realtime
     /// 实时消息的核心基类，它是 Json schema 消息的父类
     /// </summary>
     [AVIMMessageClassName("_AVIMMessage")]
-    public class AVIMMessage : IAVIMMessage
+    public class AVIMMessage : IAVIMMentionMessage
     {
         /// <summary>
         /// 默认的构造函数
@@ -74,6 +74,12 @@ namespace LeanCloud.Realtime
             Content = msgStr;
             return this;
         }
+        #endregion
+
+
+        #region mention
+        public bool MentionAll { get; set; }
+        public IEnumerable<string> MentionList { get; set; }
         #endregion
     }
 
