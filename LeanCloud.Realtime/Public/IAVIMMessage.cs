@@ -19,11 +19,23 @@ namespace LeanCloud.Realtime
         IAVIMMessage Deserialize(string msgStr);
 
         string ConversationId { get; set; }
+
         string FromClientId { get; set; }
+
         string Id { get; set; }
+
         long ServerTimestamp { get; set; }
+
         long RcpTimestamp { get; set; }
+    }
 
+    /// <summary>
+    /// mention message.
+    /// </summary>
+    public interface IAVIMMentionMessage : IAVIMMessage
+    {
+        bool MentionAll { get; set; }
 
+        IEnumerable<string> MentionList { get; set; }
     }
 }

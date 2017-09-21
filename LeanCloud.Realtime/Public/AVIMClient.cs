@@ -402,22 +402,63 @@ namespace LeanCloud.Realtime
             }
             var directCmd = cmd.PeerId(this.ClientId);
 
-            return this.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(directCmd).ContinueWith<IAVIMMessage>(t =>
+            return this.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(directCmd).OnSuccess(t =>
             {
-                if (t.IsFaulted)
-                {
-                    throw t.Exception;
-                }
-                else
-                {
-                    var response = t.Result.Item2;
-                    message.Id = response["uid"].ToString();
-                    message.ServerTimestamp = long.Parse(response["t"].ToString());
+                var response = t.Result.Item2;
 
-                    return message;
-                }
+                message.Id = response["uid"].ToString();
+                message.ServerTimestamp = long.Parse(response["t"].ToString());
+
+                return message;
+
             });
+        }
 
+
+        /// <summary>
+        /// send a message with mention.
+        /// </summary>
+        /// <returns></returns>
+        /// <param name="conversation">Conversation.</param>
+        /// <param name="message">Message.</param>
+        /// <param name="options">Options.</param>
+        public Task<IAVIMMentionMessage> SendMessageAsync(
+            AVIMConversation conversation,
+            IAVIMMentionMessage message,
+            AVIMSendOptions options)
+        {
+            if (this.LinkedRealtime.State != AVRealtime.Status.Online) throw new Exception("未能连接到服务器，无法发送消息。");
+
+            var messageBody = message.Serialize();
+
+            message.ConversationId = conversation.ConversationId;
+            message.FromClientId = this.ClientId;
+
+            var cmd = new MessageCommand()
+               .Message(messageBody)
+               .ConvId(conversation.ConversationId)
+               .Receipt(options.Receipt)
+               .Transient(options.Transient)
+               .Priority(options.Priority)
+               .Will(options.Will)
+               .MentionAll(message.MentionAll)
+               .Mention(message.MentionList);
+
+            if (options.PushData != null)
+            {
+                cmd.PushData(options.PushData);
+            }
+            var directCmd = cmd.PeerId(this.ClientId);
+
+            return this.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(directCmd).OnSuccess(t =>
+            {
+                var response = t.Result.Item2;
+
+                message.Id = response["uid"].ToString();
+                message.ServerTimestamp = long.Parse(response["t"].ToString());
+
+                return message;
+            });
         }
         #endregion
 

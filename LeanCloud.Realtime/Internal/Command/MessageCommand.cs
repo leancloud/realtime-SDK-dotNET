@@ -63,5 +63,16 @@ namespace LeanCloud.Realtime.Internal
         {
             return new MessageCommand(this.Argument("pushData", Json.Encode(pushData)));
         }
+
+        public MessageCommand Mention(IEnumerable<string> clientIds)
+        {
+            var mentionedMembers = clientIds.ToList();
+            return new MessageCommand(this.Argument("mentionPids", mentionedMembers));
+        }
+
+        public MessageCommand MentionAll(bool mentionAll)
+        {
+			return new MessageCommand(this.Argument("mentionAll", mentionAll));
+        }
     }
 }
