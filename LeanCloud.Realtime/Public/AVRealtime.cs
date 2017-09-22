@@ -489,7 +489,7 @@ namespace LeanCloud.Realtime
             var userTask = Task.FromResult(user);
             if (user == null)
                 userTask = AVUser.GetCurrentUserAsync();
-            
+
             AVIMClient client = null;
             return userTask.OnSuccess(u =>
             {
@@ -508,10 +508,10 @@ namespace LeanCloud.Realtime
                 return this.OpenSessionAsync(clientId, tag, deviceId, nonce, ts, singnature, secure);
             }).Unwrap().OnSuccess(s =>
             {
-				ToggleNotification(true);
-				ToggleHeartBeating(_heartBeatingToggle);
+                ToggleNotification(true);
+                ToggleHeartBeating(_heartBeatingToggle);
 
-				return client;
+                return client;
             });
         }
 
@@ -584,7 +584,7 @@ namespace LeanCloud.Realtime
 
         string _beatPacket = "{}";
         bool _heartBeatingToggle = true;
-        IAVTimer timer;
+        IAVTimer _heartBeatingTimer;
         /// <summary>
         /// 主动发送心跳包
         /// </summary>
@@ -596,12 +596,12 @@ namespace LeanCloud.Realtime
             this._heartBeatingToggle = toggle;
             if (!string.Equals(_beatPacket, beatPacket)) _beatPacket = beatPacket;
 
-            if (timer == null)
+            if (_heartBeatingTimer == null)
             {
-                timer = new AVTimer();
-                timer.Elapsed += SendHeartBeatingPacket;
-                timer.Interval = interval;
-                timer.Start();
+                _heartBeatingTimer = new AVTimer();
+                _heartBeatingTimer.Elapsed += SendHeartBeatingPacket;
+                _heartBeatingTimer.Interval = interval;
+                _heartBeatingTimer.Start();
                 PrintLog("auto ToggleHeartBeating stared.");
             }
         }
@@ -627,13 +627,24 @@ namespace LeanCloud.Realtime
         }
         IAVTimer reconnectTimer;
         bool autoReconnectionStarted = false;
-        public bool sessionConflict = false;
 
-        public bool CanReconnect
+        internal bool sessionConflict = false;
+
+
+        internal bool CanReconnect
         {
             get
             {
                 return !sessionConflict;
+            }
+        }
+
+        internal void ClearReconnectTimer()
+        {
+            if (reconnectTimer != null)
+            {
+                reconnectTimer.Stop();
+                reconnectTimer = null;
             }
         }
 
@@ -655,19 +666,20 @@ namespace LeanCloud.Realtime
 
         private void ReconnectTimer_Elapsed(object sender, TimerEventArgs e)
         {
-            var timer = sender as AVTimer;
+            var _timer = sender as AVTimer;
             if (state == Status.Offline)
             {
-                if (timer != null)
+                if (_timer != null)
                 {
-                    if (timer.Executed <= this.ReconnectOptions.Retry && CanReconnect)
+                    if (_timer.Executed <= this.ReconnectOptions.Retry && CanReconnect)
                     {
                         AutoReconnect();
-                        timer.Executed += 1;
+                        _timer.Executed += 1;
                     }
                     else
                     {
-                        timer = null;
+                        _timer.Stop();
+                        _timer = null;
                         autoReconnectionStarted = false;
 
                         var reconnectFailedArgs = new AVIMReconnectFailedArgs()
@@ -689,8 +701,12 @@ namespace LeanCloud.Realtime
             }
             else if (state == Status.Online)
             {
-                if (timer != null)
-                    timer.Stop();
+                if (_timer != null)
+                {
+                    _timer.Stop();
+                    _timer = null;
+                }
+
             }
         }
 
@@ -824,6 +840,7 @@ namespace LeanCloud.Realtime
                              AVRealtime.PrintLog("sesstion is expired, auto relogin with clientId :" + _clientId);
                              return this.LogInAsync(_clientId, this._tag, this._deviceId, this._secure).OnSuccess(o =>
                              {
+                                 ClearReconnectTimer();
                                  return true;
                              });
                          }
@@ -842,6 +859,7 @@ namespace LeanCloud.Realtime
                              AVRealtime.PrintLog("reopen sesstion with sesstion token :" + _sesstionToken);
                              return AVIMCommandRunner.RunCommandAsync(cmd).OnSuccess(c =>
                              {
+                                 ClearReconnectTimer();
                                  return true;
                              });
                          }
