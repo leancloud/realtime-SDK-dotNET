@@ -20,10 +20,17 @@ namespace LeanCloud.Realtime
     /// </summary>
     public class AVIMNotice : EventArgs
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="T:LeanCloud.Realtime.AVIMNotice"/> class.
+        /// </summary>
         public AVIMNotice()
         {
 
         }
+
+        /// <summary>
+        /// The name of the command.
+        /// </summary>
         public readonly string CommandName;
         public readonly IDictionary<string, object> RawData;
         public AVIMNotice(IDictionary<string, object> estimatedData)

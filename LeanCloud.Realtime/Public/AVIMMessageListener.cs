@@ -20,6 +20,12 @@ namespace LeanCloud.Realtime
         {
 
         }
+
+        /// <summary>
+        /// Protocols the hook.
+        /// </summary>
+        /// <returns><c>true</c>, if hook was protocoled, <c>false</c> otherwise.</returns>
+        /// <param name="notice">Notice.</param>
         public virtual bool ProtocolHook(AVIMNotice notice)
         {
             if (notice.CommandName != "direct") return false;
@@ -55,6 +61,10 @@ namespace LeanCloud.Realtime
             }
         }
 
+        /// <summary>
+        /// Ons the notice received.
+        /// </summary>
+        /// <param name="notice">Notice.</param>
         public virtual void OnNoticeReceived(AVIMNotice notice)
         {
             this.OnMessage(notice);

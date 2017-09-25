@@ -61,23 +61,21 @@ namespace LeanCloud.Realtime
         /// </summary>
         /// <value>The rcp timestamp.</value>
         long RcpTimestamp { get; set; }
-    }
 
-    /// <summary>
-    /// mention message.
-    /// </summary>
-    public interface IAVIMMentionMessage : IAVIMMessage
-    {
+
+		#region
         /// <summary>
-        /// Gets or sets a value indicating whether this <see cref="T:LeanCloud.Realtime.IAVIMMentionMessage"/> mention all.
+        /// Gets or sets a value indicating whether this <see cref="T:LeanCloud.Realtime.IAVIMMessage"/> mention all.
         /// </summary>
         /// <value><c>true</c> if mention all; otherwise, <c>false</c>.</value>
-        bool MentionAll { get; set; }
+		bool MentionAll { get; set; }
 
         /// <summary>
         /// Gets or sets the mention list.
         /// </summary>
         /// <value>The mention list.</value>
         IEnumerable<string> MentionList { get; set; }
+        #endregion
+
     }
 }

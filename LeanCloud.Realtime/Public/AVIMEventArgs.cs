@@ -110,21 +110,43 @@ namespace LeanCloud.Realtime
         public int FailedCode { get; set; }
     }
 
+    /// <summary>
+    /// AVIMM essage event arguments.
+    /// </summary>
     public class AVIMMessageEventArgs : EventArgs
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="T:LeanCloud.Realtime.AVIMMessageEventArgs"/> class.
+        /// </summary>
+        /// <param name="iMessage">I message.</param>
         public AVIMMessageEventArgs(IAVIMMessage iMessage)
         {
             Message = iMessage;
         }
+        /// <summary>
+        /// Gets or sets the message.
+        /// </summary>
+        /// <value>The message.</value>
         public IAVIMMessage Message { get; internal set; }
     }
 
+    /// <summary>
+    /// AVIMT ext message event arguments.
+    /// </summary>
     public class AVIMTextMessageEventArgs : EventArgs
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="T:LeanCloud.Realtime.AVIMTextMessageEventArgs"/> class.
+        /// </summary>
+        /// <param name="raw">Raw.</param>
         public AVIMTextMessageEventArgs(AVIMTextMessage raw)
         {
             TextMessage = raw;
         }
+        /// <summary>
+        /// Gets or sets the text message.
+        /// </summary>
+        /// <value>The text message.</value>
         public AVIMTextMessage TextMessage { get; internal set; }
     }
 
