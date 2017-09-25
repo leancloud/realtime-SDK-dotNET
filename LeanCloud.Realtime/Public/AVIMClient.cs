@@ -74,12 +74,24 @@ namespace LeanCloud.Realtime
             }
         }
 
+        /// <summary>
+        /// Occurs when on members joined.
+        /// </summary>
         public event EventHandler<AVIMOnMembersJoinedEventArgs> OnMembersJoined;
 
+        /// <summary>
+        /// Occurs when on members left.
+        /// </summary>
         public event EventHandler<AVIMOnMembersLeftEventArgs> OnMembersLeft;
 
+        /// <summary>
+        /// Occurs when on kicked.
+        /// </summary>
         public event EventHandler<AVIMOnKickedEventArgs> OnKicked;
 
+        /// <summary>
+        /// Occurs when on invited.
+        /// </summary>
         public event EventHandler<AVIMOnInvitedEventArgs> OnInvited;
 
         internal event EventHandler<AVIMMessageEventArgs> OnOfflineMessageReceived;
@@ -162,13 +174,13 @@ namespace LeanCloud.Realtime
 
             #region 当前 client id 离线的时间内，TA 所在的对话产生的普通消息会以离线消息的方式送达到 TA 下一次登录的客户端
             var offlineMessageListener = new OfflineMessageListener();
-            offlineMessageListener.OnOfflineMessageReceived += OfflineMessageListener_OnOfflineMessageReceived1;
+            offlineMessageListener.OnOfflineMessageReceived += OfflineMessageListener_OnOfflineMessageReceived;
             this.RegisterListener(offlineMessageListener);
             #endregion
 
         }
 
-        private void OfflineMessageListener_OnOfflineMessageReceived1(object sender, AVIMMessageEventArgs e)
+        private void OfflineMessageListener_OnOfflineMessageReceived(object sender, AVIMMessageEventArgs e)
         {
             if (OnOfflineMessageReceived != null)
             {
@@ -289,14 +301,16 @@ namespace LeanCloud.Realtime
         }
 
         /// <summary>
-        /// 创建与目标成员的对话
+        /// 创建与目标成员的对话.
         /// </summary>
-        /// <param name="member">目标成员</param>
-        /// <param name="members">目标成员列表</param>
-        /// <param name="name">对话名称</param>
-        /// <param name="isUnique">是否是唯一对话</param>
-        /// <param name="options">自定义属性</param>
-        /// <returns></returns>
+        /// <returns>返回对话实例.</returns>
+        /// <param name="member">目标成员.</param>
+        /// <param name="members">目标成员列表.</param>
+        /// <param name="name">对话名称.</param>
+        /// <param name="isSystem">是否是系统对话.</param>
+        /// <param name="isTransient">是否为暂态对话（聊天室）.</param>
+        /// <param name="isUnique">是否是唯一对话.</param>
+        /// <param name="options">自定义属性.</param>
         public Task<AVIMConversation> CreateConversationAsync(string member = null,
             IEnumerable<string> members = null,
             string name = "",
@@ -394,7 +408,9 @@ namespace LeanCloud.Realtime
                 .Receipt(options.Receipt)
                 .Transient(options.Transient)
                 .Priority(options.Priority)
-                .Will(options.Will);
+                .Will(options.Will)
+                .MentionAll(message.MentionAll)
+                .Mention(message.MentionList);
 
             if (options.PushData != null)
             {
@@ -411,53 +427,6 @@ namespace LeanCloud.Realtime
 
                 return message;
 
-            });
-        }
-
-
-        /// <summary>
-        /// send a message with mention.
-        /// </summary>
-        /// <returns></returns>
-        /// <param name="conversation">Conversation.</param>
-        /// <param name="message">Message.</param>
-        /// <param name="options">Options.</param>
-        public Task<IAVIMMentionMessage> SendMessageAsync(
-            AVIMConversation conversation,
-            IAVIMMentionMessage message,
-            AVIMSendOptions options)
-        {
-            if (this.LinkedRealtime.State != AVRealtime.Status.Online) throw new Exception("未能连接到服务器，无法发送消息。");
-
-            var messageBody = message.Serialize();
-
-            message.ConversationId = conversation.ConversationId;
-            message.FromClientId = this.ClientId;
-
-            var cmd = new MessageCommand()
-               .Message(messageBody)
-               .ConvId(conversation.ConversationId)
-               .Receipt(options.Receipt)
-               .Transient(options.Transient)
-               .Priority(options.Priority)
-               .Will(options.Will)
-               .MentionAll(message.MentionAll)
-               .Mention(message.MentionList);
-
-            if (options.PushData != null)
-            {
-                cmd.PushData(options.PushData);
-            }
-            var directCmd = cmd.PeerId(this.ClientId);
-
-            return this.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(directCmd).OnSuccess(t =>
-            {
-                var response = t.Result.Item2;
-
-                message.Id = response["uid"].ToString();
-                message.ServerTimestamp = long.Parse(response["t"].ToString());
-
-                return message;
             });
         }
         #endregion

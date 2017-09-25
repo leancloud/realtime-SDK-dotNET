@@ -17,7 +17,7 @@ namespace LeanCloud.Realtime
     /// 实时消息的核心基类，它是 Json schema 消息的父类
     /// </summary>
     [AVIMMessageClassName("_AVIMMessage")]
-    public class AVIMMessage : IAVIMMentionMessage
+    public class AVIMMessage : IAVIMMessage
     {
         /// <summary>
         /// 默认的构造函数
@@ -48,6 +48,10 @@ namespace LeanCloud.Realtime
         /// </summary>
         public long ServerTimestamp { get; set; }
 
+        /// <summary>
+        /// Gets or sets the content.
+        /// </summary>
+        /// <value>The content.</value>
         public string Content { get; set; }
 
         /// <summary>
@@ -57,29 +61,53 @@ namespace LeanCloud.Realtime
 
         internal string cmdId { get; set; }
 
+        #region
+        /// <summary>
+        /// Gets or sets a value indicating whether this <see cref="T:LeanCloud.Realtime.IAVIMMessage"/> mention all.
+        /// </summary>
+        /// <value><c>true</c> if mention all; otherwise, <c>false</c>.</value>
+        public bool MentionAll { get; set; }
+
+        /// <summary>
+        /// Gets or sets the mention list.
+        /// </summary>
+        /// <value>The mention list.</value>
+        public IEnumerable<string> MentionList { get; set; }
+
+        #endregion
+
         #region register convertor for typed message
 
+        /// <summary>
+        /// Serialize this message.
+        /// </summary>
+        /// <returns>The serialize.</returns>
         public virtual string Serialize()
         {
             return Content;
         }
 
+        /// <summary>
+        /// Validate the specified msgStr.
+        /// </summary>
+        /// <returns>The validate.</returns>
+        /// <param name="msgStr">Message string.</param>
         public virtual bool Validate(string msgStr)
         {
             return true;
         }
 
+        /// <summary>
+        /// Deserialize the specified msgStr to message subclass instance
+        /// </summary>
+        /// <returns>The deserialize.</returns>
+        /// <param name="msgStr">Message string.</param>
         public virtual IAVIMMessage Deserialize(string msgStr)
         {
             Content = msgStr;
             return this;
         }
-        #endregion
 
-
-        #region mention
-        public bool MentionAll { get; set; }
-        public IEnumerable<string> MentionList { get; set; }
         #endregion
     }
 

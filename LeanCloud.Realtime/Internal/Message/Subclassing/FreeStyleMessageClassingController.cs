@@ -14,11 +14,13 @@ namespace LeanCloud.Realtime.Internal
         private static readonly string messageClassName = "_AVIMMessage";
         private readonly IDictionary<string, FreeStyleMessageClassInfo> registeredInterfaces;
         private readonly ReaderWriterLockSlim mutex;
+
         public FreeStyleMessageClassingController()
         {
             mutex = new ReaderWriterLockSlim();
             registeredInterfaces = new Dictionary<string, FreeStyleMessageClassInfo>();
         }
+
         public Type GetType(IDictionary<string, object> msg)
         {
             throw new NotImplementedException();
@@ -38,46 +40,60 @@ namespace LeanCloud.Realtime.Internal
                 }
             }
             mutex.ExitReadLock();
-            var rtn = info != null ? info.Instantiate(msgStr) : new AVIMMessage();
+
+            var message = info != null ? info.Instantiate(msgStr) : new AVIMMessage();
+
 
             if (buildInData.ContainsKey("timestamp"))
             {
-                long timestamp = 0;
-                if (long.TryParse(buildInData["timestamp"].ToString(), out timestamp))
+                if (long.TryParse(buildInData["timestamp"].ToString(), out long timestamp))
                 {
-                    rtn.ServerTimestamp = timestamp;
+                    message.ServerTimestamp = timestamp;
                 }
             }
             if (buildInData.ContainsKey("ackAt"))
             {
-                long ackAt = 0;
-                if (long.TryParse(buildInData["ackAt"].ToString(), out ackAt))
+                if (long.TryParse(buildInData["ackAt"].ToString(), out long ackAt))
                 {
-                    rtn.RcpTimestamp = ackAt;
+                    message.RcpTimestamp = ackAt;
                 }
             }
             if (buildInData.ContainsKey("from"))
             {
-                rtn.FromClientId = buildInData["from"].ToString();
+                message.FromClientId = buildInData["from"].ToString();
             }
             if (buildInData.ContainsKey("msgId"))
             {
-                rtn.Id = buildInData["msgId"].ToString();
+                message.Id = buildInData["msgId"].ToString();
             }
             if (buildInData.ContainsKey("cid"))
             {
-                rtn.ConversationId = buildInData["cid"].ToString();
+                message.ConversationId = buildInData["cid"].ToString();
             }
             if (buildInData.ContainsKey("fromPeerId"))
             {
-                rtn.FromClientId = buildInData["fromPeerId"].ToString();
+                message.FromClientId = buildInData["fromPeerId"].ToString();
             }
             if (buildInData.ContainsKey("id"))
             {
-                rtn.Id = buildInData["id"].ToString();
+                message.Id = buildInData["id"].ToString();
             }
-            rtn.Deserialize(msgStr);
-            return rtn;
+
+            if (buildInData.ContainsKey("mentionPids"))
+            {
+                message.MentionList = AVDecoder.Instance.DecodeList<string>(buildInData["mentionPids"]);
+            }
+
+            if (buildInData.ContainsKey("mentionAll"))
+            {
+                if (bool.TryParse(buildInData["mentionAll"].ToString(), out bool mentionAll))
+                {
+                    message.MentionAll = mentionAll;
+                }
+            }
+
+            message.Deserialize(msgStr);
+            return message;
         }
         public IDictionary<string, object> EncodeProperties(IAVIMMessage subclass)
         {

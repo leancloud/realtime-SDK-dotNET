@@ -823,7 +823,7 @@ namespace LeanCloud.Realtime
                          ClientId = _clientId,
                          IsAuto = true,
                          SessionToken = _sesstionToken,
-                         FailedCode = 0
+                         FailedCode = 0// network broken.
                      };
                      m_OnReconnectFailed?.Invoke(this, reconnectFailedArgs);
                      state = Status.Offline;
@@ -867,42 +867,46 @@ namespace LeanCloud.Realtime
                      else return Task.FromResult(false);
                  }
 
-             }).Unwrap().OnSuccess(s =>
-             {
-                 if (s.IsFaulted || s.Exception != null)
-                 {
-                     var reconnectFailedArgs = new AVIMReconnectFailedArgs()
-                     {
-                         ClientId = _clientId,
-                         IsAuto = true,
-                         SessionToken = _sesstionToken,
-                         FailedCode = 1
-                     };
-                     m_OnReconnectFailed?.Invoke(this, reconnectFailedArgs);
-                     state = Status.Offline;
-                 }
-                 else
-                 {
-                     if (s.Result)
-                     {
-                         autoReconnectionStarted = false;
-                         reconnectTimer = null;
-                         var reconnectedArgs = new AVIMReconnectedEventArgs()
-                         {
-                             ClientId = _clientId,
-                             IsAuto = true,
-                             SessionToken = _sesstionToken,
-                         };
-                         state = Status.Online;
-                         m_OnReconnected?.Invoke(this, reconnectedArgs);
-                     }
-                 }
-             });
+             }).Unwrap().ContinueWith(s =>
+              {
+                  if (s.IsFaulted || s.Exception != null)
+                  {
+                      var reconnectFailedArgs = new AVIMReconnectFailedArgs()
+                      {
+                          ClientId = _clientId,
+                          IsAuto = true,
+                          SessionToken = _sesstionToken,
+                          FailedCode = 1
+                      };
+                      m_OnReconnectFailed?.Invoke(this, reconnectFailedArgs);
+                      state = Status.Offline;
+                  }
+                  else
+                  {
+                      if (s.Result)
+                      {
+                          autoReconnectionStarted = false;
+                          reconnectTimer = null;
+                          var reconnectedArgs = new AVIMReconnectedEventArgs()
+                          {
+                              ClientId = _clientId,
+                              IsAuto = true,
+                              SessionToken = _sesstionToken,
+                          };
+                          state = Status.Online;
+                          m_OnReconnected?.Invoke(this, reconnectedArgs);
+                      }
+                  }
+              });
         }
 
 
 
         #region register IAVIMMessage
+        /// <summary>
+        /// Registers the subtype of the message.
+        /// </summary>
+        /// <typeparam name="T">The 1st type parameter.</typeparam>
         public void RegisterMessageType<T>() where T : IAVIMMessage
         {
             AVIMCorePlugins.Instance.FreeStyleClassingController.RegisterSubclass(typeof(T));
@@ -910,9 +914,10 @@ namespace LeanCloud.Realtime
         #endregion
 
         /// <summary>
-        /// Opens WebSocket connection with LeanCloud Push server.
+        /// Opens websokcet the async.
         /// </summary>
         /// <returns>The async.</returns>
+        /// <param name="secure">If set to <c>true</c> secure.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         public Task OpenAsync(bool secure = true, CancellationToken cancellationToken = default(CancellationToken))
         {
