@@ -74,5 +74,10 @@ namespace LeanCloud.Realtime.Internal
         {
 			return new MessageCommand(this.Argument("mentionAll", mentionAll));
         }
+
+        public MessageCommand Binary(byte[] data)
+        {
+            return new MessageCommand(this.Argument("binaryMsg", data));
+        }
     }
 }
