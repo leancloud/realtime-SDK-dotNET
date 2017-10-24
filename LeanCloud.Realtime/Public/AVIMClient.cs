@@ -337,6 +337,27 @@ namespace LeanCloud.Realtime
         }
 
         /// <summary>
+        /// 创建虚拟对话，对话 id 是由本地直接生成，云端根据规则消息发送给指定的 client id(s)
+        /// </summary>
+        /// <param name="member"></param>
+        /// <param name="members"></param>
+        /// <returns></returns>
+        public Task<AVIMConversation> CreateVirtualConversationAsync(string member = null,
+            IEnumerable<string> members = null)
+        {
+            if (member == null) member = ClientId;
+            var membersAsList = Concat<string>(member, members, "创建对话时被操作的 member(s) 不可以为空。");
+            var tempConvId = membersAsList.TempConvId<string>();
+            var data = new Dictionary<string, object>()
+            {
+                { "objectId",tempConvId}
+            };
+            var conversation = new AVIMConversation(members: membersAsList, isVirtual: true);
+
+            return Task.FromResult(conversation);
+        }
+
+        /// <summary>
         /// 创建聊天室（即：暂态对话）
         /// </summary>
         /// <param name="conversationName">聊天室名称</param>

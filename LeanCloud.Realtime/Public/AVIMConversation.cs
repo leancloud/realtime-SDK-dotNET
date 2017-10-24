@@ -207,6 +207,11 @@ namespace LeanCloud.Realtime
         public bool IsUnique { get; internal set; }
 
         /// <summary>
+        /// 对话是否为虚拟对话
+        /// </summary>
+        public bool IsVirtual { get; internal set; }
+
+        /// <summary>
         /// 对话创建的时间
         /// </summary>
         public DateTime? CreatedAt
@@ -297,6 +302,7 @@ namespace LeanCloud.Realtime
         /// <param name="attributes"></param>
         /// <param name="state"></param>
         /// <param name="isUnique"></param>
+        /// <param name="isVirtual"></param>
         internal AVIMConversation(AVIMConversation source = null,
             string name = null,
             string creator = null,
@@ -306,7 +312,8 @@ namespace LeanCloud.Realtime
             bool isSystem = false,
             IEnumerable<KeyValuePair<string, object>> attributes = null,
             AVObject state = null,
-            bool isUnique = true)
+            bool isUnique = true,
+            bool isVirtual = false)
         {
             convState = source != null ? source.convState : new AVObject("_Conversation");
 
@@ -336,7 +343,7 @@ namespace LeanCloud.Realtime
             this.IsTransient = isTransient;
             this.IsSystem = isSystem;
             this.IsUnique = isUnique;
-
+            this.IsVirtual = isVirtual;
 
             if (state != null)
             {

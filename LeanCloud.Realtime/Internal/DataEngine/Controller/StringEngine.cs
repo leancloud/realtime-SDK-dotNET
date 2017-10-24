@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using System.Text;
 
 namespace LeanCloud.Realtime.Internal
 {
@@ -17,7 +18,19 @@ namespace LeanCloud.Realtime.Internal
 
         internal static string TempConvId<T>(this IEnumerable<T> objs)
         {
-            var base64Strs = 
+            var orderedBase64Strs = objs.Select(obj => Encoding.UTF8.ToBase64(obj.ToString())).OrderBy(a => a, StringComparer.Ordinal);
+            return "_tmp:" + string.Join("$", orderedBase64Strs);
+        }
+
+        internal static string ToBase64(this System.Text.Encoding encoding, string text)
+        {
+            if (text == null)
+            {
+                return null;
+            }
+
+            byte[] textAsBytes = encoding.GetBytes(text);
+            return Convert.ToBase64String(textAsBytes);
         }
     }
 }
