@@ -1,4 +1,4 @@
-﻿﻿using System;
+﻿using System;
 using LeanCloud;
 using LeanCloud.Realtime;
 using LeanCloud.Storage.Internal;
@@ -31,6 +31,7 @@ namespace MockConsole
         {
             AVClient.Initialize(appId, appKey);
             realtime = new AVRealtime(appId, appKey);
+
             AVRealtime.WebSocketLog(Console.Write);
         }
         public async void CreateClient(string clientId)
@@ -50,15 +51,19 @@ namespace MockConsole
             conversation.SendMessageAsync(textMessage);
         }
 
+        public void SendBinaryMessage()
+        {
+            //         var text = "I love LeanCloud";
+            //var textBytes = System.Text.Encoding.UTF8.GetBytes(text);
+            //var binaryMessage = new AVIMBinaryMessage(textBytes);
+
+            //conversation.SendMessageAsync(binaryMessage);
+
+        }
+
         public void RegisterListener()
         {
-            client.OnMessageReceived += (sender, e) =>
-            {
-                if (e.Message is AVIMTextMessage)
-                {
-                    Console.WriteLine("received text message :" + ((AVIMTextMessage)e.Message).Content);
-                }
-            };
+
         }
 
         public void RegisterOfflineListener()

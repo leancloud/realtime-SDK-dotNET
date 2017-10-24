@@ -4,7 +4,7 @@ using LeanCloud.Realtime.Internal;
 namespace LeanCloud.Realtime
 {
     /// <summary>
-    /// 实时消息的核心基类，它是 Json schema 消息的父类
+    /// 基于二进制数据的消息类型，可以直接发送 Byte 数组
     /// </summary>
     [AVIMMessageClassName("_AVIMBinaryMessage")]
     public class AVIMBinaryMessage : AVIMMessage
