@@ -378,6 +378,7 @@ namespace LeanCloud.Realtime
                 RegisterMessageType<AVIMMessage>();
                 RegisterMessageType<AVIMTypedMessage>();
                 RegisterMessageType<AVIMTextMessage>();
+                RegisterMessageType<AVIMBinaryMessage>();
             }
         }
 

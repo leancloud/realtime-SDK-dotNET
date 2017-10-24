@@ -412,6 +412,11 @@ namespace LeanCloud.Realtime
                 .MentionAll(message.MentionAll)
                 .Mention(message.MentionList);
 
+            if (message is AVIMMessage)
+            {
+                cmd = ((AVIMMessage)message).BeforeSend(cmd);
+            }
+
             if (options.PushData != null)
             {
                 cmd.PushData(options.PushData);
@@ -429,6 +434,8 @@ namespace LeanCloud.Realtime
 
             });
         }
+
+
         #endregion
 
         #region mute & unmute

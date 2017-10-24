@@ -90,6 +90,7 @@
     <Compile Include="Internal\Timer\IAVTimer.cs" />
     <Compile Include="Internal\Timer\Portable\AVTimer.Portable.cs" />
     <Compile Include="Public\AVIMTypedMessageTypeIntAttribute.cs" />
+    <Compile Include="Public\AVIMBinaryMessage.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Internal\Encoding\" />

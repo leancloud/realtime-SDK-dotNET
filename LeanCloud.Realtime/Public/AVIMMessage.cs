@@ -108,6 +108,11 @@ namespace LeanCloud.Realtime
             return this;
         }
 
+        internal virtual MessageCommand BeforeSend(MessageCommand cmd)
+        {
+            return cmd;
+        }
+
         #endregion
     }
 
