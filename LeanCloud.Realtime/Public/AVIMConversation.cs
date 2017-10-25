@@ -457,6 +457,11 @@ namespace LeanCloud.Realtime
         #endregion
 
         #region message listener and event notify
+
+        /// <summary>
+        /// Registers the listener.
+        /// </summary>
+        /// <param name="listener">Listener.</param>
         public void RegisterListener(IAVIMListener listener)
         {
             this.CurrentClient.RegisterListener(listener, this.ConversationIdHook);
@@ -489,31 +494,43 @@ namespace LeanCloud.Realtime
         #endregion
 
         #region 成员操作相关接口
+
         /// <summary>
-        /// CurrentClient 主动加入到对话中
-        /// <para>签名操作</para>
+        /// Joins the async.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>The async.</returns>
         public Task JoinAsync()
         {
             return AddMembersAsync(CurrentClient.ClientId);
         }
 
+
         /// <summary>
-        /// 
+        /// Adds the members async.
         /// </summary>
-        /// <param name="clientId"></param>
-        /// <returns></returns>
+        /// <returns>The members async.</returns>
+        /// <param name="clientId">Client identifier.</param>
+        /// <param name="clientIds">Client identifiers.</param>
         public Task AddMembersAsync(string clientId = null, IEnumerable<string> clientIds = null)
         {
             return this.CurrentClient.InviteAsync(this, clientId, clientIds);
         }
 
+        /// <summary>
+        /// Removes the members async.
+        /// </summary>
+        /// <returns>The members async.</returns>
+        /// <param name="clientId">Client identifier.</param>
+        /// <param name="clientIds">Client identifiers.</param>
         public Task RemoveMembersAsync(string clientId = null, IEnumerable<string> clientIds = null)
         {
             return this.CurrentClient.KickAsync(this, clientId, clientIds);
         }
 
+        /// <summary>
+        /// Quits the async.
+        /// </summary>
+        /// <returns>The async.</returns>
         public Task QuitAsync()
         {
             return RemoveMembersAsync(CurrentClient.ClientId);
