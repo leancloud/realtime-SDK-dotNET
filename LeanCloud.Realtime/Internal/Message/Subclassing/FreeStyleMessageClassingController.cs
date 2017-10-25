@@ -43,18 +43,16 @@ namespace LeanCloud.Realtime.Internal
 
             var message = info != null ? info.Instantiate(msgStr) : new AVIMMessage();
 
-            long timestamp;
             if (buildInData.ContainsKey("timestamp"))
             {
-                if (long.TryParse(buildInData["timestamp"].ToString(), out timestamp))
+                if (long.TryParse(buildInData["timestamp"].ToString(), out long timestamp))
                 {
                     message.ServerTimestamp = timestamp;
                 }
             }
-            long ackAt;
             if (buildInData.ContainsKey("ackAt"))
             {
-                if (long.TryParse(buildInData["ackAt"].ToString(), out ackAt))
+                if (long.TryParse(buildInData["ackAt"].ToString(), out long ackAt))
                 {
                     message.RcpTimestamp = ackAt;
                 }
@@ -85,10 +83,9 @@ namespace LeanCloud.Realtime.Internal
                 message.MentionList = AVDecoder.Instance.DecodeList<string>(buildInData["mentionPids"]);
             }
 
-            bool mentionAll;
             if (buildInData.ContainsKey("mentionAll"))
             {
-                if (bool.TryParse(buildInData["mentionAll"].ToString(), out mentionAll))
+                if (bool.TryParse(buildInData["mentionAll"].ToString(), out bool mentionAll))
                 {
                     message.MentionAll = mentionAll;
                 }
