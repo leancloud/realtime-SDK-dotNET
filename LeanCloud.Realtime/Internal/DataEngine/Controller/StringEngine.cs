@@ -18,7 +18,7 @@ namespace LeanCloud.Realtime.Internal
 
         internal static string TempConvId<T>(this IEnumerable<T> objs)
         {
-            var orderedBase64Strs = objs.Select(obj => Encoding.UTF8.ToBase64(obj.ToString())).OrderBy(a => a, StringComparer.Ordinal);
+            var orderedBase64Strs = objs.Select(obj => Encoding.UTF8.ToBase64(obj.ToString())).OrderBy(a => a, StringComparer.Ordinal).ToArray();
             return "_tmp:" + string.Join("$", orderedBase64Strs);
         }
 

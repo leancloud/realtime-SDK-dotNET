@@ -360,11 +360,11 @@ namespace LeanCloud.Realtime
         /// <summary>
         /// 创建聊天室（即：暂态对话）
         /// </summary>
-        /// <param name="conversationName">聊天室名称</param>
+        /// <param name="chatroomName">聊天室名称</param>
         /// <returns></returns>
-        internal Task<AVIMConversation> CreateChatRoomAsync(string conversationName)
+        internal Task<AVIMConversation> CreateChatRoomAsync(string chatroomName)
         {
-            var conversation = new AVIMConversation() { Name = conversationName, IsTransient = true };
+            var conversation = new AVIMConversation() { Name = chatroomName, IsTransient = true };
             return CreateConversationAsync(conversation);
         }
 
