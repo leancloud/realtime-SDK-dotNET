@@ -22,6 +22,8 @@ namespace LeanCloud.Realtime
 
         private DateTime? lastMessageAt;
 
+        internal DateTime? expiredAt;
+
         private string name;
 
         private AVObject convState;
@@ -209,7 +211,7 @@ namespace LeanCloud.Realtime
         /// <summary>
         /// 对话是否为虚拟对话
         /// </summary>
-        public bool IsVirtual { get; internal set; }
+        public bool IsTemporary { get; internal set; }
 
         /// <summary>
         /// 对话创建的时间
@@ -302,7 +304,7 @@ namespace LeanCloud.Realtime
         /// <param name="attributes"></param>
         /// <param name="state"></param>
         /// <param name="isUnique"></param>
-        /// <param name="isVirtual"></param>
+        /// <param name="isTemporary"></param>
         internal AVIMConversation(AVIMConversation source = null,
             string name = null,
             string creator = null,
@@ -313,7 +315,8 @@ namespace LeanCloud.Realtime
             IEnumerable<KeyValuePair<string, object>> attributes = null,
             AVObject state = null,
             bool isUnique = true,
-            bool isVirtual = false)
+            bool isTemporary = false,
+            int ttl = 86400)
         {
             convState = source != null ? source.convState : new AVObject("_Conversation");
 
@@ -343,7 +346,8 @@ namespace LeanCloud.Realtime
             this.IsTransient = isTransient;
             this.IsSystem = isSystem;
             this.IsUnique = isUnique;
-            this.IsVirtual = isVirtual;
+            this.IsTemporary = isTemporary;
+            this.expiredAt = DateTime.Now + new TimeSpan(0, 0, ttl);
 
             if (state != null)
             {

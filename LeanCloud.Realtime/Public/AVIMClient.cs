@@ -341,20 +341,20 @@ namespace LeanCloud.Realtime
         /// </summary>
         /// <param name="member"></param>
         /// <param name="members"></param>
+        /// <param name="ttl">过期时间，默认是一天(86400 秒)，单位是秒</param>
         /// <returns></returns>
-        public Task<AVIMConversation> CreateVirtualConversationAsync(string member = null,
-            IEnumerable<string> members = null)
+        public Task<AVIMConversation> CreateTemporaryConversationAsync(string member = null,
+            IEnumerable<string> members = null,long ttl = 86400)
         {
             if (member == null) member = ClientId;
             var membersAsList = Concat<string>(member, members, "创建对话时被操作的 member(s) 不可以为空。");
-            var tempConvId = membersAsList.TempConvId<string>();
-            var data = new Dictionary<string, object>()
-            {
-                { "objectId",tempConvId}
-            };
-            var conversation = new AVIMConversation(members: membersAsList, isVirtual: true);
 
-            return Task.FromResult(conversation);
+            var conversation = new AVIMTemporaryConversation(ttl)
+            {
+                MemberIds = membersAsList
+            };
+
+            return CreateConversationAsync(conversation);
         }
 
         /// <summary>

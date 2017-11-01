@@ -46,6 +46,16 @@ namespace LeanCloud.Realtime.Internal
             return new ConversationCommand(this.Argument("unique", isUnique));
         }
 
+        public ConversationCommand Temporary(bool isTemporary)
+        {
+            return new ConversationCommand(this.Argument("tempConv", isTemporary));
+        }
+
+        public ConversationCommand TempConvTTL(double tempConvTTL)
+        {
+            return new ConversationCommand(this.Argument("tempConvTTL", tempConvTTL));
+        }
+
         public ConversationCommand Attr(IDictionary<string, object> attr)
         {
             return new ConversationCommand(this.Argument("attr", attr));
@@ -67,8 +77,15 @@ namespace LeanCloud.Realtime.Internal
             var cmd = new ConversationCommand()
                 .ConversationId(conversation.ConversationId)
                 .Attr(attr)
-                .Members(conversation.MemberIds).
-                Transient(conversation.IsTransient);
+                .Members(conversation.MemberIds)
+                .Transient(conversation.IsTransient)
+                .Temporary(conversation.IsTemporary);
+
+            if (conversation.IsTemporary)
+            {
+                var ttl = (conversation.expiredAt.Value - DateTime.Now).TotalSeconds;
+                cmd = cmd.TempConvTTL(ttl);
+            }
 
             return cmd;
         }

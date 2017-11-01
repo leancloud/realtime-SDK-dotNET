@@ -48,6 +48,7 @@
     <Compile Include="Internal\Message\Subclassing\IFreeStyleMessageClassingController.cs" />
     <Compile Include="Internal\WebSocket\Portable\DefaultWebSocketClient.Portable.cs" />
     <Compile Include="Public\AVIMAudioMessage.cs" />
+    <Compile Include="Public\AVIMTemporaryConversation.cs" />
     <Compile Include="Public\AVIMClient.cs" />
     <Compile Include="Public\AVIMConversation.cs" />
     <Compile Include="Public\AVIMConversationQuery.cs" />
@@ -96,8 +97,6 @@
     <Folder Include="Internal\Encoding\" />
     <Folder Include="Internal\Object\" />
     <Folder Include="Internal\Query\" />
-    <Folder Include="Internal\Timer\" />
-    <Folder Include="Internal\Timer\Portable\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
