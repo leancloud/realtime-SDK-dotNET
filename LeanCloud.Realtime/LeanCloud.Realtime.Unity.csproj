@@ -92,6 +92,7 @@
     <Compile Include="Public\AVIMMessageFieldNameAttribute.cs" />
     <Compile Include="Public\AVIMNotice.cs" />
     <Compile Include="Public\AVIMSignature.cs" />
+    <Compile Include="Public\AVIMTemporaryConversation.cs" />
     <Compile Include="Public\AVIMTextMessage.cs" />
     <Compile Include="Public\AVIMTypedMessage.cs" />
     <Compile Include="Public\AVRealtime.cs" />
@@ -106,14 +107,12 @@
     <Compile Include="Internal\Timer\Unity\AVTimer.Unity.cs" />
     <Compile Include="Public\AVIMTypedMessageTypeIntAttribute.cs" />
     <Compile Include="Public\Unity\AVRealtimeBehavior.cs" />
+    <Compile Include="Public\AVIMBinaryMessage.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Internal\Encoding\" />
     <Folder Include="Internal\Object\" />
     <Folder Include="Internal\Query\" />
-    <Folder Include="Internal\Timer\" />
-    <Folder Include="Internal\Timer\Unity\" />
-    <Folder Include="Public\Unity\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Internal\WebSocket\Unity\websocket-sharp.dll" />

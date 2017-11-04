@@ -9,6 +9,14 @@ namespace LeanCloud.Realtime
     [AVIMMessageClassName("_AVIMBinaryMessage")]
     public class AVIMBinaryMessage : AVIMMessage
     {
+
+        public AVIMBinaryMessage()
+        {
+        }
+        /// <summary>
+        /// create new instance of AVIMBinnaryMessage
+        /// </summary>
+        /// <param name="data"></param>
         public AVIMBinaryMessage(byte[] data)
         {
             this.BinaryData = data;

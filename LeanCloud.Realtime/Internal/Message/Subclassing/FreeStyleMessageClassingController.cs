@@ -43,7 +43,6 @@ namespace LeanCloud.Realtime.Internal
 
             var message = info != null ? info.Instantiate(msgStr) : new AVIMMessage();
 
-
             if (buildInData.ContainsKey("timestamp"))
             {
                 if (long.TryParse(buildInData["timestamp"].ToString(), out long timestamp))

@@ -13,7 +13,7 @@ namespace LeanCloud.Realtime
     /// <summary>
     /// 图像消息
     /// </summary>
-    public class AVIMImageMessage : AVIMMessage
+    internal class AVIMImageMessage : AVIMMessage
     {
         public AVIMImageMessage()
         {

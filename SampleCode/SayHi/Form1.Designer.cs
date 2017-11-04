@@ -31,7 +31,7 @@
             this.components = new System.ComponentModel.Container();
             this.btn_logIn = new System.Windows.Forms.Button();
             this.grpbx_selector = new System.Windows.Forms.GroupBox();
-            this.ckb_isTransient = new System.Windows.Forms.CheckBox();
+            this.btn_Pause = new System.Windows.Forms.Button();
             this.txb_convId = new System.Windows.Forms.TextBox();
             this.btn_join = new System.Windows.Forms.Button();
             this.btn_create = new System.Windows.Forms.Button();
@@ -42,7 +42,6 @@
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.txb_logs = new System.Windows.Forms.TextBox();
             this.aVIMMessageBindingSource = new System.Windows.Forms.BindingSource(this.components);
-            this.btn_Pause = new System.Windows.Forms.Button();
             this.grpbx_selector.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -62,7 +61,6 @@
             // grpbx_selector
             // 
             this.grpbx_selector.Controls.Add(this.btn_Pause);
-            this.grpbx_selector.Controls.Add(this.ckb_isTransient);
             this.grpbx_selector.Controls.Add(this.txb_convId);
             this.grpbx_selector.Controls.Add(this.btn_join);
             this.grpbx_selector.Controls.Add(this.btn_create);
@@ -76,15 +74,15 @@
             this.grpbx_selector.TabStop = false;
             this.grpbx_selector.Text = "操作框";
             // 
-            // ckb_isTransient
+            // btn_Pause
             // 
-            this.ckb_isTransient.AutoSize = true;
-            this.ckb_isTransient.Location = new System.Drawing.Point(16, 136);
-            this.ckb_isTransient.Name = "ckb_isTransient";
-            this.ckb_isTransient.Size = new System.Drawing.Size(62, 17);
-            this.ckb_isTransient.TabIndex = 6;
-            this.ckb_isTransient.Text = "聊天室";
-            this.ckb_isTransient.UseVisualStyleBackColor = true;
+            this.btn_Pause.Location = new System.Drawing.Point(16, 328);
+            this.btn_Pause.Name = "btn_Pause";
+            this.btn_Pause.Size = new System.Drawing.Size(162, 23);
+            this.btn_Pause.TabIndex = 7;
+            this.btn_Pause.Text = "Pause";
+            this.btn_Pause.UseVisualStyleBackColor = true;
+            this.btn_Pause.Click += new System.EventHandler(this.btn_Pause_Click);
             // 
             // txb_convId
             // 
@@ -170,16 +168,6 @@
             // 
             this.aVIMMessageBindingSource.DataSource = typeof(LeanCloud.Realtime.AVIMMessage);
             // 
-            // btn_Pause
-            // 
-            this.btn_Pause.Location = new System.Drawing.Point(16, 328);
-            this.btn_Pause.Name = "btn_Pause";
-            this.btn_Pause.Size = new System.Drawing.Size(162, 23);
-            this.btn_Pause.TabIndex = 7;
-            this.btn_Pause.Text = "Pause";
-            this.btn_Pause.UseVisualStyleBackColor = true;
-            this.btn_Pause.Click += new System.EventHandler(this.btn_Pause_Click);
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -214,7 +202,6 @@
         private System.Windows.Forms.Button btn_create;
         private System.Windows.Forms.TextBox txb_convId;
         private System.Windows.Forms.Button btn_join;
-        private System.Windows.Forms.CheckBox ckb_isTransient;
         private System.Windows.Forms.Button btn_Pause;
     }
 }
