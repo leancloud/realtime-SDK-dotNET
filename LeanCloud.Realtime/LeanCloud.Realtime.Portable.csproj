@@ -48,7 +48,6 @@
     <Compile Include="Internal\Message\Subclassing\IFreeStyleMessageClassingController.cs" />
     <Compile Include="Internal\WebSocket\Portable\DefaultWebSocketClient.Portable.cs" />
     <Compile Include="Public\AVIMAudioMessage.cs" />
-    <Compile Include="Public\AVIMTemporaryConversation.cs" />
     <Compile Include="Public\AVIMClient.cs" />
     <Compile Include="Public\AVIMConversation.cs" />
     <Compile Include="Public\AVIMConversationQuery.cs" />
@@ -61,6 +60,7 @@
     <Compile Include="Public\AVIMMessageClassNameAttribute.cs" />
     <Compile Include="Public\AVIMNotice.cs" />
     <Compile Include="Public\AVIMSignature.cs" />
+    <Compile Include="Public\AVIMTemporaryConversation.cs" />
     <Compile Include="Public\AVIMTextMessage.cs" />
     <Compile Include="Public\AVIMConversationListener.cs" />
     <Compile Include="Public\AVIMTypedMessage.cs" />

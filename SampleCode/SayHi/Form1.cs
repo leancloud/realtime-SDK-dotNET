@@ -14,8 +14,8 @@ namespace SayHi
 {
     public partial class Form1 : Form
     {
-        string appId = "3knLr8wGGKUBiXpVAwDnryNT-gzGzoHsz";
-        string appkey = "3RpBhjoPXJjVWvPnVmPyFExt";
+        string appId = "uay57kigwe0b6f5n0e1d4z4xhydsml3dor24bzwvzr57wdap";
+        string appkey = "kfgz7jjfsk55r5a8a3y4ttd3je1ko11bkibcikonk32oozww";
         AVRealtime realtime;
         AVIMClient client;
         AVIMConversation conversation;
@@ -26,17 +26,33 @@ namespace SayHi
             Websockets.Net.WebsocketConnection.Link();
             AVRealtime.WebSocketLog(AppendLogs);
             AVClient.Initialize(appId, appkey);
-            realtime = new AVRealtime(appId, appkey);
+
+            var config = new AVRealtime.Configuration()
+            {
+                ApplicationId = appId,
+                ApplicationKey = appkey,
+                OfflineMessageStrategy = AVRealtime.OfflineMessageStrategy.UnreadAck
+            };
+
+            realtime = new AVRealtime(config);
 
             lbx_messages.DisplayMember = "Content";
             lbx_messages.ValueMember = "Id";
             lbx_messages.DataSource = data;
+
+            realtime.OnOfflineMessageReceived += Realtime_OnOfflineMessageReceived;
+        }
+
+        private void Realtime_OnOfflineMessageReceived(object sender, AVIMMessageEventArgs e)
+        {
+            AVRealtime.PrintLog(e.Message.Id);
         }
 
         private async void btn_logIn_Click(object sender, EventArgs e)
         {
             client = await realtime.CreateClientAsync(txb_clientId.Text.Trim());
             client.OnMessageReceived += Client_OnMessageReceived;
+
         }
 
         private void Client_OnMessageReceived(object sender, AVIMMessageEventArgs e)
@@ -63,8 +79,8 @@ namespace SayHi
 
         private async void btn_create_Click(object sender, EventArgs e)
         {
-            var isTransient = ckb_isTransient.Checked;
-            conversation = await client.CreateConversationAsync(txb_friend.Text.Trim(), isTransient: isTransient);
+            //var isTransient = ckb_isTransient.Checked;
+            conversation = await client.CreateConversationAsync(txb_friend.Text.Trim(), isTransient: false);
         }
 
         private async void btn_join_Click(object sender, EventArgs e)

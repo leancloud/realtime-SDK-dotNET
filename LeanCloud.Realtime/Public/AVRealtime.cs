@@ -28,6 +28,7 @@ namespace LeanCloud.Realtime
         private string _deviceId;
         private bool _secure;
         private string _tag;
+        private string subprotocolPrefix = "lc.json.";
 
         public bool IsSesstionTokenExpired
         {
@@ -347,6 +348,33 @@ namespace LeanCloud.Realtime
             /// LeanCloud App Key
             /// </summary>
             public string ApplicationKey { get; set; }
+
+            /// <summary>
+            /// 登录的时候告知服务器，本次登录所使用的离线消息策略
+            /// </summary>
+            public OfflineMessageStrategy OfflineMessageStrategy { get; set; }
+        }
+
+        /// <summary>
+        ///登录时的离线消息下发策略
+        /// </summary>
+        public enum OfflineMessageStrategy
+        {
+            /// <summary>
+            /// 服务器将所有离线消息一次性在登录之后马上下发下来
+            /// </summary>
+            Default = 1,
+
+            /// <summary>
+            /// 不再下发未读消息，而是下发对话的未读通知，告知客户端有哪些对话处于未读状态
+            /// </summary>
+            UnreadNotice = 2,
+
+            /// <summary>
+            /// ack 和 read 分离, ack 不会清理未读消息
+            /// </summary>
+            UnreadAck = 3
+
         }
 
         /// <summary>
@@ -435,7 +463,8 @@ namespace LeanCloud.Realtime
                 var client = PreLogIn(clientId, tag, deviceId);
 
                 AVRealtime.PrintLog("begin OpenAsync.");
-                return OpenAsync(secure, cancellationToken).OnSuccess(t =>
+                string subprotocol = subprotocolPrefix + (int)CurrentConfiguration.OfflineMessageStrategy;
+                return OpenAsync(secure, subprotocol, cancellationToken).OnSuccess(t =>
                  {
                      AVRealtime.PrintLog("OpenAsync OnSuccess. begin send open sesstion cmd.");
 
@@ -446,6 +475,7 @@ namespace LeanCloud.Realtime
                         .Option("open")
                         .PeerId(clientId);
 
+                     ToggleNotification(true);
                      return AttachSignature(cmd, this.SignatureFactory.CreateConnectSignature(clientId));
 
                  }).Unwrap().OnSuccess(x =>
@@ -456,7 +486,6 @@ namespace LeanCloud.Realtime
                   {
                       AVRealtime.PrintLog("sesstion opened.");
                       state = Status.Online;
-                      ToggleNotification(true);
                       ToggleHeartBeating(_heartBeatingToggle);
                       var response = s.Result.Item2;
                       if (response.ContainsKey("st"))
@@ -505,11 +534,10 @@ namespace LeanCloud.Realtime
                 var ts = signResult.Timestamp;
 
                 client = PreLogIn(clientId, tag, deviceId);
-
+                ToggleNotification(true);
                 return this.OpenSessionAsync(clientId, tag, deviceId, nonce, ts, singnature, secure);
             }).Unwrap().OnSuccess(s =>
             {
-                ToggleNotification(true);
                 ToggleHeartBeating(_heartBeatingToggle);
 
                 return client;
@@ -558,7 +586,6 @@ namespace LeanCloud.Realtime
             bool secure = true,
             CancellationToken cancellationToken = default(CancellationToken))
         {
-
             return this.CreateClientAsync(clientId, tag, deviceId, secure, cancellationToken);
         }
 
@@ -582,6 +609,23 @@ namespace LeanCloud.Realtime
             }
         }
 
+        //public void ToggleOfflineNotification(bool toggle)
+        //{
+        //    if (toggle)
+        //    {
+        //        PCLWebsocketClient.OnMessage += WebSocketClient_OnMessage_On_Session_Opening;
+        //    }
+        //    else
+        //    {
+        //        PCLWebsocketClient.OnMessage -= WebSocketClient_OnMessage_On_Session_Opening;
+        //    }
+        //}
+
+        //private void WebSocketClient_OnMessage_On_Session_Opening(string obj)
+        //{
+        //    AVRealtime.PrintLog("offline<=" + obj);
+        //}
+
 
         string _beatPacket = "{}";
         bool _heartBeatingToggle = true;
@@ -603,12 +647,12 @@ namespace LeanCloud.Realtime
                 _heartBeatingTimer.Elapsed += SendHeartBeatingPacket;
                 _heartBeatingTimer.Interval = interval;
                 _heartBeatingTimer.Start();
-                PrintLog("auto ToggleHeartBeating stared.");
+                PrintLog("auto heart beating started.");
             }
         }
         void SendHeartBeatingPacket(object sender, TimerEventArgs e)
         {
-            PrintLog("timer ToggleHeartBeating ticked.");
+            PrintLog("auto heart beating ticked by timer.");
 #if MONO || UNITY
             Dispatcher.Instance.Post(() =>
             {
@@ -915,12 +959,13 @@ namespace LeanCloud.Realtime
         #endregion
 
         /// <summary>
-        /// Opens websokcet the async.
+        /// fetch wss address from push router and open the websocket connection.
         /// </summary>
-        /// <returns>The async.</returns>
-        /// <param name="secure">If set to <c>true</c> secure.</param>
-        /// <param name="cancellationToken">Cancellation token.</param>
-        public Task OpenAsync(bool secure = true, CancellationToken cancellationToken = default(CancellationToken))
+        /// <param name="secure">if use ssl encrept</param>
+        /// <param name="subprotocol">subprotocol</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public Task OpenAsync(bool secure = true, string subprotocol = null, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (state == Status.Online)
             {
@@ -933,23 +978,26 @@ namespace LeanCloud.Realtime
                  _wss = _.Result.server;
                  state = Status.Connecting;
                  AVRealtime.PrintLog("push router give a url :" + _wss);
-                 return OpenAsync(_.Result.server, cancellationToken);
+                 return OpenAsync(_.Result.server, subprotocol, cancellationToken);
              }).Unwrap();
         }
 
         /// <summary>
-        /// 打开 WebSocket 链接
+        /// open webcoket connection with cloud.
         /// </summary>
-        /// <param name="url"></param>
+        /// <param name="url">wss address</param>
+        /// <param name="subprotocol">subprotocol for websocket</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public Task<bool> OpenAsync(string url, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<bool> OpenAsync(string url, string subprotocol = null, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (PCLWebsocketClient.IsOpen)
             {
                 AVRealtime.PrintLog(url + "is already connectd.");
                 return Task.FromResult(true);
             }
+
+            AVRealtime.PrintLog("websocket try to connect url :" + url + "with subprotocol: " + subprotocol);
             AVRealtime.PrintLog(url + " connecting...");
             var tcs = new TaskCompletionSource<bool>();
             Action<string> onError = null;
@@ -979,12 +1027,10 @@ namespace LeanCloud.Realtime
                 tcs.TrySetException(new AVIMException(AVIMException.ErrorCode.FromServer, "try to open websocket at " + url + "failed.The reason is " + reason, null));
             };
 
-
-
             PCLWebsocketClient.OnOpened += onOpend;
             PCLWebsocketClient.OnClosed += onClosed;
             PCLWebsocketClient.OnError += onError;
-            PCLWebsocketClient.Open(url);
+            PCLWebsocketClient.Open(url, subprotocol);
 
             return tcs.Task;
         }
@@ -1044,8 +1090,9 @@ namespace LeanCloud.Realtime
 
         internal void Dispose()
         {
-            ToggleNotification(false);
-            ToggleHeartBeating(false);
+            var toggle = false;
+            ToggleNotification(toggle);
+            ToggleHeartBeating(toggle);
             if (m_NoticeReceived != null)
             {
                 foreach (Delegate d in m_NoticeReceived.GetInvocationList())

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace LeanCloud.Realtime
 {
-    public class AVIMAudioMessage : AVIMMessage
+    internal class AVIMAudioMessage : AVIMMessage
     {
     }
 }
