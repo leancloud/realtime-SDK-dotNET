@@ -170,6 +170,15 @@ namespace LeanCloud.Realtime
             public int Retry { get; set; }
         }
 
+        internal string Subprotocol
+        {
+            get
+            {
+
+                return subprotocolPrefix + (int)CurrentConfiguration.OfflineMessageStrategy;
+            }
+        }
+
         /// <summary>
         /// 重连选项
         /// </summary>
@@ -463,8 +472,7 @@ namespace LeanCloud.Realtime
                 var client = PreLogIn(clientId, tag, deviceId);
 
                 AVRealtime.PrintLog("begin OpenAsync.");
-                string subprotocol = subprotocolPrefix + (int)CurrentConfiguration.OfflineMessageStrategy;
-                return OpenAsync(secure, subprotocol, cancellationToken).OnSuccess(t =>
+                return OpenAsync(secure, Subprotocol, cancellationToken).OnSuccess(t =>
                  {
                      AVRealtime.PrintLog("OpenAsync OnSuccess. begin send open sesstion cmd.");
 
@@ -858,91 +866,91 @@ namespace LeanCloud.Realtime
             };
             m_OnReconnecting?.Invoke(this, reconnectingArgs);
 
-            return OpenAsync(_wss).ContinueWith(t =>
-             {
-                 if (t.IsFaulted || t.Exception != null)
-                 {
-                     state = Status.Reconnecting;
-                     var reconnectFailedArgs = new AVIMReconnectFailedArgs()
-                     {
-                         ClientId = _clientId,
-                         IsAuto = true,
-                         SessionToken = _sesstionToken,
-                         FailedCode = 0// network broken.
-                     };
-                     m_OnReconnectFailed?.Invoke(this, reconnectFailedArgs);
-                     state = Status.Offline;
-                     return Task.FromResult(false);
-                 }
-                 else
-                 {
-                     if (t.Result)
-                     {
-                         state = Status.Opened;
-
-                         if (this.IsSesstionTokenExpired)
-                         {
-                             AVRealtime.PrintLog("sesstion is expired, auto relogin with clientId :" + _clientId);
-                             return this.LogInAsync(_clientId, this._tag, this._deviceId, this._secure).OnSuccess(o =>
-                             {
-                                 ClearReconnectTimer();
-                                 return true;
-                             });
-                         }
-                         else
-                         {
-                             var sessionCMD = new SessionCommand().UA(VersionString).R(1);
-
-                             if (string.IsNullOrEmpty(_tag))
-                             {
-                                 sessionCMD = sessionCMD.Tag(_tag).SessionToken(this._sesstionToken);
-                             }
-
-                             var cmd = sessionCMD.Option("open")
-                              .PeerId(_clientId);
-
-                             AVRealtime.PrintLog("reopen sesstion with sesstion token :" + _sesstionToken);
-                             return AVIMCommandRunner.RunCommandAsync(cmd).OnSuccess(c =>
-                             {
-                                 ClearReconnectTimer();
-                                 return true;
-                             });
-                         }
-                     }
-                     else return Task.FromResult(false);
-                 }
-
-             }).Unwrap().ContinueWith(s =>
+            return OpenAsync(_wss, Subprotocol).ContinueWith(t =>
               {
-                  if (s.IsFaulted || s.Exception != null)
+                  if (t.IsFaulted || t.Exception != null)
                   {
+                      state = Status.Reconnecting;
                       var reconnectFailedArgs = new AVIMReconnectFailedArgs()
                       {
                           ClientId = _clientId,
                           IsAuto = true,
                           SessionToken = _sesstionToken,
-                          FailedCode = 1
-                      };
+                          FailedCode = 0// network broken.
+                     };
                       m_OnReconnectFailed?.Invoke(this, reconnectFailedArgs);
                       state = Status.Offline;
+                      return Task.FromResult(false);
                   }
                   else
                   {
-                      if (s.Result)
+                      if (t.Result)
                       {
-                          autoReconnectionStarted = false;
-                          reconnectTimer = null;
-                          var reconnectedArgs = new AVIMReconnectedEventArgs()
+                          state = Status.Opened;
+
+                          if (this.IsSesstionTokenExpired)
                           {
-                              ClientId = _clientId,
-                              IsAuto = true,
-                              SessionToken = _sesstionToken,
-                          };
-                          state = Status.Online;
-                          m_OnReconnected?.Invoke(this, reconnectedArgs);
+                              AVRealtime.PrintLog("sesstion is expired, auto relogin with clientId :" + _clientId);
+                              return this.LogInAsync(_clientId, this._tag, this._deviceId, this._secure).OnSuccess(o =>
+                              {
+                                  ClearReconnectTimer();
+                                  return true;
+                              });
+                          }
+                          else
+                          {
+                              var sessionCMD = new SessionCommand().UA(VersionString).R(1);
+
+                              if (string.IsNullOrEmpty(_tag))
+                              {
+                                  sessionCMD = sessionCMD.Tag(_tag).SessionToken(this._sesstionToken);
+                              }
+
+                              var cmd = sessionCMD.Option("open")
+                               .PeerId(_clientId);
+
+                              AVRealtime.PrintLog("reopen sesstion with sesstion token :" + _sesstionToken);
+                              return AVIMCommandRunner.RunCommandAsync(cmd).OnSuccess(c =>
+                              {
+                                  ClearReconnectTimer();
+                                  return true;
+                              });
+                          }
                       }
+                      else return Task.FromResult(false);
                   }
-              });
+
+              }).Unwrap().ContinueWith(s =>
+               {
+                   if (s.IsFaulted || s.Exception != null)
+                   {
+                       var reconnectFailedArgs = new AVIMReconnectFailedArgs()
+                       {
+                           ClientId = _clientId,
+                           IsAuto = true,
+                           SessionToken = _sesstionToken,
+                           FailedCode = 1
+                       };
+                       m_OnReconnectFailed?.Invoke(this, reconnectFailedArgs);
+                       state = Status.Offline;
+                   }
+                   else
+                   {
+                       if (s.Result)
+                       {
+                           autoReconnectionStarted = false;
+                           reconnectTimer = null;
+                           var reconnectedArgs = new AVIMReconnectedEventArgs()
+                           {
+                               ClientId = _clientId,
+                               IsAuto = true,
+                               SessionToken = _sesstionToken,
+                           };
+                           state = Status.Online;
+                           m_OnReconnected?.Invoke(this, reconnectedArgs);
+                       }
+                   }
+               });
         }
 
 
