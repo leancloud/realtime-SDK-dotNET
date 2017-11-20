@@ -7,6 +7,6 @@ namespace LeanCloud.Realtime.Internal
 {
     interface IAVRouterController
     {
-        Task<PushRouterState> GetAsync(bool secure, CancellationToken cancellationToken = default(CancellationToken));
+        Task<PushRouterState> GetAsync(string pushRouter, bool secure, CancellationToken cancellationToken = default(CancellationToken));
     }
 }
