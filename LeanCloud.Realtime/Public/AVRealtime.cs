@@ -362,6 +362,18 @@ namespace LeanCloud.Realtime
             /// 登录的时候告知服务器，本次登录所使用的离线消息策略
             /// </summary>
             public OfflineMessageStrategy OfflineMessageStrategy { get; set; }
+
+            /// <summary>
+            /// Gets or sets the realtime server.
+            /// </summary>
+            /// <value>The realtime server.</value>
+            public Uri RealtimeServer { get; set; }
+
+            /// <summary>
+            /// Gets or sets the push router server.
+            /// </summary>
+            /// <value>The push router server.</value>
+            public Uri PushRouterServer { get; set; }
         }
 
         /// <summary>
@@ -877,7 +889,7 @@ namespace LeanCloud.Realtime
                           IsAuto = true,
                           SessionToken = _sesstionToken,
                           FailedCode = 0// network broken.
-                     };
+                      };
                       m_OnReconnectFailed?.Invoke(this, reconnectFailedArgs);
                       state = Status.Offline;
                       return Task.FromResult(false);
@@ -981,13 +993,19 @@ namespace LeanCloud.Realtime
                 return Task.FromResult(true);
             }
 
-            return RouterController.GetAsync(secure, cancellationToken).OnSuccess(_ =>
-             {
-                 _wss = _.Result.server;
-                 state = Status.Connecting;
-                 AVRealtime.PrintLog("push router give a url :" + _wss);
-                 return OpenAsync(_.Result.server, subprotocol, cancellationToken);
-             }).Unwrap();
+            if (CurrentConfiguration.RealtimeServer != null)
+            {
+                AVRealtime.PrintLog("use configuration websocket url:" + _wss);
+                return OpenAsync(CurrentConfiguration.RealtimeServer.ToString(), subprotocol, cancellationToken);
+            }
+
+            return RouterController.GetAsync(CurrentConfiguration.PushRouterServer.ToString(), secure, cancellationToken).OnSuccess(_ =>
+              {
+                  _wss = _.Result.server;
+                  state = Status.Connecting;
+                  AVRealtime.PrintLog("push router give a url :" + _wss);
+                  return OpenAsync(_.Result.server, subprotocol, cancellationToken);
+              }).Unwrap();
         }
 
         /// <summary>
