@@ -373,7 +373,7 @@ namespace LeanCloud.Realtime
             /// Gets or sets the push router server.
             /// </summary>
             /// <value>The push router server.</value>
-            public Uri PushRouterServer { get; set; }
+            public Uri RTMRouter { get; set; }
         }
 
         /// <summary>
@@ -998,14 +998,14 @@ namespace LeanCloud.Realtime
                 AVRealtime.PrintLog("use configuration websocket url:" + _wss);
                 return OpenAsync(CurrentConfiguration.RealtimeServer.ToString(), subprotocol, cancellationToken);
             }
-
-            return RouterController.GetAsync(CurrentConfiguration.PushRouterServer.ToString(), secure, cancellationToken).OnSuccess(_ =>
-              {
-                  _wss = _.Result.server;
-                  state = Status.Connecting;
-                  AVRealtime.PrintLog("push router give a url :" + _wss);
-                  return OpenAsync(_.Result.server, subprotocol, cancellationToken);
-              }).Unwrap();
+            var routerUrl = CurrentConfiguration.RTMRouter != null ? CurrentConfiguration.RTMRouter.ToString() : null;
+            return RouterController.GetAsync(routerUrl, secure, cancellationToken).OnSuccess(_ =>
+                {
+                    _wss = _.Result.server;
+                    state = Status.Connecting;
+                    AVRealtime.PrintLog("push router give a url :" + _wss);
+                    return OpenAsync(_.Result.server, subprotocol, cancellationToken);
+                }).Unwrap();
         }
 
         /// <summary>
