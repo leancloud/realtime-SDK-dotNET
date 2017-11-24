@@ -66,8 +66,15 @@ namespace LeanCloud.Realtime.Internal
 
         public MessageCommand Mention(IEnumerable<string> clientIds)
         {
-            var mentionedMembers = clientIds.ToList();
-            return new MessageCommand(this.Argument("mentionPids", mentionedMembers));
+            if (clientIds == null)
+            {
+                return this;
+            }
+            else
+            {
+                var mentionedMembers = clientIds.ToList();
+                return new MessageCommand(this.Argument("mentionPids", mentionedMembers));
+            }
         }
 
         public MessageCommand MentionAll(bool mentionAll)
