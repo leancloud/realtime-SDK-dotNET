@@ -344,7 +344,7 @@ namespace LeanCloud.Realtime
         /// <param name="ttl">过期时间，默认是一天(86400 秒)，单位是秒</param>
         /// <returns></returns>
         public Task<AVIMConversation> CreateTemporaryConversationAsync(string member = null,
-            IEnumerable<string> members = null,long ttl = 86400)
+            IEnumerable<string> members = null, long ttl = 86400)
         {
             if (member == null) member = ClientId;
             var membersAsList = Concat<string>(member, members, "创建对话时被操作的 member(s) 不可以为空。");
@@ -430,8 +430,7 @@ namespace LeanCloud.Realtime
                 .Transient(options.Transient)
                 .Priority(options.Priority)
                 .Will(options.Will)
-                .MentionAll(message.MentionAll)
-                .Mention(message.MentionList);
+                .MentionAll(message.MentionAll);
 
             if (message is AVIMMessage)
             {
@@ -440,8 +439,14 @@ namespace LeanCloud.Realtime
 
             if (options.PushData != null)
             {
-                cmd.PushData(options.PushData);
+                cmd = cmd.PushData(options.PushData);
             }
+
+            if (message.MentionList != null)
+            {
+                cmd = cmd.Mention(message.MentionList);
+            }
+
             var directCmd = cmd.PeerId(this.ClientId);
 
             return this.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(directCmd).OnSuccess(t =>
