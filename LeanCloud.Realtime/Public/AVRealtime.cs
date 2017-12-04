@@ -533,20 +533,24 @@ namespace LeanCloud.Realtime
         public Task<AVIMClient> CreateClientAsync(AVUser user = null,
                                                   string tag = null,
                                                   string deviceId = null,
-                                                  bool secure = true)
+                                                  bool secure = true,
+                                                  CancellationToken cancellationToken = default(CancellationToken))
         {
-
-            var userTask = Task.FromResult(user);
-            if (user == null)
-                userTask = AVUser.GetCurrentUserAsync();
-
             AVIMClient client = null;
-            return userTask.OnSuccess(u =>
+            AVRealtime.PrintLog("begin OpenAsync.");
+            return OpenAsync(secure, Subprotocol, cancellationToken).OnSuccess(openTask =>
+            {
+                AVRealtime.PrintLog("OpenAsync OnSuccess. begin send open sesstion cmd.");
+                var userTask = Task.FromResult(user);
+                if (user == null)
+                    userTask = AVUser.GetCurrentUserAsync();
+
+                return userTask;
+            }).Unwrap().OnSuccess(u =>
             {
                 var theUser = u.Result;
                 return AVCloud.RequestRealtimeSignatureAsync(theUser);
-            }).Unwrap().OnSuccess(signTask =>
-            {
+            }).Unwrap().OnSuccess(signTask =>{
                 var signResult = signTask.Result;
                 var clientId = signResult.ClientId;
                 var nonce = signResult.Nonce;
@@ -587,6 +591,11 @@ namespace LeanCloud.Realtime
 
             return client;
         }
+        #endregion
+
+        #region after-login
+
+
         #endregion
 
         /// <summary>
