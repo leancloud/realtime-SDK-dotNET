@@ -80,7 +80,7 @@ namespace SayHi
         private async void btn_create_Click(object sender, EventArgs e)
         {
             //var isTransient = ckb_isTransient.Checked;
-            conversation = await client.CreateConversationAsync(txb_friend.Text.Trim(), isTransient: false);
+            conversation = await client.CreateConversationAsync(txb_friend.Text.Trim());
         }
 
         private async void btn_join_Click(object sender, EventArgs e)
