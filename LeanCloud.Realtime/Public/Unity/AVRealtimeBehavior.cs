@@ -58,7 +58,7 @@ namespace LeanCloud.Realtime
             request.downloadHandler = new DownloadHandlerBuffer();
             yield return request.Send();
 
-            if (request.isError)
+            if (request.isNetworkError)
             {
                 throw new AVException(AVException.ErrorCode.ConnectionFailed, "can not reach router.", null);
             }
