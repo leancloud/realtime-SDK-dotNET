@@ -45,12 +45,12 @@ namespace SayHi
 
         private void Realtime_OnOfflineMessageReceived(object sender, AVIMMessageEventArgs e)
         {
-            AVRealtime.PrintLog(e.Message.Id);
+            AVRealtime.PrintLog("offline message received:" + e.Message.Id);
         }
 
         private async void btn_logIn_Click(object sender, EventArgs e)
         {
-            client = await realtime.CreateClientAsync(txb_clientId.Text.Trim());
+            client = await realtime.CreateClientAsync(clientId: txb_clientId.Text.Trim());
             client.OnMessageReceived += Client_OnMessageReceived;
 
         }
@@ -101,6 +101,13 @@ namespace SayHi
         private void btn_Pause_Click(object sender, EventArgs e)
         {
             client.CloseAsync();
+        }
+
+        private async void btn_Send_Click(object sender, EventArgs e)
+        {
+            var text = txb_InputMessage.Text != null ? txb_InputMessage.Text : "no text";
+            var textMessage = new AVIMTextMessage(text);
+            await this.client.SendMessageAsync(this.conversation, textMessage);
         }
     }
 }

@@ -42,6 +42,8 @@
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.txb_logs = new System.Windows.Forms.TextBox();
             this.aVIMMessageBindingSource = new System.Windows.Forms.BindingSource(this.components);
+            this.txb_InputMessage = new System.Windows.Forms.TextBox();
+            this.btn_Send = new System.Windows.Forms.Button();
             this.grpbx_selector.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -130,6 +132,8 @@
             // 
             // groupBox2
             // 
+            this.groupBox2.Controls.Add(this.btn_Send);
+            this.groupBox2.Controls.Add(this.txb_InputMessage);
             this.groupBox2.Controls.Add(this.lbx_messages);
             this.groupBox2.Location = new System.Drawing.Point(237, 12);
             this.groupBox2.Name = "groupBox2";
@@ -143,7 +147,7 @@
             this.lbx_messages.FormattingEnabled = true;
             this.lbx_messages.Location = new System.Drawing.Point(24, 29);
             this.lbx_messages.Name = "lbx_messages";
-            this.lbx_messages.Size = new System.Drawing.Size(653, 381);
+            this.lbx_messages.Size = new System.Drawing.Size(653, 238);
             this.lbx_messages.TabIndex = 0;
             // 
             // groupBox3
@@ -168,6 +172,25 @@
             // 
             this.aVIMMessageBindingSource.DataSource = typeof(LeanCloud.Realtime.AVIMMessage);
             // 
+            // txb_InputMessage
+            // 
+            this.txb_InputMessage.Location = new System.Drawing.Point(24, 273);
+            this.txb_InputMessage.Multiline = true;
+            this.txb_InputMessage.Name = "txb_InputMessage";
+            this.txb_InputMessage.Size = new System.Drawing.Size(540, 139);
+            this.txb_InputMessage.TabIndex = 1;
+            this.txb_InputMessage.Text = "test";
+            // 
+            // btn_Send
+            // 
+            this.btn_Send.Location = new System.Drawing.Point(570, 273);
+            this.btn_Send.Name = "btn_Send";
+            this.btn_Send.Size = new System.Drawing.Size(107, 139);
+            this.btn_Send.TabIndex = 2;
+            this.btn_Send.Text = "Send";
+            this.btn_Send.UseVisualStyleBackColor = true;
+            this.btn_Send.Click += new System.EventHandler(this.btn_Send_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -181,6 +204,7 @@
             this.grpbx_selector.ResumeLayout(false);
             this.grpbx_selector.PerformLayout();
             this.groupBox2.ResumeLayout(false);
+            this.groupBox2.PerformLayout();
             this.groupBox3.ResumeLayout(false);
             this.groupBox3.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.aVIMMessageBindingSource)).EndInit();
@@ -203,6 +227,8 @@
         private System.Windows.Forms.TextBox txb_convId;
         private System.Windows.Forms.Button btn_join;
         private System.Windows.Forms.Button btn_Pause;
+        private System.Windows.Forms.Button btn_Send;
+        private System.Windows.Forms.TextBox txb_InputMessage;
     }
 }
 
