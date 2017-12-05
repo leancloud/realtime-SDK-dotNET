@@ -171,7 +171,8 @@ namespace LeanCloud.Realtime
             }
             set
             {
-                this["name"] = value;
+                if (!string.IsNullOrEmpty(value))
+                    this["name"] = value;
             }
         }
 
