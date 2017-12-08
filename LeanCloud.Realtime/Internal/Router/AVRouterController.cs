@@ -62,25 +62,36 @@ namespace LeanCloud.Realtime.Internal
                 return Task.FromResult<PushRouterState>(null);
             }
         }
+
         Task<PushRouterState> QueryAsync(string pushRouter, bool secure, CancellationToken cancellationToken)
         {
             var appRouter = AVPlugins.Instance.AppRouterController.Get();
             var routerHost = string.Format("https://{0}/v1/route?appId={1}", appRouter.RealtimeRouterServer, AVClient.CurrentConfiguration.ApplicationId) ?? appRouter.RealtimeRouterServer ?? string.Format(routerUrl, AVClient.CurrentConfiguration.ApplicationId);
             if (!string.IsNullOrEmpty(pushRouter))
             {
-                AVRealtime.PrintLog("use configuration push router url:" + pushRouter);
-                routerHost = string.Format("https://{0}/v1/route?appId={1}", pushRouter, AVClient.CurrentConfiguration.ApplicationId);
+                var rtmUri = new Uri(pushRouter);
+                if (!string.IsNullOrEmpty(rtmUri.Scheme))
+                {
+                    var url = new Uri(rtmUri, "v1/route").ToString();
+                    routerHost = string.Format("{0}?appId={1}", url, AVClient.CurrentConfiguration.ApplicationId);
+                }
+                else
+                {
+                    routerHost = string.Format("https://{0}/v1/route?appId={1}", pushRouter, AVClient.CurrentConfiguration.ApplicationId);
+                }
             }
             if (secure)
             {
                 routerHost += "&secure=1";
             }
 
+            AVRealtime.PrintLog("use configuration push router url:" + routerHost);
+
             return AVClient.RequestAsync(uri: new Uri(routerHost),
                 method: "GET",
                 headers: null,
                 data: null,
-                contentType: "",
+                contentType: "application/json",
                 cancellationToken: CancellationToken.None).ContinueWith<PushRouterState>(t =>
                 {
                     var httpStatus = (int)t.Result.Item1;

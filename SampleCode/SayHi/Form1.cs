@@ -23,18 +23,26 @@ namespace SayHi
         public Form1()
         {
             InitializeComponent();
-            Websockets.Net.WebsocketConnection.Link();
-            AVRealtime.WebSocketLog(AppendLogs);
-            AVClient.Initialize(appId, appkey);
 
-            var config = new AVRealtime.Configuration()
+
+            var coreConfig = new AVClient.Configuration
+            {
+                ApplicationId = appId,
+                ApplicationKey = appId,
+            };
+            AVClient.Initialize(coreConfig);
+            AVClient.HttpLog(AppendLogs);
+
+            var realtimeConfig = new AVRealtime.Configuration()
             {
                 ApplicationId = appId,
                 ApplicationKey = appkey,
-                OfflineMessageStrategy = AVRealtime.OfflineMessageStrategy.UnreadAck
+                OfflineMessageStrategy = AVRealtime.OfflineMessageStrategy.UnreadAck,
             };
+            Websockets.Net.WebsocketConnection.Link();
+            AVRealtime.WebSocketLog(AppendLogs);
 
-            realtime = new AVRealtime(config);
+            realtime = new AVRealtime(realtimeConfig);
 
             lbx_messages.DisplayMember = "Content";
             lbx_messages.ValueMember = "Id";

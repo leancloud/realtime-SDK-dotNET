@@ -102,6 +102,12 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="LeanCloud.Core, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\LeanCloud.Storage.2017.11.20.1\lib\portable-net45+win+wp80+MonoAndroid10+xamarinios10+MonoTouch10\LeanCloud.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="LeanCloud.Storage, Version=2.0.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\LeanCloud.Storage.2017.11.20.1\lib\portable-net45+win+wp80+MonoAndroid10+xamarinios10+MonoTouch10\LeanCloud.Storage.dll</HintPath>
+    </Reference>
     <Reference Include="System.Net.Http">
       <HintPath>packages\Microsoft.Net.Http.2.2.29\lib\portable-net40+sl4+win8+wp71+wpa81\System.Net.Http.dll</HintPath>
     </Reference>
@@ -119,12 +125,6 @@
     </Reference>
     <Reference Include="WebSockets.PCL">
       <HintPath>packages\Websockets.Pcl.1.1.9\lib\portable-net45+win+wpa81+wp80+MonoAndroid10+xamarinios10\WebSockets.PCL.dll</HintPath>
-    </Reference>
-    <Reference Include="LeanCloud.Core">
-      <HintPath>packages\LeanCloud.Storage.2017.11.20.1\lib\portable-net45+win+wp80+MonoAndroid10+xamarinios10+MonoTouch10\LeanCloud.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="LeanCloud.Storage">
-      <HintPath>packages\LeanCloud.Storage.2017.11.20.1\lib\portable-net45+win+wp80+MonoAndroid10+xamarinios10+MonoTouch10\LeanCloud.Storage.dll</HintPath>
     </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />

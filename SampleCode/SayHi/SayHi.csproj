@@ -36,13 +36,13 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AssemblyLister, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\LeanCloud.Realtime\packages\LeanCloud.Storage.2017.10.15.1\lib\net45\AssemblyLister.dll</HintPath>
+      <HintPath>..\..\LeanCloud.Realtime\packages\LeanCloud.Storage.2017.11.20.1\lib\net45\AssemblyLister.dll</HintPath>
     </Reference>
     <Reference Include="LeanCloud.Core, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\LeanCloud.Realtime\packages\LeanCloud.Storage.2017.10.15.1\lib\net45\LeanCloud.Core.dll</HintPath>
+      <HintPath>..\..\LeanCloud.Realtime\packages\LeanCloud.Storage.2017.11.20.1\lib\net45\LeanCloud.Core.dll</HintPath>
     </Reference>
     <Reference Include="LeanCloud.Storage, Version=2.0.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\LeanCloud.Realtime\packages\LeanCloud.Storage.2017.10.15.1\lib\net45\LeanCloud.Storage.dll</HintPath>
+      <HintPath>..\..\LeanCloud.Realtime\packages\LeanCloud.Storage.2017.11.20.1\lib\net45\LeanCloud.Storage.dll</HintPath>
     </Reference>
     <Reference Include="PCLStorage, Version=1.0.2.0, Culture=neutral, PublicKeyToken=286fe515a2c35b64, processorArchitecture=MSIL">
       <HintPath>..\..\LeanCloud.Realtime\packages\PCLStorage.1.0.2\lib\net45\PCLStorage.dll</HintPath>
