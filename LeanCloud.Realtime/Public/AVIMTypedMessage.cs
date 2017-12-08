@@ -15,7 +15,7 @@ namespace LeanCloud.Realtime
     {
         public AVIMTypedMessage()
         {
-            
+             
         }
         public override string Serialize()
         {

@@ -171,8 +171,12 @@ namespace LeanCloud.Realtime
             }
             set
             {
-                if (!string.IsNullOrEmpty(value))
+                if (value == null)
+                    this["name"] = "";
+                else
+                {
                     this["name"] = value;
+                }
             }
         }
 

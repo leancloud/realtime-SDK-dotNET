@@ -53,9 +53,7 @@ namespace LeanCloud.Realtime.Internal
         public void Open(string url, string protocol = null)
         {
             if (connection != null)
-            {
-                AVRealtime.PrintLog("protocol:" + protocol);
-                
+            {                
                 connection.Open(url, protocol);
             }
         }
