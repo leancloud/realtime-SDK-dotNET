@@ -63,7 +63,7 @@ namespace LeanCloud.Realtime
         long RcpTimestamp { get; set; }
 
 
-		#region
+		#region mention features.
         /// <summary>
         /// Gets or sets a value indicating whether this <see cref="T:LeanCloud.Realtime.IAVIMMessage"/> mention all.
         /// </summary>

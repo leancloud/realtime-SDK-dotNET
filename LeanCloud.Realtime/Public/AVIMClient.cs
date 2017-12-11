@@ -576,7 +576,18 @@ namespace LeanCloud.Realtime
         /// </summary>
         /// <param name="conversation">目标对话</param>
         /// <returns></returns>
+        [Obsolete("use LeaveAsync instead.")]
         public Task LeftAsync(AVIMConversation conversation)
+        {
+            return this.OperateMembersAsync(conversation, "remove", this.ClientId);
+        }
+
+        /// <summary>
+        /// Leaves the conversation async.
+        /// </summary>
+        /// <returns>The async.</returns>
+        /// <param name="conversation">Conversation.</param>
+        public Task LeaveAsync(AVIMConversation conversation)
         {
             return this.OperateMembersAsync(conversation, "remove", this.ClientId);
         }
