@@ -76,7 +76,7 @@ namespace LeanCloud.Realtime
 
         #endregion
 
-        #region register convertor for typed message
+        #region register convertor for custom typed message
 
         /// <summary>
         /// Serialize this message.

@@ -122,6 +122,7 @@ namespace LeanCloud.Realtime.Internal
                 estimatedData.Clear();
                 estimatedData.Merge(arguments);
                 estimatedData.Add("cmd", cmd);
+                estimatedData.Add("appId", this.appId);
                 if (!string.IsNullOrEmpty(op))
                     estimatedData.Add("op", op);
                 if (!string.IsNullOrEmpty(peerId))

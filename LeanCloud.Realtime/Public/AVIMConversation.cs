@@ -414,7 +414,7 @@ namespace LeanCloud.Realtime
             var convCmd = cmd.Option("update")
                 .PeerId(this.CurrentClient.ClientId);
 
-            return this.CurrentClient.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(convCmd);
+            return this.CurrentClient.LinkedRealtime.RunCommandAsync(convCmd);
 
         }
         #endregion
@@ -637,30 +637,31 @@ namespace LeanCloud.Realtime
         /// unread message count
         /// </summary>
         public int UnreadCount { get; internal set; }
+
         /// <summary>
         /// sync state from server.suhc unread state .etc;
         /// </summary>
         /// <returns></returns>
         public Task<AggregatedState> SyncStateAsync()
         {
-            var rtn = new AggregatedState();
-            var unreadValidator = ConversationUnreadListener.UnreadConversations.Where(c => c.ConvId == this.ConversationId);
-            if (unreadValidator != null)
+            lock (mutex)
             {
-                if (unreadValidator.Count() > 0)
+                var rtn = new AggregatedState();
+                var notice = ConversationUnreadListener.Get(this.ConversationId);
+                var unreadState = new UnreadState()
                 {
-                    var notice = unreadValidator.FirstOrDefault();
-                    var unreadState = new UnreadState()
-                    {
-                        LastUnreadMessage = notice.LastUnreadMessage,
-                        SyncdAt = ConversationUnreadListener.NotifTime
-                    };
-                    rtn.Unread = unreadState;
-                }
+                    LastUnreadMessage = notice.LastUnreadMessage,
+                    SyncdAt = ConversationUnreadListener.NotifTime
+                };
+                rtn.Unread = unreadState;
+                return Task.FromResult(rtn);
             }
-            return Task.FromResult(rtn);
         }
 
+        /// <summary>
+        /// mark this conversation as read
+        /// </summary>
+        /// <returns></returns>
         public Task ReadAsync()
         {
             return this.CurrentClient.ReadAsync(this);

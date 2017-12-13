@@ -9,19 +9,76 @@ namespace LeanCloud.Realtime
 {
     internal class ConversationUnreadListener : IAVIMListener
     {
-        internal struct UnreadConversationNotice
+        internal class UnreadConversationNotice
         {
+            internal readonly object mutex = new object();
             internal IAVIMMessage LastUnreadMessage { get; set; }
             internal string ConvId { get; set; }
             internal int UnreadCount { get; set; }
+            internal void AutomicIncrement()
+            {
+                lock (mutex)
+                {
+                    UnreadCount++;
+                }
+            }
         }
         internal readonly object mutex = new object();
+        internal static readonly object sMutex = new object();
         internal static float NotifTime;
         internal static HashSet<UnreadConversationNotice> UnreadConversations;
         static ConversationUnreadListener()
         {
             UnreadConversations = new HashSet<UnreadConversationNotice>();
             NotifTime = DateTime.Now.UnixTimeStampSeconds();
+        }
+        internal static void UpdateNotice(IAVIMMessage message)
+        {
+            lock (sMutex)
+            {
+                var convValidators = UnreadConversations.Where(c => c.ConvId == message.ConversationId);
+                if (convValidators != null)
+                {
+                    if (convValidators.Count() > 0)
+                    {
+                        var currentNotice = convValidators.FirstOrDefault();
+                        currentNotice.AutomicIncrement();
+                        currentNotice.LastUnreadMessage = message;
+                    }
+                    else
+                    {
+                        var currentThread = new UnreadConversationNotice();
+                        currentThread.ConvId = message.ConversationId;
+                        currentThread.LastUnreadMessage = message;
+                        currentThread.AutomicIncrement();
+                        UnreadConversations.Add(currentThread);
+                    }
+                }
+            }
+        }
+        internal static IEnumerable<string> FindAllConvIds()
+        {
+            lock (sMutex)
+            {
+                return ConversationUnreadListener.UnreadConversations.Select(c => c.ConvId);
+            }
+        }
+
+        internal static UnreadConversationNotice Get(string convId)
+        {
+            lock (sMutex)
+            {
+                var unreadValidator = ConversationUnreadListener.UnreadConversations.Where(c => c.ConvId == convId);
+                if (unreadValidator != null)
+                {
+                    if (unreadValidator.Count() > 0)
+                    {
+                        var notice = unreadValidator.FirstOrDefault();
+                        return notice;
+                    }
+                }
+                return null;
+            }
         }
 
         public void OnNoticeReceived(AVIMNotice notice)

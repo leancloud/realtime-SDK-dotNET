@@ -30,6 +30,19 @@ namespace LeanCloud.Realtime.Internal
         {
             FreeStyleMessageClassInfo info = null;
             mutex.EnterReadLock();
+            bool bin = false;
+            if (buildInData.ContainsKey("bin"))
+            {
+                bool.TryParse(buildInData["bin"].ToString(), out bin);
+            }
+
+            if (bin)
+            {
+                var binMessage = new AVIMBinaryMessage();
+                this.DecodeProperties(binMessage, buildInData);
+                return binMessage;
+            }
+
             var reverse = registeredInterfaces.Values.Reverse();
             foreach (var subInterface in reverse)
             {
@@ -39,10 +52,20 @@ namespace LeanCloud.Realtime.Internal
                     break;
                 }
             }
+
             mutex.ExitReadLock();
 
             var message = info != null ? info.Instantiate(msgStr) : new AVIMMessage();
 
+            this.DecodeProperties(message, buildInData);
+
+            message.Deserialize(msgStr);
+
+            return message;
+        }
+
+        public IAVIMMessage DecodeProperties(IAVIMMessage message, IDictionary<string, object> buildInData)
+        {
             long timestamp;
             if (buildInData.ContainsKey("timestamp"))
             {
@@ -97,8 +120,6 @@ namespace LeanCloud.Realtime.Internal
                     message.MentionAll = mentionAll;
                 }
             }
-
-            message.Deserialize(msgStr);
             return message;
         }
         public IDictionary<string, object> EncodeProperties(IAVIMMessage subclass)

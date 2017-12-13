@@ -427,7 +427,6 @@ namespace LeanCloud.Realtime
                 RegisterMessageType<AVIMMessage>();
                 RegisterMessageType<AVIMTypedMessage>();
                 RegisterMessageType<AVIMTextMessage>();
-                RegisterMessageType<AVIMBinaryMessage>();
             }
         }
 
@@ -501,7 +500,7 @@ namespace LeanCloud.Realtime
                  }).Unwrap().OnSuccess(x =>
                  {
                      var cmd = x.Result;
-                     return AVIMCommandRunner.RunCommandAsync(cmd);
+                     return this.RunCommandAsync(cmd);
                  }).Unwrap().OnSuccess(s =>
                   {
                       AVRealtime.PrintLog("sesstion opened.");
@@ -804,7 +803,7 @@ namespace LeanCloud.Realtime
 
                 var result = AttachSignature(cmd, this.SignatureFactory.CreateConnectSignature(clientId)).OnSuccess(_ =>
                 {
-                    return AVIMCommandRunner.RunCommandAsync(cmd);
+                    return RunCommandAsync(cmd);
                 }).Unwrap().OnSuccess(t =>
                 {
                     AVRealtime.PrintLog("sesstion opened.");
@@ -850,7 +849,7 @@ namespace LeanCloud.Realtime
                 .Argument("t", timestamp)
                 .Argument("s", signature);
 
-            return AVIMCommandRunner.RunCommandAsync(cmd).OnSuccess(t =>
+            return RunCommandAsync(cmd).OnSuccess(t =>
             {
                 AVRealtime.PrintLog("sesstion opened.");
                 if (t.Exception != null)
@@ -934,7 +933,7 @@ namespace LeanCloud.Realtime
                                .PeerId(_clientId);
 
                               AVRealtime.PrintLog("reopen sesstion with sesstion token :" + _sesstionToken);
-                              return AVIMCommandRunner.RunCommandAsync(cmd).OnSuccess(c =>
+                              return RunCommandAsync(cmd).OnSuccess(c =>
                               {
                                   ClearReconnectTimer();
                                   return true;

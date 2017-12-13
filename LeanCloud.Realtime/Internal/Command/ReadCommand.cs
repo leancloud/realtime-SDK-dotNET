@@ -43,7 +43,15 @@ namespace LeanCloud.Realtime.Internal
 
         public ReadCommand ConvIds(IEnumerable<string> convIds)
         {
-            return new ReadCommand(this.Argument("cids", convIds));
+            if (convIds != null)
+            {
+                if (convIds.Count() > 0)
+                {
+                    return new ReadCommand(this.Argument("cids", convIds.ToList()));
+                }
+            }
+            return this;
+
         }
 
         internal ReadCommand Convs(IEnumerable<ConvRead> convReads)
