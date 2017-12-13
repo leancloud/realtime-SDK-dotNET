@@ -64,6 +64,7 @@
     <Compile Include="Internal\Command\ConversationCommand.cs" />
     <Compile Include="Internal\Command\IAVIMCommandRunner.cs" />
     <Compile Include="Internal\Command\MessageCommand.cs" />
+    <Compile Include="Internal\Command\ReadCommand.cs" />
     <Compile Include="Internal\Command\SessionCommand.cs" />
     <Compile Include="Internal\DataEngine\Controller\DateTimeEngine.cs" />
     <Compile Include="Internal\DataEngine\Controller\DictionaryEngine.cs" />
@@ -101,6 +102,7 @@
     <Compile Include="Public\AVIMMessageListener.cs" />
     <Compile Include="Public\ICacheEngine.cs" />
     <Compile Include="Public\ISignatureFactory.cs" />
+    <Compile Include="Public\Listener\ConversationUnreadListener.cs" />
     <Compile Include="Public\Listener\OfflineMessageListener.cs" />
     <Compile Include="Public\Listener\SessionListener.cs" />
     <Compile Include="Internal\Timer\IAVTimer.cs" />

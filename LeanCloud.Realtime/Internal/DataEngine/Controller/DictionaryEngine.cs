@@ -38,5 +38,5 @@ namespace LeanCloud.Realtime.Internal
 
             return Grab(deep, deepPath);
         }
-    }
+    } 
 }

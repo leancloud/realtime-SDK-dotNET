@@ -368,6 +368,7 @@ namespace LeanCloud.Realtime
                 this.MergeMagicFields(attributes.ToDictionary(x => x.Key, x => x.Value));
             }
 
+
         }
 
         /// <summary>
@@ -413,7 +414,7 @@ namespace LeanCloud.Realtime
             var convCmd = cmd.Option("update")
                 .PeerId(this.CurrentClient.ClientId);
 
-            return this.CurrentClient.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(convCmd);
+            return this.CurrentClient.LinkedRealtime.RunCommandAsync(convCmd);
 
         }
         #endregion
@@ -628,6 +629,84 @@ namespace LeanCloud.Realtime
                     this[kv.Key] = kv.Value;
                 }
             }
+        }
+        #endregion
+
+        #region SyncStateAsync & unread & mark as read
+        /// <summary>
+        /// sync state from server.suhc unread state .etc;
+        /// </summary>
+        /// <returns></returns>
+        public Task<AggregatedState> SyncStateAsync()
+        {
+            lock (mutex)
+            {
+                var rtn = new AggregatedState();
+                rtn.Unread = GetFromLocal();
+                return Task.FromResult(rtn);
+            }
+        }
+
+        public UnreadState Unread
+        {
+            get
+            {
+                return GetFromLocal();
+            }
+        }
+        UnreadState GetFromLocal()
+        {
+            lock (mutex)
+            {
+                var notice = ConversationUnreadListener.Get(this.ConversationId);
+                var unreadState = new UnreadState()
+                {
+                    LastUnreadMessage = notice.LastUnreadMessage,
+                    SyncdAt = ConversationUnreadListener.NotifTime,
+                    UnreadCount = notice.UnreadCount
+                };
+                return unreadState;
+            }
+        }
+
+
+        /// <summary>
+        /// mark this conversation as read
+        /// </summary>
+        /// <returns></returns>
+        public Task ReadAsync()
+        {
+            return this.CurrentClient.ReadAsync(this);
+        }
+
+        /// <summary>
+        /// aggregated state for the conversation
+        /// </summary>
+        public class AggregatedState
+        {
+            /// <summary>
+            /// Unread state
+            /// </summary>
+            public UnreadState Unread;
+        }
+        /// <summary>
+        /// UnreadState recoder for the conversation
+        /// </summary>
+        public class UnreadState
+        {
+            /// <summary>
+            /// unread count
+            /// </summary>
+            public int UnreadCount { get; set; }
+            /// <summary>
+            /// last unread message
+            /// </summary>
+            public IAVIMMessage LastUnreadMessage { get; set; }
+
+            /// <summary>
+            /// last sync timestamp
+            /// </summary>
+            public float SyncdAt { get; set; }
         }
         #endregion
     }

@@ -117,5 +117,10 @@ namespace SayHi
             var textMessage = new AVIMTextMessage(text);
             await this.client.SendMessageAsync(this.conversation, textMessage);
         }
+
+        private void btn_markAllAsRead_Click(object sender, EventArgs e)
+        {
+            this.client.ReadAllAsync();
+        }
     }
 }

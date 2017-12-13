@@ -178,6 +178,11 @@ namespace LeanCloud.Realtime
             this.RegisterListener(offlineMessageListener);
             #endregion
 
+            #region 当前 client 离线期间内产生的未读消息可以通过之后调用 Conversation.SyncStateAsync 获取一下离线期间内的未读状态
+            var unreadListener = new ConversationUnreadListener();
+            this.RegisterListener(unreadListener);
+            #endregion
+
         }
 
         private void OfflineMessageListener_OnOfflineMessageReceived(object sender, AVIMMessageEventArgs e)
@@ -241,6 +246,10 @@ namespace LeanCloud.Realtime
                 this.m_OnMessageReceived.Invoke(this, e);
             }
             this.AckListener_OnMessageReceieved(sender, e);
+            if (LinkedRealtime.CurrentConfiguration.OfflineMessageStrategy == AVRealtime.OfflineMessageStrategy.UnreadAck)
+            {
+                this.UpdateUnreadNotice(sender, e);
+            }
         }
 
         private void AckListener_OnMessageReceieved(object sender, AVIMMessageEventArgs e)
@@ -251,9 +260,15 @@ namespace LeanCloud.Realtime
                     .ConversationId(e.Message.ConversationId)
                     .PeerId(this.ClientId);
 
-                this.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(ackCommand);
+                this.LinkedRealtime.RunCommandAsync(ackCommand);
             }
         }
+
+        private void UpdateUnreadNotice(object sender, AVIMMessageEventArgs e)
+        {
+            ConversationUnreadListener.UpdateNotice(e.Message);
+        }
+
         #region listener 
 
         /// <summary>
@@ -265,6 +280,7 @@ namespace LeanCloud.Realtime
         {
             _realtime.SubscribeNoticeReceived(listener, runtimeHook);
         }
+
         #endregion
         /// <summary>
         /// 创建对话
@@ -283,7 +299,7 @@ namespace LeanCloud.Realtime
 
             return LinkedRealtime.AttachSignature(convCmd, LinkedRealtime.SignatureFactory.CreateStartConversationSignature(this.clientId, conversation.MemberIds)).OnSuccess(_ =>
              {
-                 return this.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(convCmd).OnSuccess(t =>
+                 return this.LinkedRealtime.RunCommandAsync(convCmd).OnSuccess(t =>
                   {
                       var result = t.Result;
                       if (result.Item1 < 1)
@@ -449,7 +465,7 @@ namespace LeanCloud.Realtime
 
             var directCmd = cmd.PeerId(this.ClientId);
 
-            return this.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(directCmd).OnSuccess(t =>
+            return this.LinkedRealtime.RunCommandAsync(directCmd).OnSuccess(t =>
             {
                 var response = t.Result.Item2;
 
@@ -477,7 +493,7 @@ namespace LeanCloud.Realtime
                 .Option("mute")
                 .PeerId(this.ClientId);
 
-            return this.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(convCmd);
+            return this.LinkedRealtime.RunCommandAsync(convCmd);
         }
         /// <summary>
         /// 当前用户对目标对话取消静音，恢复该对话的离线消息推送
@@ -491,7 +507,7 @@ namespace LeanCloud.Realtime
                 .Option("unmute")
                 .PeerId(this.ClientId);
 
-            return this.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(convCmd);
+            return this.LinkedRealtime.RunCommandAsync(convCmd);
         }
         #endregion
 
@@ -513,7 +529,7 @@ namespace LeanCloud.Realtime
 
             return this.LinkedRealtime.AttachSignature(cmd, LinkedRealtime.SignatureFactory.CreateConversationSignature(conversation.ConversationId, ClientId, membersAsList, ConversationSignatureAction.Add)).OnSuccess(_ =>
             {
-                return this.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(cmd).OnSuccess(t =>
+                return this.LinkedRealtime.RunCommandAsync(cmd).OnSuccess(t =>
                 {
                     var result = t.Result;
                     if (!conversation.IsTransient)
@@ -659,7 +675,7 @@ namespace LeanCloud.Realtime
             {
                 logsCmd = logsCmd.Argument("tt", afterTimeStampPoint.Value.UnixTimeStampSeconds());
             }
-            return this.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(logsCmd).OnSuccess(t =>
+            return this.LinkedRealtime.RunCommandAsync(logsCmd).OnSuccess(t =>
             {
                 var rtn = new List<IAVIMMessage>();
                 var result = t.Result.Item2;
@@ -684,23 +700,23 @@ namespace LeanCloud.Realtime
         }
         #endregion
 
+
+        //public Task MarkAsReadAsync(string conversationId = null, string messageId = null, AVIMConversation conversation = null, AVIMMessage message = null)
+        //{
+        //    var msgId = messageId != null ? messageId : message.Id;
+        //    var convId = conversationId != null ? conversationId : conversation.ConversationId;
+        //    if (convId == null && msgId == null) throw new ArgumentNullException("发送已读回执的时候，必须指定 conversation id 或者 message id");
+        //    lock (mutex)
+        //    {
+        //        var ackCommand = new AckCommand()
+        //                .ReadAck().MessageId(msgId)
+        //            .ConversationId(convId)
+        //            .PeerId(this.ClientId);
+
+        //        return this.LinkedRealtime.RunCommandAsync(ackCommand);
+        //    }
+        //}
         #region 查询对话中对方的接收状态，也就是已读回执
-        public Task MarkAsReadAsync(string conversationId = null, string messageId = null, AVIMConversation conversation = null, AVIMMessage message = null)
-        {
-            var msgId = messageId != null ? messageId : message.Id;
-            var convId = conversationId != null ? conversationId : conversation.ConversationId;
-            if (convId == null && msgId == null) throw new ArgumentNullException("发送已读回执的时候，必须指定 conversation id 或者 message id");
-            lock (mutex)
-            {
-                var ackCommand = new AckCommand()
-                        .ReadAck().MessageId(msgId)
-                    .ConversationId(convId)
-                    .PeerId(this.ClientId);
-
-                return this.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(ackCommand);
-            }
-        }
-
         private Task<Tuple<long, long>> FetchAllReceiptTimestampsAsync(string targetClientId = null, string conversationId = null, AVIMConversation conversation = null, bool queryAllMembers = false)
         {
             var convId = conversationId != null ? conversationId : conversation.ConversationId;
@@ -712,7 +728,7 @@ namespace LeanCloud.Realtime
               .Option("max-read")
               .PeerId(clientId);
 
-            return this.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(cmd).OnSuccess(t =>
+            return this.LinkedRealtime.RunCommandAsync(cmd).OnSuccess(t =>
             {
                 var result = t.Result;
                 long maxReadTimestamp = -1;
@@ -750,7 +766,7 @@ namespace LeanCloud.Realtime
                 .SessionPeerIds(queryIds)
                 .Option("query");
 
-            return this.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(cmd).OnSuccess(t =>
+            return this.LinkedRealtime.RunCommandAsync(cmd).OnSuccess(t =>
             {
                 var result = t.Result;
                 List<Tuple<string, bool>> rtn = new List<Tuple<string, bool>>();
@@ -765,6 +781,41 @@ namespace LeanCloud.Realtime
         #endregion
         #endregion
 
+        #region mark as read
+        /// <summary>
+        /// mark the conversation as read
+        /// </summary>
+        /// <param name="conversation">conversation</param>
+        /// <returns></returns>
+        public Task ReadAsync(AVIMConversation conversation)
+        {
+            var readCmd = new ReadCommand().ConvId(conversation.ConversationId).PeerId(this.ClientId);
+            return this.LinkedRealtime.RunCommandAsync(readCmd);
+        }
+
+        /// <summary>
+        /// mark the conversation as read with conversation id.
+        /// </summary>
+        /// <param name="conversationId">conversation id</param>
+        /// <returns></returns>
+        public Task ReadAsync(string conversationId)
+        {
+            var conv = AVIMConversation.CreateWithoutData(conversationId, this);
+            return this.ReadAsync(conv);
+        }
+
+        /// <summary>
+        /// mark all conversations as read.
+        /// </summary>
+        /// <returns></returns>
+        public Task ReadAllAsync()
+        {
+            var cids = ConversationUnreadListener.FindAllConvIds();
+            var readCmd = new ReadCommand().ConvIds(cids).PeerId(this.ClientId);
+            return this.LinkedRealtime.RunCommandAsync(readCmd);
+        }
+        #endregion
+
         #region log out
         /// <summary>
         /// 退出登录或者切换账号
@@ -773,7 +824,7 @@ namespace LeanCloud.Realtime
         public Task CloseAsync()
         {
             var cmd = new SessionCommand().Option("close");
-            return this.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(cmd).ContinueWith(t =>
+            return this.LinkedRealtime.RunCommandAsync(cmd).ContinueWith(t =>
             {
                 this.LinkedRealtime.LogOut();
             });

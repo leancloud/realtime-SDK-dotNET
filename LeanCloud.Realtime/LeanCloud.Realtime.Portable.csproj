@@ -43,6 +43,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Internal\Command\AckCommand.cs" />
+    <Compile Include="Internal\Command\ReadCommand.cs" />
     <Compile Include="Internal\Message\Subclassing\FreeStyleMessageClassInfo.cs" />
     <Compile Include="Internal\Message\Subclassing\FreeStyleMessageClassingController.cs" />
     <Compile Include="Internal\Message\Subclassing\IFreeStyleMessageClassingController.cs" />
@@ -86,6 +87,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Public\AVRealtime.cs" />
     <Compile Include="Public\ICacheEngine.cs" />
+    <Compile Include="Public\Listener\ConversationUnreadListener.cs" />
     <Compile Include="Public\Listener\OfflineMessageListener.cs" />
     <Compile Include="Public\Listener\SessionListener.cs" />
     <Compile Include="Internal\Timer\IAVTimer.cs" />
