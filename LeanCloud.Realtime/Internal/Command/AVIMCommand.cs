@@ -21,7 +21,8 @@ namespace LeanCloud.Realtime.Internal
         internal readonly object mutex = new object();
         internal static readonly object Mutex = new object();
 
-        public AVIMCommand()
+        public AVIMCommand() :
+            this(arguments: new Dictionary<string, object>())
         {
 
         }
@@ -34,7 +35,7 @@ namespace LeanCloud.Realtime.Internal
         {
             this.cmd = cmd;
             this.op = op;
-            this.arguments = arguments == null ? new Dictionary<string, object>() : null;
+            this.arguments = arguments == null ? new Dictionary<string, object>() : arguments;
             this.peerId = peerId;
             this.signature = signature;
         }
