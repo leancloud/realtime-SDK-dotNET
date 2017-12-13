@@ -246,7 +246,10 @@ namespace LeanCloud.Realtime
                 this.m_OnMessageReceived.Invoke(this, e);
             }
             this.AckListener_OnMessageReceieved(sender, e);
-            this.UpdateUnreadNotice(sender, e);
+            if (LinkedRealtime.CurrentConfiguration.OfflineMessageStrategy == AVRealtime.OfflineMessageStrategy.UnreadAck)
+            {
+                this.UpdateUnreadNotice(sender, e);
+            }
         }
 
         private void AckListener_OnMessageReceieved(object sender, AVIMMessageEventArgs e)

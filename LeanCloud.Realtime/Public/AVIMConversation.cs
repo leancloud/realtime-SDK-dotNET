@@ -634,11 +634,6 @@ namespace LeanCloud.Realtime
 
         #region SyncStateAsync & unread & mark as read
         /// <summary>
-        /// unread message count
-        /// </summary>
-        public int UnreadCount { get; internal set; }
-
-        /// <summary>
         /// sync state from server.suhc unread state .etc;
         /// </summary>
         /// <returns></returns>
@@ -647,16 +642,33 @@ namespace LeanCloud.Realtime
             lock (mutex)
             {
                 var rtn = new AggregatedState();
+                rtn.Unread = GetFromLocal();
+                return Task.FromResult(rtn);
+            }
+        }
+
+        public UnreadState Unread
+        {
+            get
+            {
+                return GetFromLocal();
+            }
+        }
+        UnreadState GetFromLocal()
+        {
+            lock (mutex)
+            {
                 var notice = ConversationUnreadListener.Get(this.ConversationId);
                 var unreadState = new UnreadState()
                 {
                     LastUnreadMessage = notice.LastUnreadMessage,
-                    SyncdAt = ConversationUnreadListener.NotifTime
+                    SyncdAt = ConversationUnreadListener.NotifTime,
+                    UnreadCount = notice.UnreadCount
                 };
-                rtn.Unread = unreadState;
-                return Task.FromResult(rtn);
+                return unreadState;
             }
         }
+
 
         /// <summary>
         /// mark this conversation as read
