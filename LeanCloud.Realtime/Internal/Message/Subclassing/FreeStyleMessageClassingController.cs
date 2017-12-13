@@ -80,7 +80,10 @@ namespace LeanCloud.Realtime.Internal
             {
                 message.Id = buildInData["id"].ToString();
             }
-
+            if (buildInData.ContainsKey("mid"))
+            {
+                message.Id = buildInData["mid"].ToString();
+            }
             if (buildInData.ContainsKey("mentionPids"))
             {
                 message.MentionList = AVDecoder.Instance.DecodeList<string>(buildInData["mentionPids"]);

@@ -522,6 +522,8 @@ namespace LeanCloud.Realtime
             }
         }
 
+
+
         /// <summary>
         /// Creates the client async.
         /// </summary>
@@ -550,7 +552,8 @@ namespace LeanCloud.Realtime
             {
                 var theUser = u.Result;
                 return AVCloud.RequestRealtimeSignatureAsync(theUser);
-            }).Unwrap().OnSuccess(signTask =>{
+            }).Unwrap().OnSuccess(signTask =>
+            {
                 var signResult = signTask.Result;
                 var clientId = signResult.ClientId;
                 var nonce = signResult.Nonce;
@@ -988,13 +991,22 @@ namespace LeanCloud.Realtime
         #endregion
 
         /// <summary>
+        /// open websocket with default configurations.
+        /// </summary>
+        /// <returns></returns>
+        public Task<bool> OpenAsync(bool secure = true)
+        {
+            return this.OpenAsync(secure, null);
+        }
+
+        /// <summary>
         /// fetch wss address from push router and open the websocket connection.
         /// </summary>
         /// <param name="secure">if use ssl encrept</param>
         /// <param name="subprotocol">subprotocol</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public Task OpenAsync(bool secure = true, string subprotocol = null, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<bool> OpenAsync(bool secure, string subprotocol = null, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (state == Status.Online)
             {
@@ -1069,6 +1081,17 @@ namespace LeanCloud.Realtime
 
             return tcs.Task;
         }
+
+        /// <summary>
+        /// send websocket command to Realtime server.
+        /// </summary>
+        /// <param name="command"></param>
+        /// <returns></returns>
+        public Task<Tuple<int, IDictionary<string, object>>> RunCommandAsync(AVIMCommand command)
+        {
+            command = command.AppId(this.CurrentConfiguration.ApplicationId);
+            return this.AVIMCommandRunner.RunCommandAsync(command);
+         }
 
         internal Task<AVIMCommand> AttachSignature(AVIMCommand command, Task<AVIMSignature> SignatureTask)
         {

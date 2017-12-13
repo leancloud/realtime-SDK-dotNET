@@ -22,7 +22,6 @@ namespace LeanCloud.Realtime.Internal
         internal static readonly object Mutex = new object();
 
         public AVIMCommand()
-            : this(appId: AVClient.CurrentConfiguration.ApplicationId)
         {
 
         }
@@ -37,7 +36,6 @@ namespace LeanCloud.Realtime.Internal
             this.op = op;
             this.arguments = arguments == null ? new Dictionary<string, object>() : null;
             this.peerId = peerId;
-            this.appId = appId == null ? AVClient.CurrentConfiguration.ApplicationId : appId;
             this.signature = signature;
         }
 
@@ -122,7 +120,6 @@ namespace LeanCloud.Realtime.Internal
             lock (mutex)
             {
                 estimatedData.Clear();
-                estimatedData.Add("appId", appId);
                 estimatedData.Merge(arguments);
                 estimatedData.Add("cmd", cmd);
                 if (!string.IsNullOrEmpty(op))

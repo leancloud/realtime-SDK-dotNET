@@ -41,6 +41,10 @@ namespace LeanCloud.Realtime.Internal
 
         public void Open(string url, string protocol = null)
         {
+            if (!string.IsNullOrEmpty(protocol))
+            {
+                url = string.Format("{0}?subprotocol={1}", url, protocol);
+            }
             ws = new WebSocket(url);
             ws.OnOpen += OnOpen;
             ws.OnMessage += OnWebSokectMessage;

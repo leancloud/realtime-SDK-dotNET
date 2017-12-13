@@ -178,6 +178,11 @@ namespace LeanCloud.Realtime
             this.RegisterListener(offlineMessageListener);
             #endregion
 
+            #region 当前 client 离线期间内产生的未读消息可以通过之后调用 Conversation.SyncStateAsync 获取一下离线期间内的未读状态
+            var unreadListener = new ConversationUnreadListener();
+            this.RegisterListener(unreadListener);
+            #endregion
+
         }
 
         private void OfflineMessageListener_OnOfflineMessageReceived(object sender, AVIMMessageEventArgs e)
@@ -265,6 +270,7 @@ namespace LeanCloud.Realtime
         {
             _realtime.SubscribeNoticeReceived(listener, runtimeHook);
         }
+
         #endregion
         /// <summary>
         /// 创建对话
@@ -684,23 +690,23 @@ namespace LeanCloud.Realtime
         }
         #endregion
 
+
+        //public Task MarkAsReadAsync(string conversationId = null, string messageId = null, AVIMConversation conversation = null, AVIMMessage message = null)
+        //{
+        //    var msgId = messageId != null ? messageId : message.Id;
+        //    var convId = conversationId != null ? conversationId : conversation.ConversationId;
+        //    if (convId == null && msgId == null) throw new ArgumentNullException("发送已读回执的时候，必须指定 conversation id 或者 message id");
+        //    lock (mutex)
+        //    {
+        //        var ackCommand = new AckCommand()
+        //                .ReadAck().MessageId(msgId)
+        //            .ConversationId(convId)
+        //            .PeerId(this.ClientId);
+
+        //        return this.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(ackCommand);
+        //    }
+        //}
         #region 查询对话中对方的接收状态，也就是已读回执
-        public Task MarkAsReadAsync(string conversationId = null, string messageId = null, AVIMConversation conversation = null, AVIMMessage message = null)
-        {
-            var msgId = messageId != null ? messageId : message.Id;
-            var convId = conversationId != null ? conversationId : conversation.ConversationId;
-            if (convId == null && msgId == null) throw new ArgumentNullException("发送已读回执的时候，必须指定 conversation id 或者 message id");
-            lock (mutex)
-            {
-                var ackCommand = new AckCommand()
-                        .ReadAck().MessageId(msgId)
-                    .ConversationId(convId)
-                    .PeerId(this.ClientId);
-
-                return this.LinkedRealtime.AVIMCommandRunner.RunCommandAsync(ackCommand);
-            }
-        }
-
         private Task<Tuple<long, long>> FetchAllReceiptTimestampsAsync(string targetClientId = null, string conversationId = null, AVIMConversation conversation = null, bool queryAllMembers = false)
         {
             var convId = conversationId != null ? conversationId : conversation.ConversationId;
@@ -763,6 +769,30 @@ namespace LeanCloud.Realtime
             });
         }
         #endregion
+        #endregion
+
+        #region mark as read
+        /// <summary>
+        /// mark the conversation as read
+        /// </summary>
+        /// <param name="conversation">conversation</param>
+        /// <returns></returns>
+        public Task ReadAsync(AVIMConversation conversation)
+        {
+            var readCmd = new ReadCommand().ConvId(conversation.ConversationId).PeerId(this.ClientId);
+            return this.LinkedRealtime.RunCommandAsync(readCmd);
+        }
+
+        /// <summary>
+        /// mark the conversation as read with conversation id.
+        /// </summary>
+        /// <param name="conversationId">conversation id</param>
+        /// <returns></returns>
+        public Task ReadAsync(string conversationId)
+        {
+            var conv = AVIMConversation.CreateWithoutData(conversationId, this);
+            return this.ReadAsync(conv);
+        }
         #endregion
 
         #region log out

@@ -368,6 +368,7 @@ namespace LeanCloud.Realtime
                 this.MergeMagicFields(attributes.ToDictionary(x => x.Key, x => x.Value));
             }
 
+
         }
 
         /// <summary>
@@ -628,6 +629,71 @@ namespace LeanCloud.Realtime
                     this[kv.Key] = kv.Value;
                 }
             }
+        }
+        #endregion
+
+        #region SyncStateAsync & unread & mark as read
+        /// <summary>
+        /// unread message count
+        /// </summary>
+        public int UnreadCount { get; internal set; }
+        /// <summary>
+        /// sync state from server.suhc unread state .etc;
+        /// </summary>
+        /// <returns></returns>
+        public Task<AggregatedState> SyncStateAsync()
+        {
+            var rtn = new AggregatedState();
+            var unreadValidator = ConversationUnreadListener.UnreadConversations.Where(c => c.ConvId == this.ConversationId);
+            if (unreadValidator != null)
+            {
+                if (unreadValidator.Count() > 0)
+                {
+                    var notice = unreadValidator.FirstOrDefault();
+                    var unreadState = new UnreadState()
+                    {
+                        LastUnreadMessage = notice.LastUnreadMessage,
+                        SyncdAt = ConversationUnreadListener.NotifTime
+                    };
+                    rtn.Unread = unreadState;
+                }
+            }
+            return Task.FromResult(rtn);
+        }
+
+        public Task ReadAsync()
+        {
+            return this.CurrentClient.ReadAsync(this);
+        }
+
+        /// <summary>
+        /// aggregated state for the conversation
+        /// </summary>
+        public class AggregatedState
+        {
+            /// <summary>
+            /// Unread state
+            /// </summary>
+            public UnreadState Unread;
+        }
+        /// <summary>
+        /// UnreadState recoder for the conversation
+        /// </summary>
+        public class UnreadState
+        {
+            /// <summary>
+            /// unread count
+            /// </summary>
+            public int UnreadCount { get; set; }
+            /// <summary>
+            /// last unread message
+            /// </summary>
+            public IAVIMMessage LastUnreadMessage { get; set; }
+
+            /// <summary>
+            /// last sync timestamp
+            /// </summary>
+            public float SyncdAt { get; set; }
         }
         #endregion
     }

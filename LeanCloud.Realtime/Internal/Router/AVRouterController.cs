@@ -85,7 +85,7 @@ namespace LeanCloud.Realtime.Internal
                 routerHost += "&secure=1";
             }
 
-            AVRealtime.PrintLog("use configuration push router url:" + routerHost);
+            AVRealtime.PrintLog("use push router url:" + routerHost);
 
             return AVClient.RequestAsync(uri: new Uri(routerHost),
                 method: "GET",

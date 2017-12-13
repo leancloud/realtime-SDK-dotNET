@@ -53,7 +53,11 @@ namespace LeanCloud.Realtime.Internal
         public void Open(string url, string protocol = null)
         {
             if (connection != null)
-            {                
+            {
+                if (!string.IsNullOrEmpty(protocol))
+                {
+                    url = string.Format("{0}?subprotocol={1}", url, protocol);
+                }
                 connection.Open(url, protocol);
             }
         }
