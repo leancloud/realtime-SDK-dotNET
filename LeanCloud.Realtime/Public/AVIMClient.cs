@@ -20,6 +20,7 @@ namespace LeanCloud.Realtime
         private readonly string clientId;
         private readonly AVRealtime _realtime;
         internal readonly object mutex = new object();
+        internal readonly object patchMutex = new object();
         internal AVRealtime LinkedRealtime
         {
             get { return _realtime; }
@@ -181,6 +182,25 @@ namespace LeanCloud.Realtime
             #region 当前 client 离线期间内产生的未读消息可以通过之后调用 Conversation.SyncStateAsync 获取一下离线期间内的未读状态
             var unreadListener = new ConversationUnreadListener();
             this.RegisterListener(unreadListener);
+            #endregion
+
+            #region 消息补丁（修改或者撤回）
+            var messagePatchListener = new MessagePatchListener();
+            messagePatchListener.OnReceived = (recall, messages) =>
+            {
+                if (recall && this.m_OnMessageRecalled != null)
+                {
+                    var e = new AVIMMessagePatchEventArgs(messages);
+                    this.m_OnMessageRecalled.Invoke(this, e);
+                }
+                if (!recall && this.m_OnMessageModified != null)
+                {
+                    var e = new AVIMMessagePatchEventArgs(messages);
+                    this.m_OnMessageModified.Invoke(this, e);
+                }
+               
+            };
+            this.RegisterListener(messagePatchListener);
             #endregion
 
         }
@@ -471,7 +491,7 @@ namespace LeanCloud.Realtime
 
                 message.Id = response["uid"].ToString();
                 message.ServerTimestamp = long.Parse(response["t"].ToString());
-
+                
                 return message;
 
             });
@@ -814,6 +834,52 @@ namespace LeanCloud.Realtime
             var readCmd = new ReadCommand().ConvIds(cids).PeerId(this.ClientId);
             return this.LinkedRealtime.RunCommandAsync(readCmd);
         }
+        #endregion
+
+        #region recall & modify
+
+        public Task RecallAsync(IAVIMMessage message)
+        {
+            var patchCmd = new PatchCommand().Recall(message);
+            return this.LinkedRealtime.RunCommandAsync(patchCmd);
+        }
+
+        public Task ReplaceAsync(IAVIMMessage oldMessage, IAVIMMessage newMessage)
+        {
+            var patchCmd = new PatchCommand().Modify(oldMessage, newMessage);
+            return this.LinkedRealtime.RunCommandAsync(patchCmd);
+        }
+
+        public Task ModifyAysnc(IAVIMMessage message)
+        {
+            return this.ReplaceAsync(message, message);
+        }
+
+        internal EventHandler<AVIMMessagePatchEventArgs> m_OnMessageRecalled;
+        public event EventHandler<AVIMMessagePatchEventArgs> OnMessageRecalled
+        {
+            add
+            {
+                this.m_OnMessageRecalled += value;
+            }
+            remove
+            {
+                this.m_OnMessageRecalled -= value;
+            }
+        }
+        internal EventHandler<AVIMMessagePatchEventArgs> m_OnMessageModified;
+        public event EventHandler<AVIMMessagePatchEventArgs> OnMessageModified
+        {
+            add
+            {
+                this.m_OnMessageModified += value;
+            }
+            remove
+            {
+                this.m_OnMessageModified -= value;
+            }
+        }
+
         #endregion
 
         #region log out

@@ -12,6 +12,26 @@ using LeanCloud;
 
 namespace SayHi
 {
+    public class MessageVM
+    {
+        public AVIMMessage MetaData { get; set; }
+
+        public string Id
+        {
+            get
+            {
+                return MetaData.Id;
+            }
+        }
+
+        public string Content
+        {
+            get
+            {
+                return MetaData.FromClientId + ": " + MetaData.Content;
+            }
+        }
+    }
     public partial class Form1 : Form
     {
         string appId = "uay57kigwe0b6f5n0e1d4z4xhydsml3dor24bzwvzr57wdap";
@@ -19,11 +39,12 @@ namespace SayHi
         AVRealtime realtime;
         AVIMClient client;
         AVIMConversation conversation;
-        BindingList<AVIMMessage> data = new BindingList<AVIMMessage>();
+        BindingList<MessageVM> data = new BindingList<MessageVM>();
+
+        MessageVM selected;
         public Form1()
         {
             InitializeComponent();
-
 
             var coreConfig = new AVClient.Configuration
             {
@@ -49,6 +70,7 @@ namespace SayHi
             lbx_messages.DataSource = data;
 
             realtime.OnOfflineMessageReceived += Realtime_OnOfflineMessageReceived;
+
         }
 
         private void Realtime_OnOfflineMessageReceived(object sender, AVIMMessageEventArgs e)
@@ -60,7 +82,13 @@ namespace SayHi
         {
             client = await realtime.CreateClientAsync(clientId: txb_clientId.Text.Trim());
             client.OnMessageReceived += Client_OnMessageReceived;
+            client.OnMessageRecalled += Client_OnMessageRecalled;
+        }
 
+        private void Client_OnMessageRecalled(object sender, AVIMMessagePatchEventArgs e)
+        {
+            var list = e.Messages.ToList();
+            Console.WriteLine(list[0].Id + " has been recalled.");
         }
 
         private void Client_OnMessageReceived(object sender, AVIMMessageEventArgs e)
@@ -71,7 +99,7 @@ namespace SayHi
 
                 lbx_messages.Invoke((MethodInvoker)(() =>
                 {
-                    data.Add(baseMeseage);
+                    data.Add(new MessageVM() { MetaData = baseMeseage });
                     lbx_messages.Refresh();
                 }));
             }
@@ -96,14 +124,6 @@ namespace SayHi
             var convId = this.txb_convId.Text.Trim();
             this.conversation = await client.GetConversationAsync(convId, true);
             await client.JoinAsync(this.conversation);
-
-            //AVIMClient avIMClient = await realtime.CreateClientAsync("junwu");
-            //avIMClient.OnMessageReceived += Client_OnMessageReceived;
-            //AVIMConversation avIMConversation = await avIMClient.GetConversationAsync("5940e71b8fd9c5cf89fb91b7", true);
-            //if (avIMConversation != null)
-            //{
-            //    await avIMConversation.JoinAsync();
-            //}
         }
 
         private void btn_Pause_Click(object sender, EventArgs e)
@@ -116,11 +136,49 @@ namespace SayHi
             var text = txb_InputMessage.Text != null ? txb_InputMessage.Text : "no text";
             var textMessage = new AVIMTextMessage(text);
             await this.client.SendMessageAsync(this.conversation, textMessage);
+            lbx_messages.Invoke((MethodInvoker)(() =>
+            {
+                data.Add(new MessageVM() { MetaData = textMessage });
+                lbx_messages.Refresh();
+            }));
         }
 
         private void btn_markAllAsRead_Click(object sender, EventArgs e)
         {
             this.client.ReadAllAsync();
+        }
+
+        private async void btn_Recall_Click(object sender, EventArgs e)
+        {
+            if (this.selected != null)
+            {
+                if (this.selected.MetaData.FromClientId == this.client.ClientId)
+                {
+                    await this.client.RecallAsync(this.selected.MetaData);
+                }
+            }
+        }
+
+        private void lbx_messages_SelectedValueChanged(object sender, EventArgs e)
+        {
+            Console.WriteLine(e);
+
+            var lbx = sender as ListBox;
+            var message = lbx.SelectedItem as MessageVM;
+            if (message != null)
+            {
+                this.selected = message;
+            }
+        }
+
+        private async void btn_Modify_Click(object sender, EventArgs e)
+        {
+            if (this.selected.MetaData is AVIMTextMessage)
+            {
+                var textMessage = (AVIMTextMessage)this.selected.MetaData;
+                textMessage.TextContent = "fixed content";
+            }
+            await this.client.ModifyAysnc(this.selected.MetaData);
         }
     }
 }

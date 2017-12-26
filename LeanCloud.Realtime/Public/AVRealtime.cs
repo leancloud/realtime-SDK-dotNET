@@ -1088,9 +1088,9 @@ namespace LeanCloud.Realtime
         /// <returns></returns>
         public Task<Tuple<int, IDictionary<string, object>>> RunCommandAsync(AVIMCommand command)
         {
-            command = command.AppId(this.CurrentConfiguration.ApplicationId);
+            command.AppId(this.CurrentConfiguration.ApplicationId);
             return this.AVIMCommandRunner.RunCommandAsync(command);
-         }
+        }
 
         internal Task<AVIMCommand> AttachSignature(AVIMCommand command, Task<AVIMSignature> SignatureTask)
         {

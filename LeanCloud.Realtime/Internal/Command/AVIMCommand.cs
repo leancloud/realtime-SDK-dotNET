@@ -12,8 +12,8 @@ namespace LeanCloud.Realtime.Internal
     {
         protected readonly string cmd;
         protected readonly string op;
-        protected readonly string appId;
-        protected readonly string peerId;
+        protected string appId;
+        protected string peerId;
         protected AVIMSignature signature;
         protected readonly IDictionary<string, object> arguments;
 
@@ -103,6 +103,7 @@ namespace LeanCloud.Realtime.Internal
         }
         public AVIMCommand AppId(string appId)
         {
+            this.appId = appId;
             return new AVIMCommand(this, appId: appId);
         }
 
@@ -113,7 +114,8 @@ namespace LeanCloud.Realtime.Internal
 
         public AVIMCommand IDlize()
         {
-            return Argument("i", AVIMCommand.NextCmdId);
+            this.Argument("i", AVIMCommand.NextCmdId);
+            return this;
         }
 
         public virtual IDictionary<string, object> Encode()
@@ -135,7 +137,7 @@ namespace LeanCloud.Realtime.Internal
 
         public virtual string EncodeJsonString()
         {
-            var json = Encode();
+            var json = this.Encode();
             return Json.Encode(json);
         }
         private static Int32 lastCmdId = -65536;

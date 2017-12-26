@@ -20,7 +20,7 @@ namespace LeanCloud.Realtime.Internal
         public Task<Tuple<int, IDictionary<string, object>>> RunCommandAsync(AVIMCommand command, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (!webSocketClient.IsOpen) throw new AVIMException(AVIMException.ErrorCode.CAN_NOT_EXCUTE_COMMAND, "当前连接失效，无法发送指令");
-            command = command.IDlize();
+            command.IDlize();
             var tcs = new TaskCompletionSource<Tuple<int, IDictionary<string, object>>>();
             var requestString = command.EncodeJsonString();
             AVRealtime.PrintLog("websocket=>" + requestString);
