@@ -38,5 +38,10 @@ namespace LeanCloud.Realtime.Internal
 
             return Grab(deep, deepPath);
         }
-    } 
+
+        internal static IDictionary<TKey, TValue> Trim<TKey, TValue>(this IDictionary<TKey, TValue> data)
+        {
+            return data.Where(kvp => kvp.Value != null).ToDictionary(k => k.Key, v => v.Value);
+        }
+    }
 }

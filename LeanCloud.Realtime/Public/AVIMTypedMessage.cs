@@ -11,16 +11,17 @@ namespace LeanCloud.Realtime
     /// 
     /// </summary>
     [AVIMMessageClassName("_AVIMTypedMessage")]
-    public class AVIMTypedMessage: AVIMMessage
+    public class AVIMTypedMessage : AVIMMessage
     {
         public AVIMTypedMessage()
         {
-             
+
         }
         public override string Serialize()
         {
             var result = AVRealtime.FreeStyleMessageClassingController.EncodeProperties(this);
             var resultStr = Json.Encode(result);
+            this.Content = resultStr;
             return resultStr;
         }
 
@@ -39,7 +40,6 @@ namespace LeanCloud.Realtime
         }
         public override IAVIMMessage Deserialize(string msgStr)
         {
-            base.Deserialize(msgStr);
             var msg = Json.Parse(msgStr) as IDictionary<string, object>;
             var className = AVRealtime.FreeStyleMessageClassingController.GetClassName(this.GetType());
             var PropertyMappings = AVRealtime.FreeStyleMessageClassingController.GetPropertyMappings(className);
@@ -50,7 +50,7 @@ namespace LeanCloud.Realtime
             {
                 property.Item1.SetValue(this, property.Item2, null);
             }
-            return this;
+            return base.Deserialize(msgStr);
         }
     }
 }
