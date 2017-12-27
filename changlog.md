@@ -1,5 +1,39 @@
 
-#更新日志
+# 更新日志
+## 2017-12-26
+
+### 支持了消息的撤回和修改
+
+消息撤回：
+
+```cs
+await this.client.RecallAsync(receivedMessage);// receivedMessage 只要实现了 IAVIMMessage 接口就可以
+```
+
+消息修改：
+```cs
+await this.client.ModifyAysnc(receivedMessage);// receivedMessage 只要实现了 IAVIMMessage 接口就可以
+```
+
+而在对话内的其他用户，都会触发对应的事件通知：
+
+```cs
+client.OnMessageRecalled += Client_OnMessageRecalled;
+private void Client_OnMessageRecalled(object sender, AVIMMessagePatchEventArgs e)
+{
+    var list = e.Messages.ToList();
+    Console.WriteLine(list[0].Id + " has been recalled.");
+}          
+```
+
+```cs
+client.OnMessageModified += Client_OnMessageModified;
+private vood Client_OnMessageModified(object sender, AVIMMessagePatchEventArgs e))
+{
+    var list = e.Messages.ToList();
+    Console.WriteLine(list[0].Id + " has been modified.");
+}
+```
 
 ## 2017-12-13
 ### 支持了已读回执和发送回执的分离
