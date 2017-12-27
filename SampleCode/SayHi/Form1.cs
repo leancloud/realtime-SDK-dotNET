@@ -83,12 +83,19 @@ namespace SayHi
             client = await realtime.CreateClientAsync(clientId: txb_clientId.Text.Trim());
             client.OnMessageReceived += Client_OnMessageReceived;
             client.OnMessageRecalled += Client_OnMessageRecalled;
+            client.OnMessageModified += Client_OnMessageModified;
         }
 
         private void Client_OnMessageRecalled(object sender, AVIMMessagePatchEventArgs e)
         {
             var list = e.Messages.ToList();
             Console.WriteLine(list[0].Id + " has been recalled.");
+        }
+
+        private vood Client_OnMessageModified(object sender, AVIMMessagePatchEventArgs e))
+        {
+            var list = e.Messages.ToList();
+            Console.WriteLine(list[0].Id + " has been modified.");
         }
 
         private void Client_OnMessageReceived(object sender, AVIMMessageEventArgs e)
