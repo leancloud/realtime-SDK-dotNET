@@ -92,7 +92,7 @@ namespace SayHi
             Console.WriteLine(list[0].Id + " has been recalled.");
         }
 
-        private vood Client_OnMessageModified(object sender, AVIMMessagePatchEventArgs e))
+        private void Client_OnMessageModified(object sender, AVIMMessagePatchEventArgs e)
         {
             var list = e.Messages.ToList();
             Console.WriteLine(list[0].Id + " has been modified.");
