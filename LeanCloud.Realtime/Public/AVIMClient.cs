@@ -198,7 +198,7 @@ namespace LeanCloud.Realtime
                     var e = new AVIMMessagePatchEventArgs(messages);
                     this.m_OnMessageModified.Invoke(this, e);
                 }
-               
+
             };
             this.RegisterListener(messagePatchListener);
             #endregion
@@ -491,7 +491,7 @@ namespace LeanCloud.Realtime
 
                 message.Id = response["uid"].ToString();
                 message.ServerTimestamp = long.Parse(response["t"].ToString());
-                
+
                 return message;
 
             });
@@ -797,6 +797,30 @@ namespace LeanCloud.Realtime
                 }
                 return rtn.AsEnumerable();
             });
+        }
+        #endregion
+        #region 获取暂态对话在线人数
+        /// <summary>
+        /// 获取暂态对话（聊天室）在线人数，依赖缓存，并不一定 100% 与真实数据一致。
+        /// </summary>
+        /// <param name="chatroomId"></param>
+        /// <returns></returns>
+        public Task<int> CountOnlineClientsAsync(string chatroomId)
+        {
+            var command = new AVCommand(relativeUri: "rtm/transient_group/onlines?gid=" + chatroomId, method: "GET",
+                sessionToken: null,
+                headers: null,
+                data: null);
+
+            return AVPlugins.Instance.CommandRunner.RunCommandAsync(command).OnSuccess(t =>
+               {
+                   var result = t.Result.Item2;
+                   if (result.ContainsKey("result"))
+                   {
+                       return int.Parse(result["result"].ToString());
+                   }
+                   return -1;
+               });
         }
         #endregion
         #endregion
