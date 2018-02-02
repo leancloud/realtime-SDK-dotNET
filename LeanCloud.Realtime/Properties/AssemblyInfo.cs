@@ -27,6 +27,7 @@ using System.Runtime.InteropServices;
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
 [assembly: InternalsVisibleTo("LeanCloud.Play")]
+[assembly: InternalsVisibleTo("LeanCloud.LiveQuery")]
 [assembly: ComVisible(true)]
 [assembly: AssemblyVersion("1.0.0.0")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
