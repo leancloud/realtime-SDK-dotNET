@@ -415,7 +415,6 @@ namespace LeanCloud.Realtime
                 .PeerId(this.CurrentClient.ClientId);
 
             return this.CurrentClient.LinkedRealtime.RunCommandAsync(convCmd);
-
         }
         #endregion
 

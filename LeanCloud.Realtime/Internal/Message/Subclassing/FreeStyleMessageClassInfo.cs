@@ -60,6 +60,7 @@ namespace LeanCloud.Realtime.Internal
             return rtn;
 
         }
+
         public static string GetMessageClassName(TypeInfo type)
         {
             var attribute = type.GetCustomAttribute<AVIMMessageClassNameAttribute>();
