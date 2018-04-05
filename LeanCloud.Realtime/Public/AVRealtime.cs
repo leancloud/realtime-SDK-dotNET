@@ -22,6 +22,7 @@ namespace LeanCloud.Realtime
     {
         private static readonly object mutex = new object();
         private string _wss;
+        private string _secondaryWss;
         private string _sesstionToken;
         private long _sesstionTokenExpire;
         private string _clientId;
@@ -739,7 +740,8 @@ namespace LeanCloud.Realtime
                 reconnectTimer.Enabled = true;
             }
         }
-
+        internal bool useSecondary = false;
+        internal bool reborn = false;
         private void ReconnectTimer_Elapsed(object sender, TimerEventArgs e)
         {
             var _timer = sender as AVTimer;
@@ -750,7 +752,16 @@ namespace LeanCloud.Realtime
                     if (_timer.Executed <= this.ReconnectOptions.Retry && CanReconnect)
                     {
                         AutoReconnect();
+                        PrintLog(string.Format("reconnect for {0} times,", _timer.Executed));
                         _timer.Executed += 1;
+                        if (_timer.Executed == 3)
+                        {
+                            useSecondary = true;
+                        }
+                        if (_timer.Executed == 6)
+                        {
+                            reborn = true;
+                        }
                     }
                     else
                     {
@@ -880,7 +891,6 @@ namespace LeanCloud.Realtime
         /// <returns></returns>
         public Task AutoReconnect()
         {
-
             var reconnectingArgs = new AVIMReconnectingEventArgs()
             {
                 ClientId = _clientId,
@@ -889,7 +899,18 @@ namespace LeanCloud.Realtime
             };
             m_OnReconnecting?.Invoke(this, reconnectingArgs);
 
-            return OpenAsync(_wss, Subprotocol).ContinueWith(t =>
+            var websocketServer = _wss;
+            if (useSecondary)
+            {
+                websocketServer = _secondaryWss;
+            }
+            var task = OpenAsync(websocketServer, Subprotocol);
+            if (reborn)
+            {
+                task = OpenAsync(this._secure, Subprotocol);
+            }
+
+            return task.ContinueWith(t =>
               {
                   if (t.IsFaulted || t.Exception != null)
                   {
@@ -901,6 +922,7 @@ namespace LeanCloud.Realtime
                           SessionToken = _sesstionToken,
                           FailedCode = 0// network broken.
                       };
+                      AVRealtime.PrintLog(string.Format("preferred websocket server ({0}) network broken, take secondary server({1}) :", _wss, _secondaryWss));
                       m_OnReconnectFailed?.Invoke(this, reconnectFailedArgs);
                       state = Status.Offline;
                       return Task.FromResult(false);
@@ -1007,6 +1029,7 @@ namespace LeanCloud.Realtime
         /// <returns></returns>
         public Task<bool> OpenAsync(bool secure, string subprotocol = null, CancellationToken cancellationToken = default(CancellationToken))
         {
+            _secure = secure;
             if (state == Status.Online)
             {
                 AVRealtime.PrintLog("state is Status.Online.");
@@ -1022,6 +1045,7 @@ namespace LeanCloud.Realtime
             return RouterController.GetAsync(routerUrl, secure, cancellationToken).OnSuccess(_ =>
                 {
                     _wss = _.Result.server;
+                    _secondaryWss = _.Result.secondary;
                     state = Status.Connecting;
                     AVRealtime.PrintLog("push router give a url :" + _wss);
                     return OpenAsync(_.Result.server, subprotocol, cancellationToken);
