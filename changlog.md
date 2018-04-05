@@ -1,5 +1,23 @@
 
 # 更新日志
+
+## 2018-04-05
+
+### 自动重连的策略更新
+
+之前的逻辑如下：
+
+1. 如果断线，会重连之前的 websocket 地址（prefered server）
+2. 并且会一直在 session token 有效期内使用当前的服务器地址
+
+现在的逻辑如下：
+
+1. 如果断线，会重连之前的 websocket 地址（prefered server）
+2. 如果重连三次 prefered address 失败，则会切换到 secondary server，并且会重新登录（签名和 session token 都会重新获取并且刷新）
+3. 如果 secondary server 也重连失败 3 次，则会重新请求 rtm router 地址，重新获取 prefered server 和 secondary server
+4. 重复第一步
+
+
 ## 2017-12-26
 
 ### 支持了消息的撤回和修改
