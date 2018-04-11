@@ -24,7 +24,7 @@ namespace LeanCloud.Realtime.Internal
                  var cache = _.Result;
                  var task = Task.FromResult<PushRouterState>(cache);
 
-                 if (cache == null || cache.expire < DateTime.Now.UnixTimeStampSeconds())
+                 if (cache == null || cache.expire < DateTime.Now.ToUnixTimeStamp())
                  {
                      task = QueryAsync(pushRouter, secure, cancellationToken);
                  }
@@ -110,7 +110,7 @@ namespace LeanCloud.Realtime.Internal
                         }
                         var ttl = long.Parse(routerState["ttl"].ToString());
                         var expire = DateTime.Now.AddSeconds(ttl);
-                        routerState["expire"] = expire.UnixTimeStampSeconds();
+                        routerState["expire"] = expire.ToUnixTimeStamp();
 
                         //save to local cache async.
                         AVPlugins.Instance.StorageController.LoadAsync().OnSuccess(storage => storage.Result.AddAsync(routerKey, routerState));
@@ -120,7 +120,7 @@ namespace LeanCloud.Realtime.Internal
                             server = routerState["server"] as string,
                             secondary = routerState["secondary"] as string,
                             ttl = long.Parse(routerState["ttl"].ToString()),
-                            expire = expire.UnixTimeStampSeconds(),
+                            expire = expire.ToUnixTimeStamp(),
                             source = "online"
                         };
 

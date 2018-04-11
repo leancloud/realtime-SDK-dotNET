@@ -70,7 +70,7 @@ namespace LeanCloud.Realtime.Internal
                 MessageId = message.Id,
                 MetaTimestamp = message.ServerTimestamp,
                 Recall = true,
-                PatchTimestamp = DateTime.Now.UnixTimeStampSeconds()
+                PatchTimestamp = DateTime.Now.ToUnixTimeStamp()
             };
 
             this.Patches.Add(patch);
@@ -87,7 +87,7 @@ namespace LeanCloud.Realtime.Internal
                 MessageId = oldMessage.Id,
                 MetaTimestamp = oldMessage.ServerTimestamp,
                 Recall = false,
-                PatchTimestamp = DateTime.Now.UnixTimeStampSeconds(),
+                PatchTimestamp = DateTime.Now.ToUnixTimeStamp(),
                 PatchData = newMessage.Serialize()
             };
 

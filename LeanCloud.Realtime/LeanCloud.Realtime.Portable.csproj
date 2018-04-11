@@ -42,6 +42,7 @@
     <DelaySign>false</DelaySign>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Public\AVIMEnumerator.cs" />
     <Compile Include="Internal\Command\AckCommand.cs" />
     <Compile Include="Internal\Command\PatchCommand.cs" />
     <Compile Include="Internal\Command\ReadCommand.cs" />
