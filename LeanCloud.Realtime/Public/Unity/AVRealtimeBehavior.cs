@@ -71,7 +71,7 @@ namespace LeanCloud.Realtime
             }
             var ttl = long.Parse(routerState["ttl"].ToString());
             var expire = DateTime.Now.AddSeconds(ttl);
-            routerState["expire"] = expire.UnixTimeStampSeconds();
+            routerState["expire"] = expire.ToUnixTimeStamp();
             Server = routerState["server"].ToString();
         }
     }

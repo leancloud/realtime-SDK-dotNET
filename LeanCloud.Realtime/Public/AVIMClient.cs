@@ -534,7 +534,6 @@ namespace LeanCloud.Realtime
         #region Conversation members operations
         internal Task OperateMembersAsync(AVIMConversation conversation, string action, string member = null, IEnumerable<string> members = null)
         {
-
             if (string.IsNullOrEmpty(conversation.ConversationId))
             {
                 throw new Exception("conversation id 不可以为空。");
@@ -665,6 +664,7 @@ namespace LeanCloud.Realtime
         /// <param name="afterMessageId"> 截止到某个 afterMessageId (不包含)</param>
         /// <param name="beforeTimeStampPoint">从 beforeTimeStampPoint 开始向前查询</param>
         /// <param name="afterTimeStampPoint">拉取截止到 afterTimeStampPoint 时间戳（不包含）</param>
+        /// <param name="direction">查询方向，默认是 1，如果是 1 表示从新消息往旧消息方向， 0 则相反,其他值无效</param>
         /// <param name="limit">拉取消息条数，默认值 20 条，可设置为 1 - 1000 之间的任意整数</param>
         /// <returns></returns>
         public Task<IEnumerable<IAVIMMessage>> QueryMessageAsync(AVIMConversation conversation,
@@ -672,6 +672,7 @@ namespace LeanCloud.Realtime
             string afterMessageId = null,
             DateTime? beforeTimeStampPoint = null,
             DateTime? afterTimeStampPoint = null,
+            int direction = 1,
             int limit = 20)
         {
             var logsCmd = new AVIMCommand()
@@ -687,13 +688,17 @@ namespace LeanCloud.Realtime
             {
                 logsCmd = logsCmd.Argument("tmid", afterMessageId);
             }
-            if (beforeTimeStampPoint != null)
+            if (beforeTimeStampPoint != null && beforeTimeStampPoint.Value != DateTime.MinValue)
             {
-                logsCmd = logsCmd.Argument("t", beforeTimeStampPoint.Value.UnixTimeStampSeconds());
+                logsCmd = logsCmd.Argument("t", beforeTimeStampPoint.Value.ToUnixTimeStamp());
             }
-            if (afterTimeStampPoint != null)
+            if (afterTimeStampPoint != null && afterTimeStampPoint.Value != DateTime.MinValue)
             {
-                logsCmd = logsCmd.Argument("tt", afterTimeStampPoint.Value.UnixTimeStampSeconds());
+                logsCmd = logsCmd.Argument("tt", afterTimeStampPoint.Value.ToUnixTimeStamp());
+            }
+            if (direction == 0)
+            {
+                logsCmd = logsCmd.Argument("direction", "NEW");
             }
             return this.LinkedRealtime.RunCommandAsync(logsCmd).OnSuccess(t =>
             {

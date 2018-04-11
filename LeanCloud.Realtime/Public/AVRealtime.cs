@@ -35,7 +35,7 @@ namespace LeanCloud.Realtime
         {
             get
             {
-                return DateTime.Now.UnixTimeStampSeconds() > _sesstionTokenExpire;
+                return DateTime.Now.ToUnixTimeStamp() > _sesstionTokenExpire;
             }
         }
 
@@ -515,7 +515,7 @@ namespace LeanCloud.Realtime
                       if (response.ContainsKey("stTtl"))
                       {
                           var stTtl = long.Parse(response["stTtl"].ToString());
-                          _sesstionTokenExpire = DateTime.Now.UnixTimeStampSeconds() + stTtl;
+                          _sesstionTokenExpire = DateTime.Now.ToUnixTimeStamp() + stTtl;
                       }
                       return client;
                   });
@@ -832,7 +832,7 @@ namespace LeanCloud.Realtime
                     if (response.ContainsKey("stTtl"))
                     {
                         var stTtl = long.Parse(response["stTtl"].ToString());
-                        _sesstionTokenExpire = DateTime.Now.UnixTimeStampSeconds() + stTtl;
+                        _sesstionTokenExpire = DateTime.Now.ToUnixTimeStamp() + stTtl;
                     }
                     return t.Result;
                 });
@@ -877,7 +877,7 @@ namespace LeanCloud.Realtime
                 if (response.ContainsKey("stTtl"))
                 {
                     var stTtl = long.Parse(response["stTtl"].ToString());
-                    _sesstionTokenExpire = DateTime.Now.UnixTimeStampSeconds() + stTtl;
+                    _sesstionTokenExpire = DateTime.Now.ToUnixTimeStamp() + stTtl;
                 }
                 return t.Result;
             });

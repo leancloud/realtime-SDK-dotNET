@@ -64,7 +64,7 @@ namespace LeanCloud.Realtime.Internal
                     {
                         { "cid", convRead.ConvId},
                         { "mid",string.IsNullOrEmpty(convRead.MessageId)?convRead.MessageId:""},
-                        { "timestamp", convRead.Timestamp!=0? convRead.Timestamp:DateTime.Now.UnixTimeStampSeconds()},
+                        { "timestamp", convRead.Timestamp!=0? convRead.Timestamp:DateTime.Now.ToUnixTimeStamp()},
                     }).ToList();
                     return new ReadCommand(this.Argument("convs", payload));
                 }

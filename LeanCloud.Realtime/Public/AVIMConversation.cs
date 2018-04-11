@@ -40,6 +40,7 @@ namespace LeanCloud.Realtime
                 return ((IEnumerable<KeyValuePair<string, object>>)convState).GetEnumerator();
             }
         }
+
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
             lock (mutex)
@@ -47,6 +48,7 @@ namespace LeanCloud.Realtime
                 return ((IEnumerable<KeyValuePair<string, object>>)convState).GetEnumerator();
             }
         }
+
         virtual public object this[string key]
         {
             get
@@ -93,9 +95,9 @@ namespace LeanCloud.Realtime
             }
             if (json.Keys.Contains("lm"))
             {
-                var ts = double.Parse(json["lm"].ToString());
-                updatedAt = ts.UnixTimeStampSeconds();
-                lastMessageAt = ts.UnixTimeStampSeconds();
+                var ts = long.Parse(json["lm"].ToString());
+                updatedAt = ts.ToDateTime();
+                lastMessageAt = ts.ToDateTime();
                 json.Remove("lm");
             }
             if (json.Keys.Contains("c"))
@@ -555,6 +557,7 @@ namespace LeanCloud.Realtime
         /// <param name="afterMessageId"> 截止到某个 afterMessageId (不包含)</param>
         /// <param name="beforeTimeStampPoint">从 beforeTimeStampPoint 开始向前查询</param>
         /// <param name="afterTimeStampPoint">拉取截止到 afterTimeStampPoint 时间戳（不包含）</param>
+        /// <param name="direction">查询方向，默认是 1，如果是 1 表示从新消息往旧消息方向， 0 则相反,其他值无效</param>
         /// <param name="limit">获取的消息数量</param>
         /// <returns></returns>
         public Task<IEnumerable<IAVIMMessage>> QueryMessageAsync(
@@ -562,9 +565,22 @@ namespace LeanCloud.Realtime
            string afterMessageId = null,
            DateTime? beforeTimeStampPoint = null,
            DateTime? afterTimeStampPoint = null,
+           int direction = 1,
            int limit = 20)
         {
-            return this.CurrentClient.QueryMessageAsync(this, beforeMessageId, afterMessageId, beforeTimeStampPoint, afterTimeStampPoint, limit);
+            return this.CurrentClient.QueryMessageAsync(this, beforeMessageId, afterMessageId, beforeTimeStampPoint, afterTimeStampPoint, direction, limit);
+        }
+
+        /// <summary>
+        /// 获取历史消息的迭代器
+        /// </summary>
+        /// <returns></returns>
+        public HistoryMessageIterator GetHistoryMessageIterator()
+        {
+            return new HistoryMessageIterator()
+            {
+                Convsersation = this
+            };
         }
 
 
@@ -688,6 +704,7 @@ namespace LeanCloud.Realtime
             /// </summary>
             public UnreadState Unread;
         }
+
         /// <summary>
         /// UnreadState recoder for the conversation
         /// </summary>

@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -16,6 +17,13 @@ namespace SayHi
     {
         public AVIMMessage MetaData { get; set; }
 
+        public DateTime ToDateTime(long timestamp, int unit = 1000)
+        {
+            var timespan = timestamp * 1000 / (int)(unit);
+            DateTime dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+            dtDateTime = dtDateTime.AddMilliseconds(timespan).ToLocalTime();
+            return dtDateTime;
+        }
         public string Id
         {
             get
@@ -28,7 +36,15 @@ namespace SayHi
         {
             get
             {
-                return MetaData.FromClientId + ": " + MetaData.Content;
+                return MetaData.FromClientId + ": " + MetaData.Content + " at " + this.DateTimeStr;
+            }
+        }
+
+        public string DateTimeStr
+        {
+            get
+            {
+                return ToDateTime(this.MetaData.ServerTimestamp).ToString("yyyy-MM-dd HH:mm:ss");
             }
         }
     }
@@ -124,6 +140,36 @@ namespace SayHi
         {
             //var isTransient = ckb_isTransient.Checked;
             conversation = await client.CreateConversationAsync(txb_friend.Text.Trim());
+            var messageInterator = conversation.GetHistoryMessageIterator();
+            //var lastestMessages = await messageInterator.PreviousAsync();
+            //BindMessagesToUI(lastestMessages);
+            //messageInterator.Limit = 10;
+            //var lastestMessages2 = await messageInterator.PreviousAsync();
+            //BindMessagesToUI(lastestMessages2);
+
+
+            messageInterator.From = DateTime.Now.AddDays(-1);
+            var afterMessages = await messageInterator.NextAsync();
+            BindMessagesToUI(afterMessages);
+            var afterMessages2 = await messageInterator.NextAsync();
+            BindMessagesToUI(afterMessages2);
+        }
+
+        private void BindMessagesToUI(IEnumerable<IAVIMMessage> messages)
+        {
+            foreach (var message in messages)
+            {
+                if (message is AVIMMessage)
+                {
+                    var baseMeseage = message as AVIMMessage;
+
+                    lbx_messages.Invoke((MethodInvoker)(() =>
+                    {
+                        data.Add(new MessageVM() { MetaData = baseMeseage });
+                        lbx_messages.Refresh();
+                    }));
+                }
+            }
         }
 
         private async void btn_join_Click(object sender, EventArgs e)
@@ -147,6 +193,7 @@ namespace SayHi
             {
                 data.Add(new MessageVM() { MetaData = textMessage });
                 lbx_messages.Refresh();
+                txb_InputMessage.Clear();
             }));
         }
 

@@ -30,7 +30,7 @@ namespace LeanCloud.Realtime
         static ConversationUnreadListener()
         {
             UnreadConversations = new HashSet<UnreadConversationNotice>();
-            NotifTime = DateTime.Now.UnixTimeStampSeconds();
+            NotifTime = DateTime.Now.ToUnixTimeStamp();
         }
         internal static void UpdateNotice(IAVIMMessage message)
         {

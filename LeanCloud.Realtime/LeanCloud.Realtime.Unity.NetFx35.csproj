@@ -94,6 +94,7 @@
     <Compile Include="Public\AVIMConversation.cs" />
     <Compile Include="Public\AVIMConversationListener.cs" />
     <Compile Include="Public\AVIMConversationQuery.cs" />
+    <Compile Include="Public\AVIMEnumerator.cs" />
     <Compile Include="Public\AVIMEventArgs.cs" />
     <Compile Include="Public\AVIMException.cs" />
     <Compile Include="Public\AVIMImageMessage.cs" />
