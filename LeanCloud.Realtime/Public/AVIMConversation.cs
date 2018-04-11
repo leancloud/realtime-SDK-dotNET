@@ -369,8 +369,6 @@ namespace LeanCloud.Realtime
             {
                 this.MergeMagicFields(attributes.ToDictionary(x => x.Key, x => x.Value));
             }
-
-
         }
 
         /// <summary>
@@ -669,18 +667,24 @@ namespace LeanCloud.Realtime
                 return GetFromLocal();
             }
         }
+
         UnreadState GetFromLocal()
         {
             lock (mutex)
             {
                 var notice = ConversationUnreadListener.Get(this.ConversationId);
-                var unreadState = new UnreadState()
+                if (notice != null)
                 {
-                    LastUnreadMessage = notice.LastUnreadMessage,
-                    SyncdAt = ConversationUnreadListener.NotifTime,
-                    UnreadCount = notice.UnreadCount
-                };
-                return unreadState;
+                    var unreadState = new UnreadState()
+                    {
+                        LastUnreadMessage = notice.LastUnreadMessage,
+                        SyncdAt = ConversationUnreadListener.NotifTime,
+                        UnreadCount = notice.UnreadCount
+                    };
+                    return unreadState;
+                }
+
+                return null;
             }
         }
 
