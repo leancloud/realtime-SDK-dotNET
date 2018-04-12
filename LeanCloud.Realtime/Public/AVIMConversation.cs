@@ -386,6 +386,12 @@ namespace LeanCloud.Realtime
             };
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="magicFields"></param>
+        /// <param name="client"></param>
+        /// <returns></returns>
         public static AVIMConversation CreateWithData(IEnumerable<KeyValuePair<string, object>> magicFields, AVIMClient client)
         {
             if (magicFields is AVObject)
@@ -566,7 +572,13 @@ namespace LeanCloud.Realtime
            int direction = 1,
            int limit = 20)
         {
-            return this.CurrentClient.QueryMessageAsync(this, beforeMessageId, afterMessageId, beforeTimeStampPoint, afterTimeStampPoint, direction, limit);
+            return this.CurrentClient
+                .QueryMessageAsync(this, beforeMessageId, afterMessageId, beforeTimeStampPoint, afterTimeStampPoint, direction, limit)
+                .OnSuccess(t =>
+                {
+                    OnMessageLoad(t.Result);
+                    return t.Result;
+                });
         }
 
         /// <summary>
@@ -655,20 +667,32 @@ namespace LeanCloud.Realtime
             lock (mutex)
             {
                 var rtn = new AggregatedState();
-                rtn.Unread = GetFromLocal();
+                rtn.Unread = GetUnreadStateFromLocal();
                 return Task.FromResult(rtn);
             }
         }
 
+        private UnreadState _unread;
         public UnreadState Unread
         {
             get
             {
-                return GetFromLocal();
+                if (_unread == null) _unread = GetUnreadStateFromLocal();
+                return _unread;
+            }
+
+            internal set
+            {
+                _unread = value;
             }
         }
 
-        UnreadState GetFromLocal()
+        internal ReceivedState Received
+        {
+            get; set;
+        }
+
+        UnreadState GetUnreadStateFromLocal()
         {
             lock (mutex)
             {
@@ -677,9 +701,9 @@ namespace LeanCloud.Realtime
                 {
                     var unreadState = new UnreadState()
                     {
-                        LastUnreadMessage = notice.LastUnreadMessage,
+                        LastMessage = notice.LastUnreadMessage,
                         SyncdAt = ConversationUnreadListener.NotifTime,
-                        UnreadCount = notice.UnreadCount
+                        Count = notice.UnreadCount
                     };
                     return unreadState;
                 }
@@ -688,14 +712,65 @@ namespace LeanCloud.Realtime
             }
         }
 
+        internal void OnMessageLoad(IEnumerable<IAVIMMessage> messages)
+        {
+            if (Received == null)
+            {
+                Received = new ReceivedState();
+            }
+
+            if (Unread != null)
+            {
+                Received.LastMessage = Unread.LastMessage;
+                if (Received.LastMessage != null)
+                {
+                    var receiveAck = new AckCommand()
+                        .Message(Received.LastMessage)
+                        .ToTimeStamp(Received.LastMessage.ServerTimestamp);
+                    if (this.CurrentClient.LinkedRealtime.CurrentConfiguration.OfflineMessageStrategy == AVRealtime.OfflineMessageStrategy.UnreadNotice)
+                    {
+                        receiveAck = receiveAck.ReadAck();
+                    }
+                    this.CurrentClient.RunCommandAsync(receiveAck);
+                }
+            }
+            var lastestInCollection = messages.OrderByDescending(m => m.ServerTimestamp).FirstOrDefault();
+            if (lastestInCollection != null)
+            {
+                if (Received.LastMessage == null)
+                {
+                    Received.LastMessage = lastestInCollection;
+                }
+                else
+                {
+                    if (Received.LastMessage.ServerTimestamp < lastestInCollection.ServerTimestamp)
+                    {
+                        Received.LastMessage = lastestInCollection;
+                        var receiveAck = new AckCommand().Message(lastestInCollection);
+                        this.CurrentClient.RunCommandAsync(receiveAck);
+                    }
+                }
+            }
+            Received.SyncdAt = DateTime.Now.ToUnixTimeStamp();
+        }
 
         /// <summary>
         /// mark this conversation as read
         /// </summary>
         /// <returns></returns>
-        public Task ReadAsync()
+        public Task ReadAsync(string readMessageId = null, DateTime? readAt = null)
         {
-            return this.CurrentClient.ReadAsync(this);
+            if (Unread != null)
+            {
+                if (Unread.LastMessage != null)
+                {
+                    readMessageId = Unread.LastMessage.Id;
+                }
+            }
+            return this.CurrentClient.ReadAsync(this, readMessageId, readAt).OnSuccess(t =>
+            {
+                Unread = null;
+            });
         }
 
         /// <summary>
@@ -706,7 +781,9 @@ namespace LeanCloud.Realtime
             /// <summary>
             /// Unread state
             /// </summary>
-            public UnreadState Unread;
+            public UnreadState Unread { get; internal set; }
+
+            public ReceivedState Receive { get; internal set; }
         }
 
         /// <summary>
@@ -717,16 +794,30 @@ namespace LeanCloud.Realtime
             /// <summary>
             /// unread count
             /// </summary>
-            public int UnreadCount { get; set; }
+            public int Count { get; internal set; }
             /// <summary>
             /// last unread message
             /// </summary>
-            public IAVIMMessage LastUnreadMessage { get; set; }
+            public IAVIMMessage LastMessage { get; internal set; }
 
             /// <summary>
             /// last sync timestamp
             /// </summary>
-            public float SyncdAt { get; set; }
+            public float SyncdAt { get; internal set; }
+
+        }
+
+        public class ReceivedState
+        {
+            /// <summary>
+            /// last received message
+            /// </summary>
+            public IAVIMMessage LastMessage { get; internal set; }
+
+            /// <summary>
+            /// last sync timestamp
+            /// </summary>
+            public float SyncdAt { get; internal set; }
         }
         #endregion
     }

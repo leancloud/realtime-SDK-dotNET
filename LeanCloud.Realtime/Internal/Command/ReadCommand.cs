@@ -54,7 +54,12 @@ namespace LeanCloud.Realtime.Internal
 
         }
 
-        internal ReadCommand Convs(IEnumerable<ConvRead> convReads)
+        public ReadCommand Conv(ConvRead conv)
+        {
+            return Convs(new ConvRead[] { conv });
+        }
+
+        public ReadCommand Convs(IEnumerable<ConvRead> convReads)
         {
             if (convReads != null)
             {

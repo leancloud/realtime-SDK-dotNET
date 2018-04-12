@@ -9,20 +9,21 @@ using LeanCloud.Realtime.Internal;
 
 namespace LeanCloud.Realtime
 {
+    /// <summary>
+    /// history message interator.
+    /// </summary>
     public class HistoryMessageIterator
     {
-        public int Limit { get; set; }
+       
         public AVIMConversation Convsersation { get; set; }
+        public int Limit { get; set; }
         public DateTime From { get; set; }
         public DateTime To { get; set; }
-
-
         public string EndMessageId { get; set; }
         public string StartMessageId { get; set; }
 
         internal string CurrentMessageIdFlag { get; set; }
         internal DateTime CurrentDateTimeFlag { get; set; }
-
 
         internal HistoryMessageIterator()
         {
@@ -30,6 +31,10 @@ namespace LeanCloud.Realtime
             From = DateTime.Now;
         }
 
+        /// <summary>
+        /// from lastest to previous.
+        /// </summary>
+        /// <returns></returns>
         public Task<IEnumerable<IAVIMMessage>> PreviousAsync()
         {
             if (CurrentDateTimeFlag == DateTime.MinValue)
@@ -54,6 +59,10 @@ namespace LeanCloud.Realtime
                 });
         }
 
+        /// <summary>
+        /// from previous to lastest.
+        /// </summary>
+        /// <returns></returns>
         public Task<IEnumerable<IAVIMMessage>> NextAsync()
         {
             if (CurrentDateTimeFlag == DateTime.MinValue)
