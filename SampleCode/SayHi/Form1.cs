@@ -74,7 +74,7 @@ namespace SayHi
             {
                 ApplicationId = appId,
                 ApplicationKey = appkey,
-                OfflineMessageStrategy = AVRealtime.OfflineMessageStrategy.UnreadAck,
+                OfflineMessageStrategy = AVRealtime.OfflineMessageStrategy.UnreadNotice,
             };
             Websockets.Net.WebsocketConnection.Link();
             AVRealtime.WebSocketLog(AppendLogs);
@@ -141,18 +141,17 @@ namespace SayHi
             //var isTransient = ckb_isTransient.Checked;
             conversation = await client.CreateConversationAsync(txb_friend.Text.Trim());
             var messageInterator = conversation.GetHistoryMessageIterator();
-            //var lastestMessages = await messageInterator.PreviousAsync();
-            //BindMessagesToUI(lastestMessages);
-            //messageInterator.Limit = 10;
+            var lastestMessages = await messageInterator.PreviousAsync();
+            BindMessagesToUI(lastestMessages);
             //var lastestMessages2 = await messageInterator.PreviousAsync();
             //BindMessagesToUI(lastestMessages2);
 
 
-            messageInterator.From = DateTime.Now.AddDays(-1);
-            var afterMessages = await messageInterator.NextAsync();
-            BindMessagesToUI(afterMessages);
-            var afterMessages2 = await messageInterator.NextAsync();
-            BindMessagesToUI(afterMessages2);
+            //messageInterator.From = DateTime.Now.AddDays(-1);
+            //var afterMessages = await messageInterator.NextAsync();
+            //BindMessagesToUI(afterMessages);
+            //var afterMessages2 = await messageInterator.NextAsync();
+            //BindMessagesToUI(afterMessages2);
         }
 
         private void BindMessagesToUI(IEnumerable<IAVIMMessage> messages)

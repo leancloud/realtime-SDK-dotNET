@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace LeanCloud.Realtime.Internal
 {
-    internal class AckCommand: AVIMCommand
+    internal class AckCommand : AVIMCommand
     {
         public AckCommand()
             : base(cmd: "ack")
@@ -15,9 +15,16 @@ namespace LeanCloud.Realtime.Internal
         }
 
         public AckCommand(AVIMCommand source)
-            :base(source)
+            : base(source)
         {
 
+        }
+
+        public AckCommand Message(IAVIMMessage message)
+        {
+            return new AckCommand()
+                .ConversationId(message.ConversationId)
+                .MessageId(message.Id);
         }
 
         public AckCommand MessageId(string messageId)
@@ -28,6 +35,7 @@ namespace LeanCloud.Realtime.Internal
             }
             return new AckCommand(this.Argument("mid", messageId));
         }
+
         public AckCommand ConversationId(string conversationId)
         {
             if (string.IsNullOrEmpty(conversationId))
@@ -36,6 +44,7 @@ namespace LeanCloud.Realtime.Internal
             }
             return new AckCommand(this.Argument("cid", conversationId));
         }
+
         public AckCommand FromTimeStamp(long startTimeStamp)
         {
             return new AckCommand(this.Argument("fromts", startTimeStamp));

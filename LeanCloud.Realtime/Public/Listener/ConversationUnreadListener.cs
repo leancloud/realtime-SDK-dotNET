@@ -23,6 +23,7 @@ namespace LeanCloud.Realtime
                 }
             }
         }
+
         internal readonly object mutex = new object();
         internal static readonly object sMutex = new object();
         internal static float NotifTime;
