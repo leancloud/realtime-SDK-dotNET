@@ -486,7 +486,11 @@ namespace LeanCloud.Realtime
                 AVRealtime.PrintLog("begin OpenAsync.");
                 return OpenAsync(secure, Subprotocol, cancellationToken).OnSuccess(t =>
                  {
-                     AVRealtime.PrintLog("OpenAsync OnSuccess. begin send open sesstion cmd.");
+                     if (!t.Result)
+                     {
+                         return Task.FromResult<AVIMCommand>(null);
+                     }
+                     AVRealtime.PrintLog("websocket server connected, begin to open sesstion.");
 
                      var cmd = new SessionCommand()
                         .UA(VersionString)
@@ -501,9 +505,17 @@ namespace LeanCloud.Realtime
                  }).Unwrap().OnSuccess(x =>
                  {
                      var cmd = x.Result;
+                     if (cmd == null)
+                     {
+                         return Task.FromResult<Tuple<int, IDictionary<string, object>>>(null);
+                     }
                      return this.RunCommandAsync(cmd);
                  }).Unwrap().OnSuccess(s =>
                   {
+                      if (s.Result == null)
+                      {
+                          return null;
+                      }
                       AVRealtime.PrintLog("sesstion opened.");
                       state = Status.Online;
                       ToggleHeartBeating(_heartBeatingToggle);
@@ -903,16 +915,19 @@ namespace LeanCloud.Realtime
             if (useSecondary)
             {
                 websocketServer = _secondaryWss;
+                AVRealtime.PrintLog(string.Format("preferred websocket server ({0}) network broken, take secondary server({1}) :", _wss, _secondaryWss));
             }
+
             var task = OpenAsync(websocketServer, Subprotocol);
             if (reborn)
             {
                 task = OpenAsync(this._secure, Subprotocol);
+                AVRealtime.PrintLog("both preferred and secondary websockets are expired, so try to request RTM router to get a new pair");
             }
 
             return task.ContinueWith(t =>
               {
-                  if (t.IsFaulted || t.Exception != null)
+                  if (!t.Result)
                   {
                       state = Status.Reconnecting;
                       var reconnectFailedArgs = new AVIMReconnectFailedArgs()
@@ -922,47 +937,42 @@ namespace LeanCloud.Realtime
                           SessionToken = _sesstionToken,
                           FailedCode = 0// network broken.
                       };
-                      AVRealtime.PrintLog(string.Format("preferred websocket server ({0}) network broken, take secondary server({1}) :", _wss, _secondaryWss));
                       m_OnReconnectFailed?.Invoke(this, reconnectFailedArgs);
                       state = Status.Offline;
                       return Task.FromResult(false);
                   }
                   else
                   {
-                      if (t.Result)
+                      state = Status.Opened;
+
+                      if (this.IsSesstionTokenExpired)
                       {
-                          state = Status.Opened;
-
-                          if (this.IsSesstionTokenExpired)
+                          AVRealtime.PrintLog("sesstion is expired, auto relogin with clientId :" + _clientId);
+                          return this.LogInAsync(_clientId, this._tag, this._deviceId, this._secure).OnSuccess(o =>
                           {
-                              AVRealtime.PrintLog("sesstion is expired, auto relogin with clientId :" + _clientId);
-                              return this.LogInAsync(_clientId, this._tag, this._deviceId, this._secure).OnSuccess(o =>
-                              {
-                                  ClearReconnectTimer();
-                                  return true;
-                              });
-                          }
-                          else
-                          {
-                              var sessionCMD = new SessionCommand().UA(VersionString).R(1);
-
-                              if (string.IsNullOrEmpty(_tag))
-                              {
-                                  sessionCMD = sessionCMD.Tag(_tag).SessionToken(this._sesstionToken);
-                              }
-
-                              var cmd = sessionCMD.Option("open")
-                               .PeerId(_clientId);
-
-                              AVRealtime.PrintLog("reopen sesstion with sesstion token :" + _sesstionToken);
-                              return RunCommandAsync(cmd).OnSuccess(c =>
-                              {
-                                  ClearReconnectTimer();
-                                  return true;
-                              });
-                          }
+                              ClearReconnectTimer();
+                              return true;
+                          });
                       }
-                      else return Task.FromResult(false);
+                      else
+                      {
+                          var sessionCMD = new SessionCommand().UA(VersionString).R(1);
+
+                          if (string.IsNullOrEmpty(_tag))
+                          {
+                              sessionCMD = sessionCMD.Tag(_tag).SessionToken(this._sesstionToken);
+                          }
+
+                          var cmd = sessionCMD.Option("open")
+                           .PeerId(_clientId);
+
+                          AVRealtime.PrintLog("reopen sesstion with sesstion token :" + _sesstionToken);
+                          return RunCommandAsync(cmd).OnSuccess(c =>
+                          {
+                              ClearReconnectTimer();
+                              return true;
+                          });
+                      }
                   }
 
               }).Unwrap().ContinueWith(s =>
@@ -1042,13 +1052,18 @@ namespace LeanCloud.Realtime
                 return OpenAsync(CurrentConfiguration.RealtimeServer.ToString(), subprotocol, cancellationToken);
             }
             var routerUrl = CurrentConfiguration.RTMRouter != null ? CurrentConfiguration.RTMRouter.ToString() : null;
-            return RouterController.GetAsync(routerUrl, secure, cancellationToken).OnSuccess(_ =>
+            return RouterController.GetAsync(routerUrl, secure, cancellationToken).OnSuccess(r =>
                 {
-                    _wss = _.Result.server;
-                    _secondaryWss = _.Result.secondary;
+                    var routerState = r.Result;
+                    if (routerState == null)
+                    {
+                        return Task.FromResult(false);
+                    }
+                    _wss = routerState.server;
+                    _secondaryWss = routerState.secondary;
                     state = Status.Connecting;
                     AVRealtime.PrintLog("push router give a url :" + _wss);
-                    return OpenAsync(_.Result.server, subprotocol, cancellationToken);
+                    return OpenAsync(routerState.server, subprotocol, cancellationToken);
                 }).Unwrap();
         }
 
@@ -1067,7 +1082,7 @@ namespace LeanCloud.Realtime
                 return Task.FromResult(true);
             }
 
-            AVRealtime.PrintLog("websocket try to connect url :" + url + "with subprotocol: " + subprotocol);
+            AVRealtime.PrintLog("websocket try to connect url :" + url + " with subprotocol: " + subprotocol);
             AVRealtime.PrintLog(url + " connecting...");
             var tcs = new TaskCompletionSource<bool>();
             Action<string> onError = null;
@@ -1075,7 +1090,7 @@ namespace LeanCloud.Realtime
             {
                 PCLWebsocketClient.OnError -= onError;
                 tcs.TrySetResult(false);
-                tcs.TrySetException(new AVIMException(AVIMException.ErrorCode.FromServer, "try to open websocket at " + url + "failed.The reason is " + reason, null));
+                //tcs.TrySetException(new AVIMException(AVIMException.ErrorCode.FromServer, "try to open websocket at " + url + "failed.The reason is " + reason, null));
             });
 
             Action onOpend = null;
@@ -1094,7 +1109,7 @@ namespace LeanCloud.Realtime
                 PCLWebsocketClient.OnOpened -= onOpend;
                 PCLWebsocketClient.OnClosed -= onClosed;
                 tcs.TrySetResult(false);
-                tcs.TrySetException(new AVIMException(AVIMException.ErrorCode.FromServer, "try to open websocket at " + url + "failed.The reason is " + reason, null));
+                //tcs.TrySetException(new AVIMException(AVIMException.ErrorCode.FromServer, "try to open websocket at " + url + "failed.The reason is " + reason, null));
             };
 
             PCLWebsocketClient.OnOpened += onOpend;
@@ -1118,7 +1133,7 @@ namespace LeanCloud.Realtime
 
         internal Task<AVIMCommand> AttachSignature(AVIMCommand command, Task<AVIMSignature> SignatureTask)
         {
-            AVRealtime.PrintLog("AttachSignature started.");
+            AVRealtime.PrintLog("begin to attach singature.");
             var tcs = new TaskCompletionSource<AVIMCommand>();
             if (SignatureTask == null)
             {
