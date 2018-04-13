@@ -390,13 +390,13 @@ namespace LeanCloud.Realtime
             /// <summary>
             /// 不再下发未读消息，而是下发对话的未读通知，告知客户端有哪些对话处于未读状态
             /// </summary>
+            [Obsolete("该策略已被废弃，请使用 UnreadAck")]
             UnreadNotice = 2,
 
             /// <summary>
             /// ack 和 read 分离, ack 不会清理未读消息
             /// </summary>
             UnreadAck = 3
-
         }
 
         /// <summary>

@@ -16,7 +16,7 @@ namespace LeanCloud.Realtime.Internal
         public static long ToUnixTimeStamp(this DateTime date, UnixTimeStampUnit unit = UnixTimeStampUnit.Milisecond)
         {
             long unixTimestamp = (long)(date.ToUniversalTime().Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
-            return unixTimestamp * (int)unit;
+            return (unixTimestamp * (int)unit);
         }
 
         public static DateTime ToDateTime(this long timestamp, UnixTimeStampUnit unit = UnixTimeStampUnit.Milisecond)

@@ -59,6 +59,10 @@ namespace LeanCloud.Realtime.Internal
                         }
                         webSocketClient.OnMessage -= onMessage;
                     }
+                    else
+                    {
+
+                    }
                 }
             };
             webSocketClient.OnMessage += onMessage;

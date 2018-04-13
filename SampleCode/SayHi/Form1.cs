@@ -74,7 +74,7 @@ namespace SayHi
             {
                 ApplicationId = appId,
                 ApplicationKey = appkey,
-                OfflineMessageStrategy = AVRealtime.OfflineMessageStrategy.UnreadNotice,
+                OfflineMessageStrategy = AVRealtime.OfflineMessageStrategy.UnreadAck,
             };
             Websockets.Net.WebsocketConnection.Link();
             AVRealtime.WebSocketLog(AppendLogs);
@@ -196,9 +196,11 @@ namespace SayHi
             }));
         }
 
-        private void btn_markAllAsRead_Click(object sender, EventArgs e)
+        private async void btn_markAllAsRead_Click(object sender, EventArgs e)
         {
-            this.client.ReadAllAsync();
+            await this.conversation.ReadAsync(this.selected.MetaData);
+            var unread = this.conversation.Unread;
+            var count = unread.Count;
         }
 
         private async void btn_Recall_Click(object sender, EventArgs e)

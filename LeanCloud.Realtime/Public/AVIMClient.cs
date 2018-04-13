@@ -266,10 +266,6 @@ namespace LeanCloud.Realtime
                 this.m_OnMessageReceived.Invoke(this, e);
             }
             this.AckListener_OnMessageReceieved(sender, e);
-            if (LinkedRealtime.CurrentConfiguration.OfflineMessageStrategy == AVRealtime.OfflineMessageStrategy.UnreadAck)
-            {
-                this.UpdateUnreadNotice(sender, e);
-            }
         }
 
         private void AckListener_OnMessageReceieved(object sender, AVIMMessageEventArgs e)
@@ -277,8 +273,13 @@ namespace LeanCloud.Realtime
             lock (mutex)
             {
                 var ackCommand = new AckCommand().MessageId(e.Message.Id)
-                    .ConversationId(e.Message.ConversationId)
-                    .PeerId(this.ClientId);
+                    .ConversationId(e.Message.ConversationId);
+
+                // 在 v.2 协议下，只要在线收到消息，就默认是已读的，下次上线不会再把当前消息当做未读消息
+                if (this.LinkedRealtime.CurrentConfiguration.OfflineMessageStrategy == AVRealtime.OfflineMessageStrategy.UnreadNotice)
+                {
+                    ackCommand = ackCommand.ReadAck();
+                }
 
                 this.RunCommandAsync(ackCommand);
             }
@@ -326,9 +327,8 @@ namespace LeanCloud.Realtime
                       {
                           var members = conversation.MemberIds.ToList();
                           members.Add(ClientId);
-                          conversation = new AVIMConversation(source: conversation, creator: ClientId, isUnique: isUnique, members: members);
+                          conversation.MemberIds = members;
                           conversation.MergeFromPushServer(result.Item2);
-                          conversation.CurrentClient = this;
                       }
 
                       return conversation;
@@ -361,7 +361,7 @@ namespace LeanCloud.Realtime
                 name: name,
                 isUnique: isUnique,
                 isSystem: isSystem,
-                isTransient: isTransient);
+                isTransient: isTransient, client: this);
             if (options != null)
             {
                 foreach (var key in options.Keys)
@@ -412,7 +412,7 @@ namespace LeanCloud.Realtime
         /// <returns></returns>
         public Task<AVIMConversation> GetConversationAsync(string id, bool noCache = true)
         {
-            if (!noCache) return Task.FromResult(new AVIMConversation() { ConversationId = id, CurrentClient = this });
+            if (!noCache) return Task.FromResult(new AVIMConversation(this) { ConversationId = id });
             else
             {
                 return this.GetQuery().WhereEqualTo("objectId", id).FirstAsync();
@@ -845,19 +845,20 @@ namespace LeanCloud.Realtime
         /// 
         /// </summary>
         /// <param name="conversation"></param>
-        /// <param name="readMessageId"></param>
+        /// <param name="message"></param>
         /// <param name="readAt"></param>
         /// <returns></returns>
-        public Task ReadAsync(AVIMConversation conversation, string readMessageId = null, DateTime? readAt = null)
+        public Task ReadAsync(AVIMConversation conversation, IAVIMMessage message = null, DateTime? readAt = null)
         {
             var convRead = new ReadCommand.ConvRead()
             {
                 ConvId = conversation.ConversationId,
             };
 
-            if (!string.IsNullOrEmpty(readMessageId))
+            if (message != null)
             {
-                convRead.MessageId = readMessageId;
+                convRead.MessageId = message.Id;
+                convRead.Timestamp = message.ServerTimestamp;
             }
 
             if (readAt != null && readAt.Value != DateTime.MinValue)
@@ -866,7 +867,10 @@ namespace LeanCloud.Realtime
             }
 
             var readCmd = new ReadCommand().Conv(convRead).PeerId(this.ClientId);
-            return this.RunCommandAsync(readCmd);
+
+            this.RunCommandAsync(readCmd);
+
+            return Task.FromResult(true);
         }
 
         /// <summary>

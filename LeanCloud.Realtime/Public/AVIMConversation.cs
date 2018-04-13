@@ -148,10 +148,10 @@ namespace LeanCloud.Realtime
                 if (_currentClient == null) throw new NullReferenceException("当前对话没有关联有效的 AVIMClient。");
                 return _currentClient;
             }
-            set
-            {
-                _currentClient = value;
-            }
+            //set
+            //{
+            //    _currentClient = value;
+            //}
         }
         /// <summary>
         /// 对话的唯一ID
@@ -293,9 +293,26 @@ namespace LeanCloud.Realtime
         /// 已知 id，在本地构建一个 AVIMConversation 对象
         /// </summary>
         public AVIMConversation(string id)
-            : this(null, null, null, null, null, false, false, null)
+            : this(id, null)
+        {
+
+        }
+
+        /// <summary>
+        /// 已知 id 在本地构建一个对话
+        /// </summary>
+        /// <param name="id">对话 id</param>
+        /// <param name="client">AVIMClient 实例，必须是登陆成功的</param>
+        public AVIMConversation(string id, AVIMClient client) : this(client)
         {
             this.ConversationId = id;
+        }
+
+        internal AVIMConversation(AVIMClient client)
+        {
+            this._currentClient = client;
+            this.AutoRead = true;
+            this.CurrentClient.OnMessageReceived += CurrentClient_OnMessageReceived;
         }
 
         /// <summary>
@@ -323,7 +340,9 @@ namespace LeanCloud.Realtime
             AVObject state = null,
             bool isUnique = true,
             bool isTemporary = false,
-            int ttl = 86400)
+            int ttl = 86400,
+            AVIMClient client = null) :
+            this(client)
         {
             convState = source != null ? source.convState : new AVObject("_Conversation");
 
@@ -379,10 +398,9 @@ namespace LeanCloud.Realtime
         /// <returns></returns>
         public static AVIMConversation CreateWithoutData(string convId, AVIMClient client)
         {
-            return new AVIMConversation()
+            return new AVIMConversation(client)
             {
                 ConversationId = convId,
-                CurrentClient = client
             };
         }
 
@@ -396,15 +414,9 @@ namespace LeanCloud.Realtime
         {
             if (magicFields is AVObject)
             {
-                return new AVIMConversation(state: (AVObject)magicFields)
-                {
-                    CurrentClient = client
-                };
+                return new AVIMConversation(state: (AVObject)magicFields, client: client);
             }
-            return new AVIMConversation(attributes: magicFields)
-            {
-                CurrentClient = client
-            };
+            return new AVIMConversation(attributes: magicFields, client: client);
         }
 
         #region save to cloud
@@ -420,7 +432,7 @@ namespace LeanCloud.Realtime
             var convCmd = cmd.Option("update")
                 .PeerId(this.CurrentClient.ClientId);
 
-            return this.CurrentClient.LinkedRealtime.RunCommandAsync(convCmd);
+            return this.CurrentClient.RunCommandAsync(convCmd);
         }
         #endregion
 
@@ -576,7 +588,7 @@ namespace LeanCloud.Realtime
                 .QueryMessageAsync(this, beforeMessageId, afterMessageId, beforeTimeStampPoint, afterTimeStampPoint, direction, limit)
                 .OnSuccess(t =>
                 {
-                    OnMessageLoad(t.Result);
+                    //OnMessageLoad(t.Result);
                     return t.Result;
                 });
         }
@@ -673,11 +685,24 @@ namespace LeanCloud.Realtime
         }
 
         private UnreadState _unread;
+        private UnreadState _lastUnreadWhenOpenSession;
         public UnreadState Unread
         {
             get
             {
-                if (_unread == null) _unread = GetUnreadStateFromLocal();
+                _lastUnreadWhenOpenSession = GetUnreadStateFromLocal();
+
+                // v.2 协议，只给出上次离线之后的未读消息，本次在线的收到的消息均视为已读
+                if (this.CurrentClient.LinkedRealtime.CurrentConfiguration.OfflineMessageStrategy == AVRealtime.OfflineMessageStrategy.UnreadNotice)
+                {
+                    _unread = _lastUnreadWhenOpenSession;
+                }
+                else if (this.CurrentClient.LinkedRealtime.CurrentConfiguration.OfflineMessageStrategy == AVRealtime.OfflineMessageStrategy.UnreadAck)
+                {
+                    if (_lastUnreadWhenOpenSession == null) _unread = new UnreadState().MergeReceived(this.Received);
+                    else _unread = _lastUnreadWhenOpenSession.MergeReceived(this.Received);
+                }
+
                 return _unread;
             }
 
@@ -687,7 +712,12 @@ namespace LeanCloud.Realtime
             }
         }
 
-        internal ReceivedState Received
+        private object receivedMutex = new object();
+        public ReceivedState Received
+        {
+            get; set;
+        }
+        public ReadState Read
         {
             get; set;
         }
@@ -711,6 +741,8 @@ namespace LeanCloud.Realtime
                 return null;
             }
         }
+
+
 
         internal void OnMessageLoad(IEnumerable<IAVIMMessage> messages)
         {
@@ -755,21 +787,34 @@ namespace LeanCloud.Realtime
         }
 
         /// <summary>
+        /// 收到消息时，自动标记当前对话已读
+        /// </summary>
+        public bool AutoRead { get; set; }
+
+        /// <summary>
         /// mark this conversation as read
         /// </summary>
         /// <returns></returns>
-        public Task ReadAsync(string readMessageId = null, DateTime? readAt = null)
+        public Task ReadAsync(IAVIMMessage message = null, DateTime? readAt = null)
         {
-            if (Unread != null)
+            // 标记已读必须至少是从上一次离线产生的最后一条消息开始，否则无法计算 Count
+            if (_lastUnreadWhenOpenSession != null)
             {
-                if (Unread.LastMessage != null)
+                if (_lastUnreadWhenOpenSession.LastMessage != null)
                 {
-                    readMessageId = Unread.LastMessage.Id;
+                    message = _lastUnreadWhenOpenSession.LastMessage;
                 }
             }
-            return this.CurrentClient.ReadAsync(this, readMessageId, readAt).OnSuccess(t =>
+            return this.CurrentClient.ReadAsync(this, message, readAt).OnSuccess(t =>
             {
-                Unread = null;
+                _lastUnreadWhenOpenSession = null;
+                Read = new ReadState()
+                {
+                    ReadAt = readAt != null ? readAt.Value.ToUnixTimeStamp() : 0,
+                    LastMessage = message,
+                    SyncdAt = DateTime.Now.ToUnixTimeStamp()
+                };
+
             });
         }
 
@@ -782,8 +827,6 @@ namespace LeanCloud.Realtime
             /// Unread state
             /// </summary>
             public UnreadState Unread { get; internal set; }
-
-            public ReceivedState Receive { get; internal set; }
         }
 
         /// <summary>
@@ -803,12 +846,30 @@ namespace LeanCloud.Realtime
             /// <summary>
             /// last sync timestamp
             /// </summary>
-            public float SyncdAt { get; internal set; }
+            public long SyncdAt { get; internal set; }
 
+            internal UnreadState MergeReceived(ReceivedState receivedState)
+            {
+                if (receivedState == null) return this;
+                var count = Count + receivedState.Count;
+                var lastMessage = this.LastMessage;
+                if (receivedState.LastMessage != null)
+                {
+                    lastMessage = receivedState.LastMessage;
+                }
+                var syncdAt = this.SyncdAt > receivedState.SyncdAt ? this.SyncdAt : receivedState.SyncdAt;
+                return new UnreadState()
+                {
+                    Count = count,
+                    LastMessage = lastMessage,
+                    SyncdAt = syncdAt
+                };
+            }
         }
 
         public class ReceivedState
         {
+            public int Count { get; internal set; }
             /// <summary>
             /// last received message
             /// </summary>
@@ -817,7 +878,32 @@ namespace LeanCloud.Realtime
             /// <summary>
             /// last sync timestamp
             /// </summary>
-            public float SyncdAt { get; internal set; }
+            public long SyncdAt { get; internal set; }
+        }
+
+        public class ReadState
+        {
+            public long ReadAt { get; set; }
+            public IAVIMMessage LastMessage { get; internal set; }
+            public long SyncdAt { get; internal set; }
+        }
+
+        #endregion
+
+        #region on client message received to update unread
+        private void CurrentClient_OnMessageReceived(object sender, AVIMMessageEventArgs e)
+        {
+            lock (receivedMutex)
+            {
+                if (this.Received == null) this.Received = new ReceivedState();
+                this.Received.Count++;
+                this.Received.LastMessage = e.Message;
+                this.Received.SyncdAt = DateTime.Now.ToUnixTimeStamp();
+            }
+            if (AutoRead)
+            {
+                this.ReadAsync(e.Message);
+            }
         }
         #endregion
     }
