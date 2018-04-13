@@ -9,12 +9,23 @@ namespace LeanCloud.Realtime
 {
     internal class ConversationUnreadListener : IAVIMListener
     {
-        internal class UnreadConversationNotice
+        internal class UnreadConversationNotice : IEqualityComparer<UnreadConversationNotice>
         {
             internal readonly object mutex = new object();
             internal IAVIMMessage LastUnreadMessage { get; set; }
             internal string ConvId { get; set; }
             internal int UnreadCount { get; set; }
+
+            public bool Equals(UnreadConversationNotice x, UnreadConversationNotice y)
+            {
+                return x.ConvId == y.ConvId;
+            }
+
+            public int GetHashCode(UnreadConversationNotice obj)
+            {
+                return obj.ConvId.GetHashCode();
+            }
+
             internal void AutomicIncrement()
             {
                 lock (mutex)
@@ -23,16 +34,15 @@ namespace LeanCloud.Realtime
                 }
             }
         }
-
-        internal readonly object mutex = new object();
         internal static readonly object sMutex = new object();
-        internal static float NotifTime;
+        internal static long NotifTime;
         internal static HashSet<UnreadConversationNotice> UnreadConversations;
         static ConversationUnreadListener()
         {
-            UnreadConversations = new HashSet<UnreadConversationNotice>();
+            UnreadConversations = new HashSet<UnreadConversationNotice>(new UnreadConversationNotice());
             NotifTime = DateTime.Now.ToUnixTimeStamp();
         }
+
         internal static void UpdateNotice(IAVIMMessage message)
         {
             lock (sMutex)
@@ -56,6 +66,10 @@ namespace LeanCloud.Realtime
                     }
                 }
             }
+        }
+        internal static void ClearUnread(string convId)
+        {
+            UnreadConversations.Remove(Get(convId));
         }
         internal static IEnumerable<string> FindAllConvIds()
         {
@@ -84,14 +98,14 @@ namespace LeanCloud.Realtime
 
         public void OnNoticeReceived(AVIMNotice notice)
         {
-            lock (mutex)
+            lock (sMutex)
             {
                 if (notice.RawData.ContainsKey("convs"))
                 {
                     var unreadRawData = notice.RawData["convs"] as List<object>;
                     if (notice.RawData.ContainsKey("notifTime"))
                     {
-                        float.TryParse(notice.RawData["notifTime"].ToString(), out NotifTime);
+                        long.TryParse(notice.RawData["notifTime"].ToString(), out NotifTime);
                     }
                     foreach (var data in unreadRawData)
                     {
@@ -99,19 +113,24 @@ namespace LeanCloud.Realtime
                         if (dataMap != null)
                         {
                             var convId = dataMap["cid"].ToString();
+                            var ucn = Get(convId);
+                            if (ucn == null) ucn = new UnreadConversationNotice();
+
+                            ucn.ConvId = convId;
                             var unreadCount = 0;
                             Int32.TryParse(dataMap["unread"].ToString(), out unreadCount);
+                            ucn.UnreadCount = unreadCount;
+
                             #region restore last message for the conversation
-                            var msgStr = dataMap["data"].ToString();
-                            var messageObj = AVRealtime.FreeStyleMessageClassingController.Instantiate(msgStr, dataMap);
-                            #endregion   
-                            var ucn = new UnreadConversationNotice()
+                            if (dataMap.ContainsKey("data"))
                             {
-                                ConvId = convId,
-                                LastUnreadMessage = messageObj,
-                                UnreadCount = unreadCount
-                            };
+                                var msgStr = dataMap["data"].ToString();
+                                var messageObj = AVRealtime.FreeStyleMessageClassingController.Instantiate(msgStr, dataMap);
+                                ucn.LastUnreadMessage = messageObj;
+                            }
+
                             UnreadConversations.Add(ucn);
+                            #endregion
                         }
                     }
                 }

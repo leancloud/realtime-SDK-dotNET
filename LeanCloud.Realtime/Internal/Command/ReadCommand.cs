@@ -12,7 +12,7 @@ namespace LeanCloud.Realtime.Internal
         {
             internal string ConvId { get; set; }
             internal string MessageId { get; set; }
-            internal float Timestamp { get; set; }
+            internal long Timestamp { get; set; }
             public override bool Equals(object obj)
             {
                 ConvRead cr = obj as ConvRead;
@@ -65,12 +65,23 @@ namespace LeanCloud.Realtime.Internal
             {
                 if (convReads.Count() > 0)
                 {
-                    var payload = convReads.Select(convRead => new Dictionary<string, object>()
+                    IList<IDictionary<string, object>> payload = new List<IDictionary<string, object>>();
+
+                    foreach (var convRead in convReads)
                     {
-                        { "cid", convRead.ConvId},
-                        { "mid",string.IsNullOrEmpty(convRead.MessageId)?convRead.MessageId:""},
-                        { "timestamp", convRead.Timestamp!=0? convRead.Timestamp:DateTime.Now.ToUnixTimeStamp()},
-                    }).ToList();
+                        var convDic = new Dictionary<string, object>();
+                        convDic.Add("cid", convRead.ConvId);
+                        if (!string.IsNullOrEmpty(convRead.MessageId))
+                        {
+                            convDic.Add("mid", convRead.MessageId);
+                        }
+                        if (convRead.Timestamp != 0)
+                        {
+                            convDic.Add("timestamp", convRead.Timestamp);
+                        }
+                        payload.Add(convDic);
+                    }
+
                     return new ReadCommand(this.Argument("convs", payload));
                 }
             }

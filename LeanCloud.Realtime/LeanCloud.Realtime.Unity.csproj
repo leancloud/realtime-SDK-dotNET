@@ -81,7 +81,6 @@
     <Compile Include="Public\AVIMAudioMessage.cs" />
     <Compile Include="Public\AVIMClient.cs" />
     <Compile Include="Public\AVIMConversation.cs" />
-    <Compile Include="Public\AVIMConversationListener.cs" />
     <Compile Include="Public\AVIMConversationQuery.cs" />
     <Compile Include="Public\AVIMEnumerator.cs" />
     <Compile Include="Public\AVIMEventArgs.cs" />
@@ -101,6 +100,7 @@
     <Compile Include="Public\AVIMMessageListener.cs" />
     <Compile Include="Public\ICacheEngine.cs" />
     <Compile Include="Public\ISignatureFactory.cs" />
+    <Compile Include="Public\Listener\AVIMConversationListener.cs" />
     <Compile Include="Public\Listener\ConversationUnreadListener.cs" />
     <Compile Include="Public\Listener\MessagePatchListener.cs" />
     <Compile Include="Public\Listener\OfflineMessageListener.cs" />
