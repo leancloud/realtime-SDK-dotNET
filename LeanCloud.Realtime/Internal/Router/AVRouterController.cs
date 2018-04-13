@@ -94,10 +94,19 @@ namespace LeanCloud.Realtime.Internal
                 contentType: "application/json",
                 cancellationToken: CancellationToken.None).ContinueWith<PushRouterState>(t =>
                 {
+                    if (t.Exception != null)
+                    {
+                        var innnerException = t.Exception.InnerException.InnerException.InnerException;
+                        if (innnerException != null)
+                        {
+                            AVRealtime.PrintLog(innnerException.Message);
+                            return null;
+                        }
+                    }
                     var httpStatus = (int)t.Result.Item1;
                     if (httpStatus != 200)
                     {
-                        throw new AVException(AVException.ErrorCode.ConnectionFailed, "can not reach router.", null);
+                        return null;
                     }
                     try
                     {
