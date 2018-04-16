@@ -11,5 +11,7 @@ namespace LeanCloud.Realtime.Internal
     {
         Task<Tuple<int, IDictionary<string, object>>> RunCommandAsync(AVIMCommand command,
             CancellationToken cancellationToken = default(CancellationToken));
+
+        void RunCommand(AVIMCommand command);
     }
 }

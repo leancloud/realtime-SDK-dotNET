@@ -28,7 +28,24 @@ namespace LeanCloud.Realtime.Internal
         public event Action<int, string, string> OnClosed;
         public event Action<string> OnError;
         public event Action<string> OnLog;
-        public event Action<string> OnMessage;
+        public event Action<string> OnMessage
+        {
+            add
+            {
+                onMesssageCount++;
+                AVRealtime.PrintLog("DefaultWebSocketClient.OnMessage event add with " + onMesssageCount + " times");
+                m_OnMessage += value;
+
+            }
+            remove
+            {
+                onMesssageCount--;
+                AVRealtime.PrintLog("DefaultWebSocketClient.OnMessage event remove with " + onMesssageCount + " times");
+                m_OnMessage -= value;
+            }
+        }
+        private Action<string> m_OnMessage;
+        private int onMesssageCount = 0;
         public event Action OnOpened;
 
         public void Close()
@@ -61,8 +78,8 @@ namespace LeanCloud.Realtime.Internal
 
         private void OnWebSokectMessage(object sender, MessageEventArgs e)
         {
-            if (this.OnMessage != null)
-                this.OnMessage(e.Data);
+            if (this.m_OnMessage != null)
+                this.m_OnMessage(e.Data);
         }
 
         private void OnOpen(object sender, EventArgs e)

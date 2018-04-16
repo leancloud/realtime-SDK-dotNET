@@ -1131,6 +1131,16 @@ namespace LeanCloud.Realtime
             return this.AVIMCommandRunner.RunCommandAsync(command);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="command"></param>
+        public void RunCommand(AVIMCommand command)
+        {
+            command.AppId(this.CurrentConfiguration.ApplicationId);
+            this.AVIMCommandRunner.RunCommand(command);
+        }
+
         internal Task<AVIMCommand> AttachSignature(AVIMCommand command, Task<AVIMSignature> SignatureTask)
         {
             AVRealtime.PrintLog("begin to attach singature.");

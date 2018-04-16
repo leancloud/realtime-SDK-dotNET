@@ -59,6 +59,7 @@ namespace LeanCloud.Realtime
         //    }
         //}
 
+        private int onMessageReceivedCount = 0;
         private EventHandler<AVIMMessageEventArgs> m_OnMessageReceived;
         /// <summary>
         /// 接收到聊天消息的事件通知
@@ -67,10 +68,14 @@ namespace LeanCloud.Realtime
         {
             add
             {
+                onMessageReceivedCount++;
+                AVRealtime.PrintLog("AVIMClient.OnMessageReceived event add with " + onMessageReceivedCount + " times");
                 m_OnMessageReceived += value;
             }
             remove
             {
+                onMessageReceivedCount--;
+                AVRealtime.PrintLog("AVIMClient.OnMessageReceived event remove with" + onMessageReceivedCount + " times");
                 m_OnMessageReceived -= value;
             }
         }
@@ -263,6 +268,11 @@ namespace LeanCloud.Realtime
         {
             if (this.m_OnMessageReceived != null)
             {
+                var subscribers = this.m_OnMessageReceived.GetInvocationList();
+                foreach (var sub in subscribers)
+                {
+                    AVRealtime.PrintLog(sub.ToString() + " " + sub.Target.ToString());
+                }
                 this.m_OnMessageReceived.Invoke(this, e);
             }
             this.AckListener_OnMessageReceieved(sender, e);
@@ -961,6 +971,12 @@ namespace LeanCloud.Realtime
         {
             command.PeerId(this.ClientId);
             return this.LinkedRealtime.RunCommandAsync(command);
+        }
+
+        public void RunCommand(AVIMCommand command)
+        {
+            command.PeerId(this.ClientId);
+            this.LinkedRealtime.RunCommand(command);
         }
     }
 }
