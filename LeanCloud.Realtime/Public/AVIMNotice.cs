@@ -10,8 +10,16 @@ using System.Threading.Tasks;
 
 namespace LeanCloud.Realtime
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public interface IAVIMNotice
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="estimatedData"></param>
+        /// <returns></returns>
         AVIMNotice Restore(IDictionary<string, object> estimatedData);
     }
     /// <summary>

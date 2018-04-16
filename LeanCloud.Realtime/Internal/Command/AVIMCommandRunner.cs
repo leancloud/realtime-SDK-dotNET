@@ -17,6 +17,21 @@ namespace LeanCloud.Realtime.Internal
             this.webSocketClient = webSocketClient;
         }
 
+        public void RunCommand(AVIMCommand command)
+        {
+            if (!webSocketClient.IsOpen) throw new AVIMException(AVIMException.ErrorCode.CAN_NOT_EXCUTE_COMMAND, "当前连接失效，无法发送指令");
+            command.IDlize();
+            var requestString = command.EncodeJsonString();
+            AVRealtime.PrintLog("websocket=>" + requestString);
+            webSocketClient.Send(requestString);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="command"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public Task<Tuple<int, IDictionary<string, object>>> RunCommandAsync(AVIMCommand command, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (!webSocketClient.IsOpen) throw new AVIMException(AVIMException.ErrorCode.CAN_NOT_EXCUTE_COMMAND, "当前连接失效，无法发送指令");
