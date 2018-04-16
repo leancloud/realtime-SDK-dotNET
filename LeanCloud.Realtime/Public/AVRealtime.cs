@@ -633,23 +633,27 @@ namespace LeanCloud.Realtime
             return this.CreateClientAsync(clientId, tag, deviceId, secure, cancellationToken);
         }
 
+        private bool _listening = false;
         /// <summary>
         /// websocket 事件的监听的开关
         /// </summary>
         /// <param name="toggle">是否打开</param>
         public void ToggleNotification(bool toggle)
         {
-            if (toggle)
+            AVRealtime.PrintLog("ToggleNotification| toggle:" + toggle + "|listening: " + _listening);
+            if (toggle && !_listening)
             {
                 PCLWebsocketClient.OnClosed += WebsocketClient_OnClosed;
                 PCLWebsocketClient.OnError += WebsocketClient_OnError;
                 PCLWebsocketClient.OnMessage += WebSocketClient_OnMessage;
+                _listening = true;
             }
             else
             {
                 PCLWebsocketClient.OnClosed -= WebsocketClient_OnClosed;
                 PCLWebsocketClient.OnError -= WebsocketClient_OnError;
                 PCLWebsocketClient.OnMessage -= WebSocketClient_OnMessage;
+                _listening = false;
             }
         }
 
