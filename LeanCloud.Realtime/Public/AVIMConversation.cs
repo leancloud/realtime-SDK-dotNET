@@ -311,7 +311,6 @@ namespace LeanCloud.Realtime
         internal AVIMConversation(AVIMClient client)
         {
             this._currentClient = client;
-            this.AutoRead = true;
             this.CurrentClient.OnMessageReceived += CurrentClient_OnMessageReceived;
         }
 
@@ -787,11 +786,6 @@ namespace LeanCloud.Realtime
         }
 
         /// <summary>
-        /// 收到消息时，自动标记当前对话已读
-        /// </summary>
-        public bool AutoRead { get; set; }
-
-        /// <summary>
         /// mark this conversation as read
         /// </summary>
         /// <returns></returns>
@@ -900,7 +894,7 @@ namespace LeanCloud.Realtime
                 this.Received.LastMessage = e.Message;
                 this.Received.SyncdAt = DateTime.Now.ToUnixTimeStamp();
             }
-            if (AutoRead)
+            if (this.CurrentClient.CurrentConfiguration.AutoRead)
             {
                 this.ReadAsync(e.Message);
             }

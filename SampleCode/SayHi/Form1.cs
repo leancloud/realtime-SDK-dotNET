@@ -139,7 +139,8 @@ namespace SayHi
         private async void btn_create_Click(object sender, EventArgs e)
         {
             //var isTransient = ckb_isTransient.Checked;
-            conversation = await client.CreateConversationAsync(txb_friend.Text.Trim());
+            //conversation = await client.CreateConversationAsync(txb_friend.Text.Trim());
+            conversation = AVIMConversation.CreateWithoutData(txb_convId.Text.Trim(), this.client);
             var messageInterator = conversation.GetHistoryMessageIterator();
             var lastestMessages = await messageInterator.PreviousAsync();
             BindMessagesToUI(lastestMessages);

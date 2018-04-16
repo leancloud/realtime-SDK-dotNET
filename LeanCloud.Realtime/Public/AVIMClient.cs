@@ -21,6 +21,20 @@ namespace LeanCloud.Realtime
         private readonly AVRealtime _realtime;
         internal readonly object mutex = new object();
         internal readonly object patchMutex = new object();
+
+        /// <summary>
+        /// 一些可变的配置选项，便于应对各种需求场景
+        /// </summary>
+        public struct Configuration
+        {
+            public bool AutoRead { get; set; }
+        }
+
+        public Configuration CurrentConfiguration
+        {
+            get; set;
+        }
+
         internal AVRealtime LinkedRealtime
         {
             get { return _realtime; }
@@ -206,6 +220,13 @@ namespace LeanCloud.Realtime
 
             };
             this.RegisterListener(messagePatchListener);
+            #endregion
+
+            #region configuration
+            CurrentConfiguration = new Configuration()
+            {
+                AutoRead = true,
+            };
             #endregion
 
         }
