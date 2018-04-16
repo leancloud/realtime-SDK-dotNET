@@ -648,7 +648,7 @@ namespace LeanCloud.Realtime
                 PCLWebsocketClient.OnMessage += WebSocketClient_OnMessage;
                 _listening = true;
             }
-            else
+            else if (!toggle && _listening)
             {
                 PCLWebsocketClient.OnClosed -= WebsocketClient_OnClosed;
                 PCLWebsocketClient.OnError -= WebsocketClient_OnError;
