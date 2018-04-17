@@ -289,11 +289,6 @@ namespace LeanCloud.Realtime
         {
             if (this.m_OnMessageReceived != null)
             {
-                var subscribers = this.m_OnMessageReceived.GetInvocationList();
-                foreach (var sub in subscribers)
-                {
-                    AVRealtime.PrintLog(sub.ToString() + " " + sub.Target.ToString());
-                }
                 this.m_OnMessageReceived.Invoke(this, e);
             }
             this.AckListener_OnMessageReceieved(sender, e);

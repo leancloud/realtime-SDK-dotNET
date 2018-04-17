@@ -11,6 +11,9 @@ using LeanCloud.Storage.Internal;
 using System.Threading;
 using LeanCloud.Core.Internal;
 
+#if UNITY
+using UnityEngine;
+#endif
 namespace LeanCloud.Realtime
 {
 
@@ -18,7 +21,12 @@ namespace LeanCloud.Realtime
     /// 实时消息的框架类
     /// 包含了 WebSocket 连接以及事件通知的管理
     /// </summary>
+#if UNITY
+    public class AVRealtime : MonoBehaviour
+#else
     public class AVRealtime
+#endif
+
     {
         private static readonly object mutex = new object();
         private string _wss;
