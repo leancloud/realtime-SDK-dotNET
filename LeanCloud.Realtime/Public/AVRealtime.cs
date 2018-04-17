@@ -21,13 +21,11 @@ namespace LeanCloud.Realtime
     /// 实时消息的框架类
     /// 包含了 WebSocket 连接以及事件通知的管理
     /// </summary>
-#if UNITY
-    public class AVRealtime : MonoBehaviour
-#else
     public class AVRealtime
-#endif
-
     {
+        // TEMP 缓存 AVRealtime 所有实例，用于释放
+        public static List<AVRealtime> avRealtimeList = null;
+
         private static readonly object mutex = new object();
         private string _wss;
         private string _secondaryWss;
@@ -436,6 +434,9 @@ namespace LeanCloud.Realtime
                 RegisterMessageType<AVIMMessage>();
                 RegisterMessageType<AVIMTypedMessage>();
                 RegisterMessageType<AVIMTextMessage>();
+            }
+            lock (avRealtimeList) {
+                avRealtimeList.Add(this);
             }
         }
 
@@ -1230,7 +1231,7 @@ namespace LeanCloud.Realtime
 
         static AVRealtime()
         {
-
+            avRealtimeList = new List<AVRealtime>();
 #if MONO || UNITY
             versionString = "net-unity/" + Version;
 #else
