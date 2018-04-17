@@ -741,48 +741,16 @@ namespace LeanCloud.Realtime
             }
         }
 
-
-
         internal void OnMessageLoad(IEnumerable<IAVIMMessage> messages)
         {
-            if (Received == null)
-            {
-                Received = new ReceivedState();
-            }
-
-            if (Unread != null)
-            {
-                Received.LastMessage = Unread.LastMessage;
-                if (Received.LastMessage != null)
-                {
-                    var receiveAck = new AckCommand()
-                        .Message(Received.LastMessage)
-                        .ToTimeStamp(Received.LastMessage.ServerTimestamp);
-                    if (this.CurrentClient.LinkedRealtime.CurrentConfiguration.OfflineMessageStrategy == AVRealtime.OfflineMessageStrategy.UnreadNotice)
-                    {
-                        receiveAck = receiveAck.ReadAck();
-                    }
-                    this.CurrentClient.RunCommandAsync(receiveAck);
-                }
-            }
             var lastestInCollection = messages.OrderByDescending(m => m.ServerTimestamp).FirstOrDefault();
             if (lastestInCollection != null)
             {
-                if (Received.LastMessage == null)
+                if (CurrentClient.CurrentConfiguration.AutoRead)
                 {
-                    Received.LastMessage = lastestInCollection;
-                }
-                else
-                {
-                    if (Received.LastMessage.ServerTimestamp < lastestInCollection.ServerTimestamp)
-                    {
-                        Received.LastMessage = lastestInCollection;
-                        var receiveAck = new AckCommand().Message(lastestInCollection);
-                        this.CurrentClient.RunCommandAsync(receiveAck);
-                    }
+                    this.ReadAsync(lastestInCollection);
                 }
             }
-            Received.SyncdAt = DateTime.Now.ToUnixTimeStamp();
         }
 
         /// <summary>
