@@ -755,6 +755,8 @@ namespace LeanCloud.Realtime
                     }
                 }
 
+                conversation.OnMessageLoad(rtn);
+
                 return rtn.AsEnumerable();
             });
         }
