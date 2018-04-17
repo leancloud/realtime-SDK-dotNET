@@ -887,16 +887,17 @@ namespace LeanCloud.Realtime
         #region on client message received to update unread
         private void CurrentClient_OnMessageReceived(object sender, AVIMMessageEventArgs e)
         {
+            if (this.CurrentClient.CurrentConfiguration.AutoRead)
+            {
+                this.ReadAsync(e.Message);
+                return;
+            }
             lock (receivedMutex)
             {
                 if (this.Received == null) this.Received = new ReceivedState();
                 this.Received.Count++;
                 this.Received.LastMessage = e.Message;
                 this.Received.SyncdAt = DateTime.Now.ToUnixTimeStamp();
-            }
-            if (this.CurrentClient.CurrentConfiguration.AutoRead)
-            {
-                this.ReadAsync(e.Message);
             }
         }
         #endregion
