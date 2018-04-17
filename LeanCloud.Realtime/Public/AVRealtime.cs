@@ -435,7 +435,8 @@ namespace LeanCloud.Realtime
                 RegisterMessageType<AVIMTypedMessage>();
                 RegisterMessageType<AVIMTextMessage>();
             }
-            lock (avRealtimeList) {
+            lock (avRealtimeList)
+            {
                 avRealtimeList.Add(this);
             }
         }
@@ -450,6 +451,7 @@ namespace LeanCloud.Realtime
             {
                 ApplicationId = applicationId,
                 ApplicationKey = applicationKey,
+                OfflineMessageStrategy = OfflineMessageStrategy.UnreadAck
             })
         {
 
