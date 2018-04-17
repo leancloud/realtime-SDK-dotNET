@@ -23,9 +23,13 @@ namespace LeanCloud.Realtime
             avRealtime.hideFlags = HideFlags.HideInHierarchy;
         }
 
-        void OnDestroy()
+        void OnApplicationQuit()
         {
-
+            List<AVRealtime> avRealtimeList = AVRealtime.avRealtimeList;
+            for (int i = 0; i < avRealtimeList.Count; i++) {
+                AVRealtime realtime = avRealtimeList[i];
+                realtime.LogOut();
+            }
         }
     }
 }
