@@ -90,14 +90,10 @@ namespace LeanCloud.Realtime.Internal
 
         public void Send(string message)
         {
-            if (this.IsOpen)
-            {
-                ws.SendAsync(message, (b) =>
-                {
+			ws.SendAsync(message, (b) =>
+			{
 
-                });
-            }
-
+			});
         }
     }
 }
