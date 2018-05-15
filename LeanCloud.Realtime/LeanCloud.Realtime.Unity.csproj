@@ -52,6 +52,9 @@
     <Reference Include="LeanCloud.Core">
       <HintPath>Unity.libs\LeanCloud.Core.dll</HintPath>
     </Reference>
+    <Reference Include="AssemblyLister">
+      <HintPath>Unity.libs\AssemblyLister.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Internal\AVIMCorePlugins.cs" />

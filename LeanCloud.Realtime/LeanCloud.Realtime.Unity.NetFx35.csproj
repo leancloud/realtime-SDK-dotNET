@@ -60,6 +60,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>Internal\WebSocket\Unity\websocket-sharp.dll</HintPath>
     </Reference>
+    <Reference Include="AssemblyLister">
+      <HintPath>Unity35.libs\AssemblyLister.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Internal\AVIMCorePlugins.cs" />
