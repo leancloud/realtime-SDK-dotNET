@@ -13,17 +13,8 @@ namespace LeanCloud.Realtime
     /// AVRealtime initialize behavior.
     /// </summary>
     public class AVRealtimeBehavior : AVInitializeBehaviour
-    {
-        [RuntimeInitializeOnLoadMethod]
-        static void OnRuntimeMethodLoad()
-        {
-            GameObject avRealtime = new GameObject("_AVRealtimeBehavior");
-            DontDestroyOnLoad(avRealtime);
-            avRealtime.AddComponent<AVRealtimeBehavior>();
-            avRealtime.hideFlags = HideFlags.HideInHierarchy;
-        }
-
-        void OnApplicationQuit()
+	{
+		void OnApplicationQuit()
         {
             List<AVRealtime> avRealtimeList = AVRealtime.avRealtimeList;
             for (int i = 0; i < avRealtimeList.Count; i++) {
