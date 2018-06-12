@@ -109,6 +109,7 @@ namespace LeanCloud.Realtime.Internal
 
         public AVIMCommand PeerId(string peerId)
         {
+            this.peerId = peerId;
             return new AVIMCommand(this, peerId: peerId);
         }
 

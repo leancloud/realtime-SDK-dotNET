@@ -181,7 +181,6 @@ namespace LeanCloud.Realtime
         {
             get
             {
-
                 return subprotocolPrefix + (int)CurrentConfiguration.OfflineMessageStrategy;
             }
         }
@@ -417,6 +416,11 @@ namespace LeanCloud.Realtime
         {
             lock (mutex)
             {
+                if ((int)config.OfflineMessageStrategy == 0)
+                {
+                    config.OfflineMessageStrategy = OfflineMessageStrategy.UnreadAck;
+                }
+
                 CurrentConfiguration = config;
                 if (CurrentConfiguration.WebSocketClient != null)
                 {
@@ -431,6 +435,9 @@ namespace LeanCloud.Realtime
                     Interval = 5,
                     Retry = 120
                 };
+
+
+
                 RegisterMessageType<AVIMMessage>();
                 RegisterMessageType<AVIMTypedMessage>();
                 RegisterMessageType<AVIMTextMessage>();
@@ -1063,8 +1070,9 @@ namespace LeanCloud.Realtime
 
             if (CurrentConfiguration.RealtimeServer != null)
             {
-                AVRealtime.PrintLog("use configuration websocket url:" + _wss);
-                return OpenAsync(CurrentConfiguration.RealtimeServer.ToString(), subprotocol, cancellationToken);
+                _wss = CurrentConfiguration.RealtimeServer.ToString();
+                AVRealtime.PrintLog("use configuration realtime server with url: " + _wss);
+                return OpenAsync(_wss, subprotocol, cancellationToken);
             }
             var routerUrl = CurrentConfiguration.RTMRouter != null ? CurrentConfiguration.RTMRouter.ToString() : null;
             return RouterController.GetAsync(routerUrl, secure, cancellationToken).OnSuccess(r =>

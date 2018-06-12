@@ -14,6 +14,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SayHi", "..\SampleCode\SayH
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LeanCloud.Realtime.Unity.NetFx35", "LeanCloud.Realtime.Unity.NetFx35.csproj", "{4442C93D-060D-4CE9-8062-4DBCB58541B6}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{F24A5744-E022-41C8-BE20-312322E30262}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LeanCloud.Realtime.UnitTest.Mono", "Test\LeanCloud.Realtime.UnitTest.Mono\LeanCloud.Realtime.UnitTest.Mono.csproj", "{1B8C3AB0-D406-4701-B3B0-D95265B4BFA3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -84,6 +88,18 @@ Global
 		{4442C93D-060D-4CE9-8062-4DBCB58541B6}.Release|iPhone.Build.0 = Release|Any CPU
 		{4442C93D-060D-4CE9-8062-4DBCB58541B6}.Release|iPhoneSimulator.ActiveCfg = Release|Any CPU
 		{4442C93D-060D-4CE9-8062-4DBCB58541B6}.Release|iPhoneSimulator.Build.0 = Release|Any CPU
+		{1B8C3AB0-D406-4701-B3B0-D95265B4BFA3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1B8C3AB0-D406-4701-B3B0-D95265B4BFA3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1B8C3AB0-D406-4701-B3B0-D95265B4BFA3}.Debug|iPhone.ActiveCfg = Debug|Any CPU
+		{1B8C3AB0-D406-4701-B3B0-D95265B4BFA3}.Debug|iPhone.Build.0 = Debug|Any CPU
+		{1B8C3AB0-D406-4701-B3B0-D95265B4BFA3}.Debug|iPhoneSimulator.ActiveCfg = Debug|Any CPU
+		{1B8C3AB0-D406-4701-B3B0-D95265B4BFA3}.Debug|iPhoneSimulator.Build.0 = Debug|Any CPU
+		{1B8C3AB0-D406-4701-B3B0-D95265B4BFA3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1B8C3AB0-D406-4701-B3B0-D95265B4BFA3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1B8C3AB0-D406-4701-B3B0-D95265B4BFA3}.Release|iPhone.ActiveCfg = Release|Any CPU
+		{1B8C3AB0-D406-4701-B3B0-D95265B4BFA3}.Release|iPhone.Build.0 = Release|Any CPU
+		{1B8C3AB0-D406-4701-B3B0-D95265B4BFA3}.Release|iPhoneSimulator.ActiveCfg = Release|Any CPU
+		{1B8C3AB0-D406-4701-B3B0-D95265B4BFA3}.Release|iPhoneSimulator.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -91,6 +107,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{A3B45AAC-BCC9-47ED-8292-F7CC74F77839} = {E93AA0BB-3800-4995-AC3D-C95251362FE1}
 		{CF9C74F8-FDF1-483C-B4C0-964A1296F05A} = {E93AA0BB-3800-4995-AC3D-C95251362FE1}
+		{1B8C3AB0-D406-4701-B3B0-D95265B4BFA3} = {F24A5744-E022-41C8-BE20-312322E30262}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6ADB001B-71B3-4A4A-B406-90F6A58BEF3E}
