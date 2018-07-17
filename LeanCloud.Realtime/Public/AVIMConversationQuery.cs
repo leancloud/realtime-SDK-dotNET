@@ -9,11 +9,17 @@ using System.Threading.Tasks;
 
 namespace LeanCloud.Realtime
 {
+#if !NETCOREAPP
     /// <summary>
     /// 对话查询类
     /// </summary>
     public class AVIMConversationQuery : AVQueryBase<AVIMConversationQuery, AVIMConversation>
     {
+#else
+    public class AVIMConversationQuery : AVIMQueryBase<AVIMConversation>
+    {
+#endif
+
         internal AVIMClient CurrentClient { get; set; }
         internal AVIMConversationQuery(AVIMClient _currentClient)
             : base()
@@ -37,7 +43,7 @@ namespace LeanCloud.Realtime
         {
 
         }
-
+        #if !NETCOREAPP
         internal override AVIMConversationQuery CreateInstance(
             AVQueryBase<AVIMConversationQuery, AVIMConversation> source,
             IDictionary<string, object> where,
@@ -72,6 +78,28 @@ namespace LeanCloud.Realtime
             rtn.withLastMessageRefreshed = this.withLastMessageRefreshed;
             return rtn;
         }
+
+        public AVIMConversationQuery WithLastMessageRefreshed(bool enabled)
+        {
+            this.withLastMessageRefreshed = enabled;
+            return CreateInstance(this);
+        }
+
+        public AVIMConversationQuery Compact(bool enabled)
+        {
+            this.compact = enabled;
+            return CreateInstance(this);
+        }
+        #endif
+        internal override AVIMQueryBase<AVIMConversation> CreateInstance(AVIMQueryBase<AVIMConversation> source, IDictionary<string, object> where = null, IEnumerable<string> replacementOrderBy = null, IEnumerable<string> thenBy = null, int? skip = null, int? limit = null, IEnumerable<string> includes = null, IEnumerable<string> selectedKeys = null, string redirectClassNameForKey = null)
+        {
+            var rtn = new AVIMConversationQuery(this, where, replacementOrderBy, thenBy, skip, limit, includes, selectedKeys, redirectClassNameForKey);
+            rtn.CurrentClient = this.CurrentClient;
+            rtn.compact = this.compact;
+            rtn.withLastMessageRefreshed = this.withLastMessageRefreshed;
+            return rtn;
+        }
+
         internal AVIMCommand GenerateQueryCommand()
         {
             var cmd = new ConversationCommand();
@@ -95,17 +123,6 @@ namespace LeanCloud.Realtime
             return cmd.Option("query").PeerId(CurrentClient.ClientId);
         }
 
-        public AVIMConversationQuery WithLastMessageRefreshed(bool enabled)
-        {
-            this.withLastMessageRefreshed = enabled;
-            return CreateInstance(this);
-        }
-        public AVIMConversationQuery Compact(bool enabled)
-        {
-            this.compact = enabled;
-            return CreateInstance(this);
-        }
-        
         public override Task<int> CountAsync(CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
@@ -120,7 +137,7 @@ namespace LeanCloud.Realtime
         public override Task<IEnumerable<AVIMConversation>> FindAsync(CancellationToken cancellationToken)
         {
             var convCmd = this.GenerateQueryCommand();
-            return CurrentClient.LinkedRealtime.RunCommandAsync(convCmd).OnSuccess(t => 
+            return CurrentClient.LinkedRealtime.RunCommandAsync(convCmd).OnSuccess(t =>
             {
                 var result = t.Result.Item2;
 
@@ -162,4 +179,5 @@ namespace LeanCloud.Realtime
             return idQuery.FirstAsync();
         }
     }
+
 }

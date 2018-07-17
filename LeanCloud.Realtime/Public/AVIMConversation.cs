@@ -85,6 +85,7 @@ namespace LeanCloud.Realtime
             var jsonToSave = AVObject.ToJSONObjectForSaving(currentOperations);
             return jsonToSave;
         }
+
         internal void MergeFromPushServer(IDictionary<string, object> json)
         {
             if (json.Keys.Contains("cdate"))
