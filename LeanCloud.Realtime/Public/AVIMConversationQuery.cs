@@ -14,12 +14,13 @@ namespace LeanCloud.Realtime
     /// 对话查询类
     /// </summary>
     public class AVIMConversationQuery : AVQueryBase<AVIMConversationQuery, AVIMConversation>
-    {
 #else
+    /// <summary>
+    /// 对话查询类
+    /// </summary>
     public class AVIMConversationQuery : AVIMQueryBase<AVIMConversation>
-    {
 #endif
-
+    {
         internal AVIMClient CurrentClient { get; set; }
         internal AVIMConversationQuery(AVIMClient _currentClient)
             : base()
@@ -43,7 +44,7 @@ namespace LeanCloud.Realtime
         {
 
         }
-        #if !NETCOREAPP
+#if !NETCOREAPP
         internal override AVIMConversationQuery CreateInstance(
             AVQueryBase<AVIMConversationQuery, AVIMConversation> source,
             IDictionary<string, object> where,
@@ -90,7 +91,7 @@ namespace LeanCloud.Realtime
             this.compact = enabled;
             return CreateInstance(this);
         }
-        #endif
+#else
         internal override AVIMQueryBase<AVIMConversation> CreateInstance(AVIMQueryBase<AVIMConversation> source, IDictionary<string, object> where = null, IEnumerable<string> replacementOrderBy = null, IEnumerable<string> thenBy = null, int? skip = null, int? limit = null, IEnumerable<string> includes = null, IEnumerable<string> selectedKeys = null, string redirectClassNameForKey = null)
         {
             var rtn = new AVIMConversationQuery(this, where, replacementOrderBy, thenBy, skip, limit, includes, selectedKeys, redirectClassNameForKey);
@@ -99,6 +100,8 @@ namespace LeanCloud.Realtime
             rtn.withLastMessageRefreshed = this.withLastMessageRefreshed;
             return rtn;
         }
+
+#endif
 
         internal AVIMCommand GenerateQueryCommand()
         {
