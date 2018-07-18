@@ -11,7 +11,7 @@ namespace LeanCloud.Realtime.Internal
         private const int ReceiveChunkSize = 1024;
         private const int SendChunkSize = 1024;
 
-        private readonly ClientWebSocket _ws;
+        private ClientWebSocket _ws;
         private Uri _uri;
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private readonly CancellationToken _cancellationToken;
@@ -37,8 +37,7 @@ namespace LeanCloud.Realtime.Internal
 
         public DefaultWebSocketClient()
         {
-            _ws = new ClientWebSocket();
-            _ws.Options.KeepAliveInterval = TimeSpan.FromSeconds(20);
+            _ws = NewWebSocket();
             _cancellationToken = _cancellationTokenSource.Token;
         }
 
@@ -123,6 +122,10 @@ namespace LeanCloud.Realtime.Internal
         public async void Open(string url, string protocol = null)
         {
             _uri = new Uri(url);
+            if (_ws.State == WebSocketState.Open || _ws.State == WebSocketState.Connecting)
+            {
+                _ws = NewWebSocket();
+            }
             await _ws.ConnectAsync(_uri, _cancellationToken);
             CallOnConnected();
             StartListen();
@@ -138,6 +141,13 @@ namespace LeanCloud.Realtime.Internal
             var encoded = Encoding.UTF8.GetBytes(message);
             var buffer = new ArraySegment<Byte>(encoded, 0, encoded.Length);
             await _ws.SendAsync(buffer, WebSocketMessageType.Text, true, _cancellationToken);
+        }
+
+        ClientWebSocket NewWebSocket()
+        {
+            var result = new ClientWebSocket();
+            result.Options.KeepAliveInterval = TimeSpan.FromSeconds(20);
+            return result;
         }
     }
 }
