@@ -114,8 +114,15 @@ namespace LeanCloud.Realtime.Internal
         {
             if (_ws != null)
             {
-                await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
-                CallOnDisconnected();
+                try
+                {
+                    await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
+                    CallOnDisconnected();
+                }
+                catch (Exception ex)
+                {
+                    CallOnDisconnected();
+                }
             }
         }
 
@@ -126,9 +133,19 @@ namespace LeanCloud.Realtime.Internal
             {
                 _ws = NewWebSocket();
             }
-            await _ws.ConnectAsync(_uri, _cancellationToken);
-            CallOnConnected();
-            StartListen();
+            try
+            {
+                await _ws.ConnectAsync(_uri, _cancellationToken);
+                CallOnConnected();
+                StartListen();
+            }
+            catch (Exception ex)
+            {
+                if (ex is ObjectDisposedException)
+                {
+                    OnError($"can NOT connect server with url: {url}");
+                }
+            }
         }
 
         public async void Send(string message)

@@ -17,6 +17,8 @@ namespace LeanCloud.Realtime.Internal
         protected AVIMSignature signature;
         protected readonly IDictionary<string, object> arguments;
 
+        public int TimeoutInSeconds { get; set; }
+
         protected readonly IDictionary<string, object> estimatedData = new Dictionary<string, object>();
         internal readonly object mutex = new object();
         internal static readonly object Mutex = new object();

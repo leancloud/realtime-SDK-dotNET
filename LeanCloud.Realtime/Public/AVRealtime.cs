@@ -23,8 +23,7 @@ namespace LeanCloud.Realtime
     /// </summary>
     public class AVRealtime
     {
-        // TEMP 缓存 AVRealtime 所有实例，用于释放
-        public static List<AVRealtime> avRealtimeList = null;
+        internal static IDictionary<string, AVIMClient> clients = null;
 
         private static readonly object mutex = new object();
         private string _wss;
@@ -59,14 +58,14 @@ namespace LeanCloud.Realtime
             {
                 lock (mutex)
                 {
-                    avIMCommandRunner = avIMCommandRunner ?? new AVIMCommandRunner(this.PCLWebsocketClient);
+                    avIMCommandRunner = avIMCommandRunner ?? new AVIMCommandRunner(this.AVWebSocketClient);
                     return avIMCommandRunner;
                 }
             }
         }
 
         private IWebSocketClient webSocketController;
-        internal IWebSocketClient PCLWebsocketClient
+        internal IWebSocketClient AVWebSocketClient
         {
             get
             {
@@ -74,7 +73,6 @@ namespace LeanCloud.Realtime
                 {
                     webSocketController = webSocketController ?? new DefaultWebSocketClient();
                     return webSocketController;
-
                 }
             }
             set
@@ -442,10 +440,6 @@ namespace LeanCloud.Realtime
                 RegisterMessageType<AVIMTypedMessage>();
                 RegisterMessageType<AVIMTextMessage>();
             }
-            lock (avRealtimeList)
-            {
-                avRealtimeList.Add(this);
-            }
         }
 
         /// <summary>
@@ -463,6 +457,7 @@ namespace LeanCloud.Realtime
         {
 
         }
+
         #region websocket log
         internal static Action<string> LogTracker { get; private set; }
         /// <summary>
@@ -502,53 +497,54 @@ namespace LeanCloud.Realtime
                 var client = PreLogIn(clientId, tag, deviceId);
 
                 AVRealtime.PrintLog("begin OpenAsync.");
-                return OpenAsync(secure, Subprotocol, cancellationToken).OnSuccess(t =>
-                 {
-                     if (!t.Result)
-                     {
-                         return Task.FromResult<AVIMCommand>(null);
-                     }
-                     AVRealtime.PrintLog("websocket server connected, begin to open sesstion.");
-
-                     var cmd = new SessionCommand()
-                        .UA(VersionString)
-                        .Tag(tag)
-                        .DeviceId(deviceId)
-                        .Option("open")
-                        .PeerId(clientId);
-
-                     ToggleNotification(true);
-                     return AttachSignature(cmd, this.SignatureFactory.CreateConnectSignature(clientId));
-
-                 }).Unwrap().OnSuccess(x =>
-                 {
-                     var cmd = x.Result;
-                     if (cmd == null)
-                     {
-                         return Task.FromResult<Tuple<int, IDictionary<string, object>>>(null);
-                     }
-                     return this.RunCommandAsync(cmd);
-                 }).Unwrap().OnSuccess(s =>
+                return OpenAsync(secure, Subprotocol, true, cancellationToken).OnSuccess(t =>
                   {
-                      if (s.Result == null)
+                      if (!t.Result)
                       {
-                          return null;
+                          return Task.FromResult<AVIMCommand>(null);
                       }
-                      AVRealtime.PrintLog("sesstion opened.");
-                      state = Status.Online;
-                      ToggleHeartBeating(_heartBeatingToggle);
-                      var response = s.Result.Item2;
-                      if (response.ContainsKey("st"))
+                      AVRealtime.PrintLog("websocket server connected, begin to open sesstion.");
+
+                      var cmd = new SessionCommand()
+                         .UA(VersionString)
+                         .Tag(tag)
+                         .DeviceId(deviceId)
+                         .Option("open")
+                         .PeerId(clientId);
+
+                      ToggleNotification(true);
+                      return AttachSignature(cmd, this.SignatureFactory.CreateConnectSignature(clientId));
+
+                  }).Unwrap().OnSuccess(x =>
+                  {
+                      var cmd = x.Result;
+                      if (cmd == null)
                       {
-                          _sesstionToken = response["st"] as string;
+                          return Task.FromResult<Tuple<int, IDictionary<string, object>>>(null);
                       }
-                      if (response.ContainsKey("stTtl"))
-                      {
-                          var stTtl = long.Parse(response["stTtl"].ToString());
-                          _sesstionTokenExpire = DateTime.Now.ToUnixTimeStamp() + stTtl;
-                      }
-                      return client;
-                  });
+                      return this.RunCommandAsync(cmd);
+                  }).Unwrap().OnSuccess(s =>
+                   {
+                       if (s.Result == null)
+                       {
+                           return null;
+                       }
+                       AVRealtime.PrintLog("sesstion opened.");
+                       state = Status.Online;
+                       ToggleHeartBeating(_heartBeatingToggle);
+                       var response = s.Result.Item2;
+                       if (response.ContainsKey("st"))
+                       {
+                           _sesstionToken = response["st"] as string;
+                       }
+                       if (response.ContainsKey("stTtl"))
+                       {
+                           var stTtl = long.Parse(response["stTtl"].ToString());
+                           _sesstionTokenExpire = DateTime.Now.ToUnixTimeStamp() + stTtl;
+                       }
+                       AfterLogIn(client);
+                       return client;
+                   });
             }
         }
 
@@ -570,35 +566,35 @@ namespace LeanCloud.Realtime
         {
             AVIMClient client = null;
             AVRealtime.PrintLog("begin OpenAsync.");
-            return OpenAsync(secure, Subprotocol, cancellationToken).OnSuccess(openTask =>
-            {
-                AVRealtime.PrintLog("OpenAsync OnSuccess. begin send open sesstion cmd.");
-                var userTask = Task.FromResult(user);
-                if (user == null)
-                    userTask = AVUser.GetCurrentUserAsync();
+            return OpenAsync(secure, Subprotocol, true, cancellationToken).OnSuccess(openTask =>
+             {
+                 AVRealtime.PrintLog("OpenAsync OnSuccess. begin send open sesstion cmd.");
+                 var userTask = Task.FromResult(user);
+                 if (user == null)
+                     userTask = AVUser.GetCurrentUserAsync();
 
-                return userTask;
-            }).Unwrap().OnSuccess(u =>
-            {
-                var theUser = u.Result;
-                return AVCloud.RequestRealtimeSignatureAsync(theUser);
-            }).Unwrap().OnSuccess(signTask =>
-            {
-                var signResult = signTask.Result;
-                var clientId = signResult.ClientId;
-                var nonce = signResult.Nonce;
-                var singnature = signResult.Signature;
-                var ts = signResult.Timestamp;
+                 return userTask;
+             }).Unwrap().OnSuccess(u =>
+             {
+                 var theUser = u.Result;
+                 return AVCloud.RequestRealtimeSignatureAsync(theUser);
+             }).Unwrap().OnSuccess(signTask =>
+             {
+                 var signResult = signTask.Result;
+                 var clientId = signResult.ClientId;
+                 var nonce = signResult.Nonce;
+                 var singnature = signResult.Signature;
+                 var ts = signResult.Timestamp;
 
-                client = PreLogIn(clientId, tag, deviceId);
-                ToggleNotification(true);
-                return this.OpenSessionAsync(clientId, tag, deviceId, nonce, ts, singnature, secure);
-            }).Unwrap().OnSuccess(s =>
-            {
-                ToggleHeartBeating(_heartBeatingToggle);
-
-                return client;
-            });
+                 client = PreLogIn(clientId, tag, deviceId);
+                 ToggleNotification(true);
+                 return this.OpenSessionAsync(clientId, tag, deviceId, nonce, ts, singnature, secure);
+             }).Unwrap().OnSuccess(s =>
+             {
+                 ToggleHeartBeating(_heartBeatingToggle);
+                 AfterLogIn(client);
+                 return client;
+             });
         }
 
         #region pre-login
@@ -624,6 +620,13 @@ namespace LeanCloud.Realtime
 
             return client;
         }
+
+        internal void AfterLogIn(AVIMClient client)
+        {
+            if (clients == null) clients = new Dictionary<string, AVIMClient>();
+            clients[client.ClientId] = client;
+        }
+
         #endregion
 
         #region after-login
@@ -661,16 +664,16 @@ namespace LeanCloud.Realtime
             AVRealtime.PrintLog("ToggleNotification| toggle:" + toggle + "|listening: " + _listening);
             if (toggle && !_listening)
             {
-                PCLWebsocketClient.OnClosed += WebsocketClient_OnClosed;
-                PCLWebsocketClient.OnError += WebsocketClient_OnError;
-                PCLWebsocketClient.OnMessage += WebSocketClient_OnMessage;
+                AVWebSocketClient.OnClosed += WebsocketClient_OnClosed;
+                AVWebSocketClient.OnError += WebsocketClient_OnError;
+                AVWebSocketClient.OnMessage += WebSocketClient_OnMessage;
                 _listening = true;
             }
             else if (!toggle && _listening)
             {
-                PCLWebsocketClient.OnClosed -= WebsocketClient_OnClosed;
-                PCLWebsocketClient.OnError -= WebsocketClient_OnError;
-                PCLWebsocketClient.OnMessage -= WebSocketClient_OnMessage;
+                AVWebSocketClient.OnClosed -= WebsocketClient_OnClosed;
+                AVWebSocketClient.OnError -= WebsocketClient_OnError;
+                AVWebSocketClient.OnMessage -= WebSocketClient_OnMessage;
                 _listening = false;
             }
         }
@@ -707,7 +710,7 @@ namespace LeanCloud.Realtime
             this._heartBeatingToggle = toggle;
             if (!string.Equals(_beatPacket, beatPacket)) _beatPacket = beatPacket;
 
-            if (_heartBeatingTimer == null)
+            if (_heartBeatingTimer == null && this._heartBeatingToggle)
             {
                 _heartBeatingTimer = new AVTimer();
                 _heartBeatingTimer.Elapsed += SendHeartBeatingPacket;
@@ -715,7 +718,12 @@ namespace LeanCloud.Realtime
                 _heartBeatingTimer.Start();
                 PrintLog("auto heart beating started.");
             }
+            if (!this._heartBeatingToggle)
+            {
+                _heartBeatingTimer.Stop();
+            }
         }
+
         void SendHeartBeatingPacket(object sender, TimerEventArgs e)
         {
             PrintLog("auto heart beating ticked by timer.");
@@ -729,24 +737,35 @@ namespace LeanCloud.Realtime
 #endif
         }
 
+        /// <summary>
+        /// Keeps the alive.
+        /// </summary>
         public void KeepAlive()
         {
-            if (this._heartBeatingToggle)
+            var cmd = new AVIMCommand();
+            RunCommandAsync(cmd).ContinueWith(t =>
             {
-                PCLWebsocketClient.Send(this._beatPacket);
-            }
+                if (t.IsCanceled)
+                {
+                    this.AVWebSocketClient.Close();
+                }
+            });
+            //if (this._heartBeatingToggle)
+            //{
+            //    AVWebSocketClient.Send(this._beatPacket);
+            //}
         }
         IAVTimer reconnectTimer;
         bool autoReconnectionStarted = false;
 
         internal bool sessionConflict = false;
-
+        internal bool loggedOut = false;
 
         internal bool CanReconnect
         {
             get
             {
-                return !sessionConflict;
+                return !sessionConflict && !loggedOut;
             }
         }
 
@@ -767,6 +786,7 @@ namespace LeanCloud.Realtime
             if (!autoReconnectionStarted && CanReconnect)
             {
                 autoReconnectionStarted = true;
+                AutoReconnect();
                 reconnectTimer = new AVTimer();
                 reconnectTimer.Interval = this.ReconnectOptions.Interval * 1000;
                 reconnectTimer.Elapsed += ReconnectTimer_Elapsed;
@@ -918,13 +938,13 @@ namespace LeanCloud.Realtime
 
         }
 
-
         /// <summary>
         /// 自动重连
         /// </summary>
         /// <returns></returns>
         public Task AutoReconnect()
         {
+            AVRealtime.PrintLog("AutoReconnect started.");
             var reconnectingArgs = new AVIMReconnectingEventArgs()
             {
                 ClientId = _clientId,
@@ -940,10 +960,10 @@ namespace LeanCloud.Realtime
                 AVRealtime.PrintLog(string.Format("preferred websocket server ({0}) network broken, take secondary server({1}) :", _wss, _secondaryWss));
             }
 
-            var task = OpenAsync(websocketServer, Subprotocol);
+            var task = OpenAsync(websocketServer, Subprotocol, true);
             if (reborn)
             {
-                task = OpenAsync(this._secure, Subprotocol);
+                task = OpenAsync(this._secure, Subprotocol, true);
                 AVRealtime.PrintLog("both preferred and secondary websockets are expired, so try to request RTM router to get a new pair");
             }
 
@@ -1052,17 +1072,20 @@ namespace LeanCloud.Realtime
             return this.OpenAsync(secure, null);
         }
 
+
+
         /// <summary>
-        /// fetch wss address from push router and open the websocket connection.
+        /// Open websocket connection.
         /// </summary>
-        /// <param name="secure">if use ssl encrept</param>
-        /// <param name="subprotocol">subprotocol</param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        public Task<bool> OpenAsync(bool secure, string subprotocol = null, CancellationToken cancellationToken = default(CancellationToken))
+        /// <returns>The async.</returns>
+        /// <param name="secure">If set to <c>true</c> secure.</param>
+        /// <param name="subprotocol">Subprotocol.</param>
+        /// <param name="enforce">If set to <c>true</c> enforce.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        public Task<bool> OpenAsync(bool secure, string subprotocol = null, bool enforce = false, CancellationToken cancellationToken = default(CancellationToken))
         {
             _secure = secure;
-            if (state == Status.Online)
+            if (state == Status.Online && !enforce)
             {
                 AVRealtime.PrintLog("state is Status.Online.");
                 return Task.FromResult(true);
@@ -1072,7 +1095,7 @@ namespace LeanCloud.Realtime
             {
                 _wss = CurrentConfiguration.RealtimeServer.ToString();
                 AVRealtime.PrintLog("use configuration realtime server with url: " + _wss);
-                return OpenAsync(_wss, subprotocol, cancellationToken);
+                return OpenAsync(_wss, subprotocol, enforce);
             }
             var routerUrl = CurrentConfiguration.RTMRouter != null ? CurrentConfiguration.RTMRouter.ToString() : null;
             return RouterController.GetAsync(routerUrl, secure, cancellationToken).OnSuccess(r =>
@@ -1086,7 +1109,7 @@ namespace LeanCloud.Realtime
                     _secondaryWss = routerState.secondary;
                     state = Status.Connecting;
                     AVRealtime.PrintLog("push router give a url :" + _wss);
-                    return OpenAsync(routerState.server, subprotocol, cancellationToken);
+                    return OpenAsync(routerState.server, subprotocol, enforce);
                 }).Unwrap();
         }
 
@@ -1097,9 +1120,9 @@ namespace LeanCloud.Realtime
         /// <param name="subprotocol">subprotocol for websocket</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public Task<bool> OpenAsync(string url, string subprotocol = null, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<bool> OpenAsync(string url, string subprotocol = null, bool enforce = false, CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (PCLWebsocketClient.IsOpen)
+            if (AVWebSocketClient.IsOpen && !enforce)
             {
                 AVRealtime.PrintLog(url + "is already connectd.");
                 return Task.FromResult(true);
@@ -1111,34 +1134,50 @@ namespace LeanCloud.Realtime
             Action<string> onError = null;
             onError = ((reason) =>
             {
-                PCLWebsocketClient.OnError -= onError;
-                tcs.TrySetResult(false);
+                AVWebSocketClient.OnError -= onError;
+
+                if (tcs.Task.IsCanceled || tcs.Task.IsCompleted)
+                {
+                    return;
+                }
+
+                tcs.SetResult(false);
+
+                AVRealtime.PrintLog(reason);
                 //tcs.TrySetException(new AVIMException(AVIMException.ErrorCode.FromServer, "try to open websocket at " + url + "failed.The reason is " + reason, null));
             });
 
             Action onOpend = null;
             onOpend = (() =>
             {
-                PCLWebsocketClient.OnError -= onError;
-                PCLWebsocketClient.OnOpened -= onOpend;
-                tcs.TrySetResult(true);
+                AVWebSocketClient.OnError -= onError;
+                AVWebSocketClient.OnOpened -= onOpend;
+                if (tcs.Task.IsCanceled || tcs.Task.IsCompleted)
+                {
+                    return;
+                }
+                tcs.SetResult(true);
                 AVRealtime.PrintLog(url + " connected.");
             });
 
             Action<int, string, string> onClosed = null;
             onClosed = (reason, arg0, arg1) =>
             {
-                PCLWebsocketClient.OnError -= onError;
-                PCLWebsocketClient.OnOpened -= onOpend;
-                PCLWebsocketClient.OnClosed -= onClosed;
-                tcs.TrySetResult(false);
+                AVWebSocketClient.OnError -= onError;
+                AVWebSocketClient.OnOpened -= onOpend;
+                AVWebSocketClient.OnClosed -= onClosed;
+                if(tcs.Task.IsCanceled || tcs.Task.IsCompleted)
+                {
+                    return;
+                }
+                tcs.SetResult(true);
                 //tcs.TrySetException(new AVIMException(AVIMException.ErrorCode.FromServer, "try to open websocket at " + url + "failed.The reason is " + reason, null));
             };
 
-            PCLWebsocketClient.OnOpened += onOpend;
-            PCLWebsocketClient.OnClosed += onClosed;
-            PCLWebsocketClient.OnError += onError;
-            PCLWebsocketClient.Open(url, subprotocol);
+            AVWebSocketClient.OnOpened += onOpend;
+            AVWebSocketClient.OnClosed += onClosed;
+            AVWebSocketClient.OnError += onError;
+            AVWebSocketClient.Open(url, subprotocol);
 
             return tcs.Task;
         }
@@ -1213,8 +1252,9 @@ namespace LeanCloud.Realtime
         internal void LogOut()
         {
             State = Status.Closed;
+            loggedOut = true;
             Dispose();
-            PCLWebsocketClient.Close();
+            AVWebSocketClient.Close();
         }
 
         internal void Dispose()
@@ -1222,6 +1262,7 @@ namespace LeanCloud.Realtime
             var toggle = false;
             ToggleNotification(toggle);
             ToggleHeartBeating(toggle);
+
             if (m_NoticeReceived != null)
             {
                 foreach (Delegate d in m_NoticeReceived.GetInvocationList())
@@ -1241,7 +1282,6 @@ namespace LeanCloud.Realtime
 
         static AVRealtime()
         {
-            avRealtimeList = new List<AVRealtime>();
 #if MONO || UNITY
             versionString = "net-unity/" + Version;
 #else
