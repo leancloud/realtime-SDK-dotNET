@@ -13,14 +13,26 @@ namespace LeanCloud.Realtime
     /// AVRealtime initialize behavior.
     /// </summary>
     public class AVRealtimeBehavior : AVInitializeBehaviour
-	{
-		void OnApplicationQuit()
+    {
+        void OnApplicationQuit()
         {
-            List<AVRealtime> avRealtimeList = AVRealtime.avRealtimeList;
-            for (int i = 0; i < avRealtimeList.Count; i++) {
-                AVRealtime realtime = avRealtimeList[i];
-                realtime.LogOut();
+            foreach (var item in AVRealtime.clients)
+            {
+                item.Value.LinkedRealtime.LogOut();
             }
         }
+
+        private void Update()
+        {
+            if (Application.internetReachability == NetworkReachability.NotReachable)
+            {
+                AVRealtime.PrintLog("unity Application.internetReachability is NetworkReachability.NotReachable");
+                foreach (var item in AVRealtime.clients)
+                {
+                    item.Value.LinkedRealtime.StartAutoReconnect();
+                }
+            }
+        }
+
     }
 }

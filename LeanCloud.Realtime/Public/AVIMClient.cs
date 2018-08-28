@@ -328,6 +328,15 @@ namespace LeanCloud.Realtime
             _realtime.SubscribeNoticeReceived(listener, runtimeHook);
         }
 
+        #region get client instance
+        public static AVIMClient Get(string clientId)
+        {
+            if (AVRealtime.clients == null || !AVRealtime.clients.ContainsKey(clientId)) throw new MissingFieldException(string.Format("no client found with a id in {0}", clientId));
+
+            return AVRealtime.clients[clientId];
+        }
+        #endregion
+
         #endregion
         /// <summary>
         /// 创建对话
