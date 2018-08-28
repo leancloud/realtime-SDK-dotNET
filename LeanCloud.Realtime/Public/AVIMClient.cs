@@ -329,9 +329,14 @@ namespace LeanCloud.Realtime
         }
 
         #region get client instance
+        /// <summary>
+        /// Get the specified clientId.
+        /// </summary>
+        /// <returns>The get.</returns>
+        /// <param name="clientId">Client identifier.</param>
         public static AVIMClient Get(string clientId)
         {
-            if (AVRealtime.clients == null || !AVRealtime.clients.ContainsKey(clientId)) throw new MissingFieldException(string.Format("no client found with a id in {0}", clientId));
+            if (AVRealtime.clients == null || !AVRealtime.clients.ContainsKey(clientId)) throw new Exception(string.Format("no client found with a id in {0}", clientId));
 
             return AVRealtime.clients[clientId];
         }
