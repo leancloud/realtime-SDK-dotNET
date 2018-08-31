@@ -16,9 +16,12 @@ namespace LeanCloud.Realtime
     {
         void OnApplicationQuit()
         {
-            foreach (var item in AVRealtime.clients)
+            if (AVRealtime.clients != null)
             {
-                item.Value.LinkedRealtime.LogOut();
+                foreach (var item in AVRealtime.clients)
+                {
+                    item.Value.LinkedRealtime.LogOut();
+                }
             }
         }
 
@@ -33,6 +36,61 @@ namespace LeanCloud.Realtime
                 }
             }
         }
+
+        public override void Awake()
+        {
+            base.Awake();
+            StartCoroutine(InitializeRealtime());
+            gameObject.name = "AVRealtimeInitializeBehavior";
+        }
+
+        public IEnumerator InitializeRealtime()
+        {
+            if (isRealtimeInitialized)
+            {
+                yield break;
+            }
+            isRealtimeInitialized = true;
+            yield return FetchRouter();
+        }
+
+
+        [SerializeField]
+        public bool secure;
+        private static bool isRealtimeInitialized = false;
+        public string Server;
+        private IDictionary<string, object> routerState;
+
+        public IEnumerator FetchRouter()
+        {
+            var state = AVPlugins.Instance.AppRouterController.Get();
+            var url = string.Format("https://{0}/v1/route?appId={1}", state.RealtimeRouterServer, applicationID);
+            if (secure)
+            {
+                url += "&secure=1";
+            }
+
+            var request = new UnityWebRequest(url);
+            request.downloadHandler = new DownloadHandlerBuffer();
+            yield return request.Send();
+
+            if (request.isError)
+            {
+                throw new AVException(AVException.ErrorCode.ConnectionFailed, "can not reach router.", null);
+            }
+
+            var result = request.downloadHandler.text;
+            routerState = Json.Parse(result) as IDictionary<string, object>;
+            if (routerState.Keys.Count == 0)
+            {
+                throw new KeyNotFoundException("Can not get websocket url from server,please check the appId.");
+            }
+            var ttl = long.Parse(routerState["ttl"].ToString());
+            var expire = DateTime.Now.AddSeconds(ttl);
+            routerState["expire"] = expire.ToUnixTimeStamp(UnixTimeStampUnit.Second);
+            Server = routerState["server"].ToString();
+        }
+
 
     }
 }
