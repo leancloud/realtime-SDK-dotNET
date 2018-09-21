@@ -8,6 +8,7 @@ using LeanCloud;
 using LeanCloud.Storage.Internal;
 using System.Collections;
 using LeanCloud.Core.Internal;
+using System.IO;
 
 namespace LeanCloud.Realtime
 {
@@ -870,5 +871,353 @@ namespace LeanCloud.Realtime
             }
         }
         #endregion
+    }
+
+    /// <summary>
+    /// AVIMConversation extensions.
+    /// </summary>
+    public static class AVIMConversationExtensions
+    {
+        public static Task<T> SendAsync<T>(this AVIMConversation conversation, T message)
+            where T : IAVIMMessage
+        {
+            return conversation.SendMessageAsync(message).OnSuccess(t =>
+            {
+                return (T)t.Result;
+            });
+        }
+
+       
+
+       
+        /// <summary>
+        /// Send text message.
+        /// </summary>
+        /// <returns>The text async.</returns>
+        /// <param name="conversation">Conversation.</param>
+        /// <param name="text">Text.</param>
+        public static Task<AVIMTextMessage> SendTextAsync(this AVIMConversation conversation, string text)
+        {
+            return conversation.SendAsync<AVIMTextMessage>(new AVIMTextMessage(text));
+        }
+
+        #region Image messages
+
+        /// <summary>
+        /// Send image message async.
+        /// </summary>
+        /// <returns>The image async.</returns>
+        /// <param name="conversation">Conversation.</param>
+        /// <param name="url">URL.</param>
+        /// <param name="name">Name.</param>
+        /// <param name="textTitle">Text title.</param>
+        /// <param name="customAttributes">Custom attributes.</param>
+        public static Task<AVIMImageMessage> SendImageAsync(this AVIMConversation conversation, string url, string name = null, string textTitle = null, IDictionary<string, object> customAttributes = null)
+        {
+            return conversation.SendFileMessageAsync<AVIMImageMessage>(name, url, textTitle, customAttributes);
+        }
+
+        /// <summary>
+        /// Send image message async.
+        /// </summary>
+        /// <returns>The image async.</returns>
+        /// <param name="conversation">Conversation.</param>
+        /// <param name="fileName">File name.</param>
+        /// <param name="data">Data.</param>
+        /// <param name="mimeType">MIME type.</param>
+        /// <param name="textTitle">Text title.</param>
+        /// <param name="metaData">Meta data.</param>
+        /// <param name="customAttributes">Custom attributes.</param>
+        public static Task<AVIMImageMessage> SendImageAsync(this AVIMConversation conversation, string fileName, Stream data, string mimeType = null, string textTitle = null, IDictionary<string, object> metaData = null, IDictionary<string, object> customAttributes = null)
+        {
+            return conversation.SendFileMessageAsync<AVIMImageMessage>(fileName, data, mimeType, textTitle, metaData, customAttributes);
+        }
+
+        /// <summary>
+        /// Send image message async.
+        /// </summary>
+        /// <returns>The image async.</returns>
+        /// <param name="conversation">Conversation.</param>
+        /// <param name="fileName">File name.</param>
+        /// <param name="data">Data.</param>
+        /// <param name="mimeType">MIME type.</param>
+        /// <param name="textTitle">Text title.</param>
+        /// <param name="metaData">Meta data.</param>
+        /// <param name="customAttributes">Custom attributes.</param>
+        public static Task<AVIMImageMessage> SendImageAsync(this AVIMConversation conversation, string fileName, byte[] data, string mimeType = null, string textTitle = null, IDictionary<string, object> metaData = null, IDictionary<string, object> customAttributes = null)
+        {
+            return conversation.SendFileMessageAsync<AVIMImageMessage>(fileName, data, mimeType, textTitle, metaData, customAttributes);
+        }
+        #endregion
+
+        #region audio message
+
+        /// <summary>
+        /// Send audio message async.
+        /// </summary>
+        /// <returns>The audio async.</returns>
+        /// <param name="conversation">Conversation.</param>
+        /// <param name="url">URL.</param>
+        /// <param name="name">Name.</param>
+        /// <param name="textTitle">Text title.</param>
+        /// <param name="customAttributes">Custom attributes.</param>
+        public static Task<AVIMAudioMessage> SendAudioAsync(this AVIMConversation conversation, string url, string name = null, string textTitle = null, IDictionary<string, object> customAttributes = null)
+        {
+            return conversation.SendFileMessageAsync<AVIMAudioMessage>(name, url, textTitle, customAttributes);
+        }
+
+        /// <summary>
+        /// Send audio message async.
+        /// </summary>
+        /// <returns>The audio async.</returns>
+        /// <param name="conversation">Conversation.</param>
+        /// <param name="fileName">File name.</param>
+        /// <param name="data">Data.</param>
+        /// <param name="mimeType">MIME type.</param>
+        /// <param name="textTitle">Text title.</param>
+        /// <param name="metaData">Meta data.</param>
+        /// <param name="customAttributes">Custom attributes.</param>
+        public static Task<AVIMAudioMessage> SendAudioAsync(this AVIMConversation conversation, string fileName, Stream data, string mimeType = null, string textTitle = null, IDictionary<string, object> metaData = null, IDictionary<string, object> customAttributes = null)
+        {
+            return conversation.SendFileMessageAsync<AVIMAudioMessage>(fileName, data, mimeType, textTitle, metaData, customAttributes);
+        }
+
+        /// <summary>
+        /// Send audio message async.
+        /// </summary>
+        /// <returns>The audio async.</returns>
+        /// <param name="conversation">Conversation.</param>
+        /// <param name="fileName">File name.</param>
+        /// <param name="data">Data.</param>
+        /// <param name="mimeType">MIME type.</param>
+        /// <param name="textTitle">Text title.</param>
+        /// <param name="metaData">Meta data.</param>
+        /// <param name="customAttributes">Custom attributes.</param>
+        public static Task<AVIMAudioMessage> SendAudioAsync(this AVIMConversation conversation, string fileName, byte[] data, string mimeType = null, string textTitle = null, IDictionary<string, object> metaData = null, IDictionary<string, object> customAttributes = null)
+        {
+            return conversation.SendFileMessageAsync<AVIMAudioMessage>(fileName, data, mimeType, textTitle, metaData, customAttributes);
+        }
+        #endregion
+
+        #region video message
+        /// <summary>
+        /// Send video message async.
+        /// </summary>
+        /// <returns>The video async.</returns>
+        /// <param name="conversation">Conversation.</param>
+        /// <param name="url">URL.</param>
+        /// <param name="name">Name.</param>
+        /// <param name="textTitle">Text title.</param>
+        /// <param name="customAttributes">Custom attributes.</param>
+        public static Task<AVIMVideoMessage> SendVideoAsync(this AVIMConversation conversation, string url, string name = null, string textTitle = null, IDictionary<string, object> customAttributes = null)
+        {
+            return conversation.SendFileMessageAsync<AVIMVideoMessage>(name, url, textTitle, customAttributes);
+        }
+        /// <summary>
+        /// Send video message async.
+        /// </summary>
+        /// <returns>The video async.</returns>
+        /// <param name="conversation">Conversation.</param>
+        /// <param name="fileName">File name.</param>
+        /// <param name="data">Data.</param>
+        /// <param name="mimeType">MIME type.</param>
+        /// <param name="textTitle">Text title.</param>
+        /// <param name="metaData">Meta data.</param>
+        /// <param name="customAttributes">Custom attributes.</param>
+        public static Task<AVIMVideoMessage> SendVideoAsync(this AVIMConversation conversation, string fileName, Stream data, string mimeType = null, string textTitle = null, IDictionary<string, object> metaData = null, IDictionary<string, object> customAttributes = null)
+        {
+            return conversation.SendFileMessageAsync<AVIMVideoMessage>(fileName, data, mimeType, textTitle, metaData, customAttributes);
+        }
+
+        /// <summary>
+        /// Send video message async.
+        /// </summary>
+        /// <returns>The video async.</returns>
+        /// <param name="conversation">Conversation.</param>
+        /// <param name="fileName">File name.</param>
+        /// <param name="data">Data.</param>
+        /// <param name="mimeType">MIME type.</param>
+        /// <param name="textTitle">Text title.</param>
+        /// <param name="metaData">Meta data.</param>
+        /// <param name="customAttributes">Custom attributes.</param>
+        public static Task<AVIMVideoMessage> SendVideoAsync(this AVIMConversation conversation, string fileName, byte[] data, string mimeType = null, string textTitle = null, IDictionary<string, object> metaData = null, IDictionary<string, object> customAttributes = null)
+        {
+            return conversation.SendFileMessageAsync<AVIMVideoMessage>(fileName, data, mimeType, textTitle, metaData, customAttributes);
+        }
+        #endregion
+
+        /// <summary>
+        /// Send file message async.
+        /// </summary>
+        /// <returns>The file message async.</returns>
+        /// <param name="conversation">Conversation.</param>
+        /// <param name="url">URL.</param>
+        /// <param name="name">Name.</param>
+        /// <param name="textTitle">Text title.</param>
+        /// <param name="customAttributes">Custom attributes.</param>
+        /// <typeparam name="T">The 1st type parameter.</typeparam>
+        public static Task<T> SendFileMessageAsync<T>(this AVIMConversation conversation, string url, string name = null, string textTitle = null, IDictionary<string, object> customAttributes = null)
+            where T : AVIMFileMessage, new()
+        {
+            var fileMessage = AVIMFileMessage.FromUrl<T>(name, url, textTitle, customAttributes);
+            return conversation.SendAsync<T>(fileMessage);
+        }
+
+        /// <summary>
+        /// Send file message async.
+        /// </summary>
+        /// <returns>The file message async.</returns>
+        /// <param name="conversation">Conversation.</param>
+        /// <param name="fileName">File name.</param>
+        /// <param name="data">Data.</param>
+        /// <param name="mimeType">MIME type.</param>
+        /// <param name="textTitle">Text title.</param>
+        /// <param name="metaData">Meta data.</param>
+        /// <param name="customAttributes">Custom attributes.</param>
+        /// <typeparam name="T">The 1st type parameter.</typeparam>
+        public static Task<T> SendFileMessageAsync<T>(this AVIMConversation conversation, string fileName, Stream data, string mimeType = null, string textTitle = null, IDictionary<string, object> metaData = null, IDictionary<string, object> customAttributes = null)
+            where T : AVIMFileMessage, new()
+        {
+            var fileMessage = AVIMFileMessage.FromStream<T>(fileName, data, mimeType, textTitle, metaData, customAttributes);
+
+            return fileMessage.File.SaveAsync().OnSuccess(fileUploaded =>
+            {
+                return conversation.SendAsync<T>(fileMessage);
+            }).Unwrap();
+        }
+
+        /// <summary>
+        /// Send file message async.
+        /// </summary>
+        /// <returns>The file message async.</returns>
+        /// <param name="conversation">Conversation.</param>
+        /// <param name="fileName">File name.</param>
+        /// <param name="data">Data.</param>
+        /// <param name="mimeType">MIME type.</param>
+        /// <param name="textTitle">Text title.</param>
+        /// <param name="metaData">Meta data.</param>
+        /// <param name="customAttributes">Custom attributes.</param>
+        /// <typeparam name="T">The 1st type parameter.</typeparam>
+        public static Task<T> SendFileMessageAsync<T>(this AVIMConversation conversation, string fileName, byte[] data, string mimeType = null, string textTitle = null, IDictionary<string, object> metaData = null, IDictionary<string, object> customAttributes = null)
+            where T : AVIMFileMessage, new()
+        {
+            var fileMessage = AVIMFileMessage.FromStream<T>(fileName, new MemoryStream(data), mimeType, textTitle, metaData, customAttributes);
+
+            return conversation.SendFileMessageAsync<T>(fileName, new MemoryStream(data), mimeType, textTitle, metaData, customAttributes);
+        }
+    }
+
+    /// <summary>
+    /// AVIMConversatio builder.
+    /// </summary>
+    public interface IAVIMConversatioBuilder
+    {
+        AVIMConversation Build();
+    }
+
+    /// <summary>
+    /// AVIMConversation builder.
+    /// </summary>
+    public class AVIMConversationBuilder : IAVIMConversatioBuilder
+    {
+        public AVIMClient Client { get; set; }
+        public bool IsUnique { get; set; }
+        public IEnumerable<string> Members
+        {
+            get
+            {
+                return members;
+            }
+            set
+            {
+                members = value.ToList();
+            }
+        }
+        private List<string> members { get; set; }
+        public IDictionary<string, object> Properties
+        {
+            get
+            {
+                return properties;
+            }
+            set
+            {
+                properties = new Dictionary<string, object>(value);
+            }
+        }
+        private Dictionary<string, object> properties;
+
+        public string Name { get; set; }
+        public bool IsTransient { get; set; }
+        public bool IsSystem { get; set; }
+
+        internal static AVIMConversationBuilder CreateDefaultBuilder()
+        {
+            return new AVIMConversationBuilder();
+        }
+
+        public AVIMConversation Build()
+        {
+            var result = new AVIMConversation(
+                members: members,
+                name: Name,
+                isUnique: IsUnique,
+                isSystem: IsSystem,
+                isTransient: IsTransient,
+                client: Client);
+
+            if (properties != null)
+            {
+                foreach (var key in properties.Keys)
+                {
+                    result[key] = properties[key];
+                }
+            }
+
+            return result;
+        }
+
+        public AVIMConversationBuilder UseUnique()
+        {
+            this.IsUnique = true;
+            return this;
+        }
+
+        public AVIMConversationBuilder UseSystem()
+        {
+            this.IsSystem = true;
+            return this;
+        }
+
+        public AVIMConversationBuilder UseTransien()
+        {
+            this.IsTransient = true;
+            return this;
+        }
+
+        public AVIMConversationBuilder UseName(string name)
+        {
+            this.Name = name;
+            return this;
+        }
+
+        public AVIMConversationBuilder AddMember(string memberClientId)
+        {
+            return AddMembers(new string[] { memberClientId });
+        }
+
+        public AVIMConversationBuilder AddMembers(IEnumerable<string> memberClientIds)
+        {
+            if (this.members == null) this.members = new List<string>();
+            this.members.AddRange(memberClientIds);
+            return this;
+        }
+
+        public AVIMConversationBuilder SetProperty(string key, object value)
+        {
+            if (this.properties == null) this.properties = new Dictionary<string, object>();
+            this.properties[key] = value;
+            return this;
+        }
     }
 }

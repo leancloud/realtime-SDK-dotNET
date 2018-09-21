@@ -9,4 +9,12 @@
   <ItemGroup>
     <ProjectReference Include="..\..\LeanCloud.Realtime\LeanCloud.Realtime.NetCore.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Remove="石原里美就是最美哒.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="石原里美就是最美哒.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 </Project>

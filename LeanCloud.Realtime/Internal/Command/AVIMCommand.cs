@@ -8,6 +8,9 @@ using System.Threading.Tasks;
 
 namespace LeanCloud.Realtime.Internal
 {
+    /// <summary>
+    /// Command.
+    /// </summary>
     public class AVIMCommand
     {
         protected readonly string cmd;
@@ -143,6 +146,15 @@ namespace LeanCloud.Realtime.Internal
             var json = this.Encode();
             return Json.Encode(json);
         }
+
+        public bool IsValid
+        {
+            get
+            {
+                return !string.IsNullOrEmpty(this.cmd);
+            }
+        }
+
         private static Int32 lastCmdId = -65536;
         internal static Int32 NextCmdId
         {

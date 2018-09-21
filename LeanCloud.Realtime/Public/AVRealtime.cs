@@ -435,10 +435,13 @@ namespace LeanCloud.Realtime
                 };
 
 
-
                 RegisterMessageType<AVIMMessage>();
                 RegisterMessageType<AVIMTypedMessage>();
                 RegisterMessageType<AVIMTextMessage>();
+                RegisterMessageType<AVIMImageMessage>();
+                RegisterMessageType<AVIMAudioMessage>();
+                RegisterMessageType<AVIMVideoMessage>();
+                RegisterMessageType<AVIMFileMessage>();
             }
         }
 
@@ -750,10 +753,6 @@ namespace LeanCloud.Realtime
                     this.AVWebSocketClient.Close();
                 }
             });
-            //if (this._heartBeatingToggle)
-            //{
-            //    AVWebSocketClient.Send(this._beatPacket);
-            //}
         }
         IAVTimer reconnectTimer;
         bool autoReconnectionStarted = false;
@@ -1166,7 +1165,7 @@ namespace LeanCloud.Realtime
                 AVWebSocketClient.OnError -= onError;
                 AVWebSocketClient.OnOpened -= onOpend;
                 AVWebSocketClient.OnClosed -= onClosed;
-                if(tcs.Task.IsCanceled || tcs.Task.IsCompleted)
+                if (tcs.Task.IsCanceled || tcs.Task.IsCompleted)
                 {
                     return;
                 }
@@ -1285,7 +1284,7 @@ namespace LeanCloud.Realtime
 #if MONO || UNITY
             versionString = "net-unity/" + Version;
 #else
-            versionString = "net-portable/" + Version;
+            versionString = "net-universal/" + Version;
 #endif
         }
 
