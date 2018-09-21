@@ -1,6 +1,7 @@
 ﻿using LeanCloud.Realtime.Internal;
 using LeanCloud.Storage.Internal;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -22,14 +23,6 @@ namespace LeanCloud.Realtime
         {
 
         }
-        /// <summary>
-        /// 文本内容
-        /// </summary>
-        [AVIMMessageFieldName("_lctext")]
-        public string TextContent
-        {
-            get; set;
-        }
 
         /// <summary>
         /// 文本类型标记
@@ -50,13 +43,5 @@ namespace LeanCloud.Realtime
         {
             TextContent = textContent;
         }
-
-        //public override bool Validate(string msgStr)
-        //{
-        //    if (!base.Validate(msgStr)) return false;
-        //    var msg = Json.Parse(msgStr) as IDictionary<string, object>;
-
-        //    return msg[AVIMProtocol.LCTYPE].ToString() == "-1".ToString();
-        //}
     }
 }

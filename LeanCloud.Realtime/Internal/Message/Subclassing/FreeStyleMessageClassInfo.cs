@@ -58,7 +58,6 @@ namespace LeanCloud.Realtime.Internal
         {
             var rtn = (IAVIMMessage)Constructor.Invoke(null);
             return rtn;
-
         }
 
         public static string GetMessageClassName(TypeInfo type)

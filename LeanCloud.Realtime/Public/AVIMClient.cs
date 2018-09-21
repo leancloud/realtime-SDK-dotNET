@@ -413,6 +413,28 @@ namespace LeanCloud.Realtime
         }
 
         /// <summary>
+        /// Creates the conversation async.
+        /// </summary>
+        /// <returns>The conversation async.</returns>
+        /// <param name="builder">Builder.</param>
+        public Task<AVIMConversation> CreateConversationAsync(IAVIMConversatioBuilder builder)
+        {
+            var conversation = builder.Build();
+            return CreateConversationAsync(conversation, conversation.IsUnique);
+        }
+
+        /// <summary>
+        /// Gets the conversatio builder.
+        /// </summary>
+        /// <returns>The conversatio builder.</returns>
+        public AVIMConversationBuilder GetConversatioBuilder()
+        {
+            var builder = AVIMConversationBuilder.CreateDefaultBuilder();
+            builder.Client = this;
+            return builder;
+        }
+
+        /// <summary>
         /// 创建虚拟对话，对话 id 是由本地直接生成，云端根据规则消息发送给指定的 client id(s)
         /// </summary>
         /// <param name="member"></param>
@@ -1009,6 +1031,63 @@ namespace LeanCloud.Realtime
         {
             command.PeerId(this.ClientId);
             this.LinkedRealtime.RunCommand(command);
+        }
+    }
+
+    /// <summary>
+    /// AVIMClient extensions.
+    /// </summary>
+    public static class AVIMClientExtensions
+    {
+        /// <summary>
+        /// Create conversation async.
+        /// </summary>
+        /// <returns>The conversation async.</returns>
+        /// <param name="client">Client.</param>
+        /// <param name="members">Members.</param>
+        public static Task<AVIMConversation> CreateConversationAsync(this AVIMClient client, IEnumerable<string> members)
+        {
+            return client.CreateConversationAsync(members: members);
+        }
+
+        public static Task<AVIMConversation> CreateConversationAsync(this AVIMClient client, IEnumerable<string> members, string conversationName)
+        {
+            return client.CreateConversationAsync(members: members, name: conversationName);
+        }
+
+        /// <summary>
+        /// Get conversation.
+        /// </summary>
+        /// <returns>The conversation.</returns>
+        /// <param name="client">Client.</param>
+        /// <param name="conversationId">Conversation identifier.</param>
+        public static AVIMConversation GetConversation(this AVIMClient client, string conversationId)
+        {
+            return AVIMConversation.CreateWithoutData(conversationId, client);
+        }
+
+        /// <summary>
+        /// Join conversation async.
+        /// </summary>
+        /// <returns>The async.</returns>
+        /// <param name="client">Client.</param>
+        /// <param name="conversationId">Conversation identifier.</param>
+        public static Task JoinAsync(this AVIMClient client, string conversationId)
+        {
+            var conversation = client.GetConversation(conversationId);
+            return client.JoinAsync(conversation);
+        }
+
+        /// <summary>
+        /// Leave conversation async.
+        /// </summary>
+        /// <returns>The async.</returns>
+        /// <param name="client">Client.</param>
+        /// <param name="conversationId">Conversation identifier.</param>
+        public static Task LeaveAsync(this AVIMClient client, string conversationId)
+        {
+            var conversation = client.GetConversation(conversationId);
+            return client.LeaveAsync(conversation);
         }
     }
 }

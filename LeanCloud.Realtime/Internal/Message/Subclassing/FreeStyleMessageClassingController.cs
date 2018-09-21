@@ -122,6 +122,7 @@ namespace LeanCloud.Realtime.Internal
             }
             return message;
         }
+
         public IDictionary<string, object> EncodeProperties(IAVIMMessage subclass)
         {
             var type = subclass.GetType();
@@ -142,9 +143,10 @@ namespace LeanCloud.Realtime.Internal
             }
             return result;
         }
+
         public bool IsTypeValid(IDictionary<string, object> msg, Type type)
         {
-            throw new NotImplementedException();
+            return true;
         }
 
         public void RegisterSubclass(Type type)

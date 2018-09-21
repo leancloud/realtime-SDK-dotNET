@@ -33,12 +33,19 @@ namespace LeanCloud.Realtime.Internal
         /// <returns></returns>
         public Task<Tuple<int, IDictionary<string, object>>> RunCommandAsync(AVIMCommand command, CancellationToken cancellationToken = default(CancellationToken))
         {
-            command.IDlize();
             var tcs = new TaskCompletionSource<Tuple<int, IDictionary<string, object>>>();
+
+            command.IDlize();
+
             var requestString = command.EncodeJsonString();
+            if (!command.IsValid)
+            {
+                requestString = "{}";
+            }
             AVRealtime.PrintLog("websocket=>" + requestString);
             webSocketClient.Send(requestString);
             var requestJson = command.Encode();
+
 
             Action<string> onMessage = null;
             onMessage = (response) =>
