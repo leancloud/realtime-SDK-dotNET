@@ -151,7 +151,6 @@ namespace LeanCloud.Realtime
                 {
                     url = urlObj.ToString();
                 }
-
                 File = AVFile.CreateWithData(objId, name, url, metaData);
             }
 
