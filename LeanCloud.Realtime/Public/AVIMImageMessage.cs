@@ -21,8 +21,6 @@ namespace LeanCloud.Realtime
 
     }
 
-
-
     /// <summary>
     /// File message.
     /// </summary>
@@ -104,6 +102,60 @@ namespace LeanCloud.Realtime
             {
                 { AVIMProtocol.LCFILE, fileData }
             };
+        }
+
+        public override IAVIMMessage Deserialize(string msgStr)
+        {
+            var msg = Json.Parse(msgStr) as IDictionary<string, object>;
+            var fileData = msg[AVIMProtocol.LCFILE] as IDictionary<string, object>;
+            string mimeType = null;
+            string url = null;
+            string name = null;
+            string objId = null;
+            IDictionary<string, object> metaData = null;
+            if (fileData != null)
+            {
+                object metaDataObj = null;
+
+                if (fileData.TryGetValue("metaData", out metaDataObj))
+                {
+                    metaData = metaDataObj as IDictionary<string, object>;
+                    object fileNameObj = null;
+                    if (metaData != null)
+                    {
+                        if (metaData.TryGetValue("name", out fileNameObj))
+                        {
+                            name = fileNameObj.ToString();
+                        }
+                    }
+                    object mimeTypeObj = null;
+                    if (metaData != null)
+                    {
+                        if (metaData.TryGetValue("format", out mimeTypeObj))
+                        {
+                            if (mimeTypeObj != null)
+                                mimeType = mimeTypeObj.ToString();
+                        }
+                    }
+                }
+
+                object objIdObj = null;
+                if (fileData.TryGetValue("objId", out objIdObj))
+                {
+                    if (objIdObj != null)
+                        objId = objIdObj.ToString();
+                }
+
+                object urlObj = null;
+                if (fileData.TryGetValue("url", out urlObj))
+                {
+                    url = urlObj.ToString();
+                }
+
+                File = AVFile.CreateWithData(objId, name, url, metaData);
+            }
+
+            return base.Deserialize(msgStr);
         }
     }
 }

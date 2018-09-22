@@ -35,7 +35,7 @@
 		<EmbeddedResource Remove="Test\LeanCloud.Realtime.Test.Integration.WPFNetFx45\Properties\Resources.resx" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="LeanCloud.Storage" Version="2018.8.24.1" />
+		<PackageReference Include="LeanCloud.Storage" Version="2018.9.22.1" />
 	</ItemGroup>
 	<ItemGroup>
 		<Folder Include="Public\NetCore\" />

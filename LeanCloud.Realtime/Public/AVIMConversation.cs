@@ -914,7 +914,7 @@ namespace LeanCloud.Realtime
         /// <param name="customAttributes">Custom attributes.</param>
         public static Task<AVIMImageMessage> SendImageAsync(this AVIMConversation conversation, string url, string name = null, string textTitle = null, IDictionary<string, object> customAttributes = null)
         {
-            return conversation.SendFileMessageAsync<AVIMImageMessage>(name, url, textTitle, customAttributes);
+            return conversation.SendFileMessageAsync<AVIMImageMessage>(url, name, textTitle, customAttributes);
         }
 
         /// <summary>

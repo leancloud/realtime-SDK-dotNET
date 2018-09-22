@@ -171,6 +171,10 @@ namespace LeanCloud.Realtime
         /// <value>The content of the message.</value>
         public virtual IDictionary<string, object> MessageContent { get; set; }
 
+        /// <summary>
+        /// Encodes the decorated.
+        /// </summary>
+        /// <returns>The decorated.</returns>
         public virtual IDictionary<string, object> EncodeDecorated()
         {
             return Message.Encode();
@@ -189,6 +193,10 @@ namespace LeanCloud.Realtime
             return resultEncoed;
         }
 
+        /// <summary>
+        /// Encodes the decorator.
+        /// </summary>
+        /// <returns>The decorator.</returns>
         public abstract IDictionary<string, object> EncodeDecorator();
     }
 }
