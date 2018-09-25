@@ -1,6 +1,44 @@
 
 # 更新日志
 
+## 2018-09-25
+
+### 支持使用 Builder 模式构建对话
+
+```cs
+var conversationBuilder = tom.GetConversationBuilder().SetProperty("type", "private").SetProperty("pinned", true);
+var conversation = await tom.CreateConversationAsync(conversationBuilder);
+```
+
+### 重新设计了新版的内置消息类型
+
+发送图像消息：
+
+```cs
+// 外链
+await conversation.SendImageAsync("http://ww3.sinaimg.cn/bmiddle/596b0666gw1ed70eavm5tg20bq06m7wi.gif", "Satomi_Ishihara", "萌妹子一枚", new Dictionary<string, object>
+{
+   { "actress","石原里美"}
+});
+// 物理文件
+using (FileStream fileStream = new FileStream(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "San_Francisco.jpg"), FileMode.Open, FileAccess.Read))
+{
+   var imageMessage = new AVIMImageMessage();
+   imageMessage.File = new AVFile("San_Francisco.png", fileStream);
+   imageMessage.TextContent = "发自我的 Windows";
+   await conversation.SendAsync(imageMessage);
+}
+```
+
+### 查询消息历史记录支持泛型查询子类
+
+```cs
+// 不指定类型，获取 10 条最近的消息
+var messages = await conversation.QueryMessageAsync(limit: 10);
+// 指定图像消息类型
+var imageMessages = await conversation.QueryMessageAsync<AVIMImageMessage>(limit: 10);
+```
+
 ## 2018-04-05
 
 ### 自动重连的策略更新

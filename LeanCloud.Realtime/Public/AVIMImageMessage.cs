@@ -64,6 +64,15 @@ namespace LeanCloud.Realtime
             return FromUrl<T>(string.Empty.Random(8), url, null);
         }
 
+        /// <summary>
+        /// From the URL.
+        /// </summary>
+        /// <returns>The URL.</returns>
+        /// <param name="fileName">File name.</param>
+        /// <param name="externalUrl">External URL.</param>
+        /// <param name="textTitle">Text title.</param>
+        /// <param name="customAttributes">Custom attributes.</param>
+        /// <typeparam name="T">The 1st type parameter.</typeparam>
         public static T FromUrl<T>(string fileName, string externalUrl, string textTitle, IDictionary<string, object> customAttributes = null) where T : AVIMFileMessage, new()
         {
             T message = new T();
@@ -73,6 +82,17 @@ namespace LeanCloud.Realtime
             return message;
         }
 
+        /// <summary>
+        /// From the stream.
+        /// </summary>
+        /// <returns>The stream.</returns>
+        /// <param name="fileName">File name.</param>
+        /// <param name="data">Data.</param>
+        /// <param name="mimeType">MIME type.</param>
+        /// <param name="textTitle">Text title.</param>
+        /// <param name="metaData">Meta data.</param>
+        /// <param name="customAttributes">Custom attributes.</param>
+        /// <typeparam name="T">The 1st type parameter.</typeparam>
         public static T FromStream<T>(string fileName, Stream data, string mimeType, string textTitle, IDictionary<string, object> metaData, IDictionary<string, object> customAttributes = null) where T : AVIMFileMessage, new()
         {
             T message = new T();
@@ -104,6 +124,11 @@ namespace LeanCloud.Realtime
             };
         }
 
+        /// <summary>
+        /// Deserialize the specified msgStr.
+        /// </summary>
+        /// <returns>The deserialize.</returns>
+        /// <param name="msgStr">Message string.</param>
         public override IAVIMMessage Deserialize(string msgStr)
         {
             var msg = Json.Parse(msgStr) as IDictionary<string, object>;
@@ -154,6 +179,68 @@ namespace LeanCloud.Realtime
                 File = AVFile.CreateWithData(objId, name, url, metaData);
             }
 
+            return base.Deserialize(msgStr);
+        }
+    }
+
+    /// <summary>
+    /// Location message.
+    /// </summary>
+    [AVIMMessageClassName("_AVIMMessageClassName")]
+    [AVIMTypedMessageTypeInt(-5)]
+    public class AVIMLocationMessage : AVIMMessageDecorator
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="T:LeanCloud.Realtime.AVIMLocationMessage"/> class.
+        /// </summary>
+        public AVIMLocationMessage()
+         : base(new AVIMTypedMessage())
+        {
+
+        }
+
+        /// <summary>
+        /// Gets or sets the location.
+        /// </summary>
+        /// <value>The location.</value>
+        public AVGeoPoint Location { get; set; }
+
+        public AVIMLocationMessage(AVGeoPoint location)
+            : this()
+        {
+            Location = location;
+        }
+
+        /// <summary>
+        /// Encodes the decorator.
+        /// </summary>
+        /// <returns>The decorator.</returns>
+        public override IDictionary<string, object> EncodeDecorator()
+        {
+            var locationData = new Dictionary<string, object>
+            {
+                { "longitude", Location.Longitude},
+                { "latitude", Location.Latitude }
+            };
+            return new Dictionary<string, object>
+            {
+                { AVIMProtocol.LCLOC, locationData }
+            };
+        }
+
+        /// <summary>
+        /// Deserialize the specified msgStr.
+        /// </summary>
+        /// <returns>The deserialize.</returns>
+        /// <param name="msgStr">Message string.</param>
+        public override IAVIMMessage Deserialize(string msgStr)
+        {
+            var msg = Json.Parse(msgStr) as IDictionary<string, object>;
+            var locationData = msg[AVIMProtocol.LCLOC] as IDictionary<string, object>;
+            if (locationData != null)
+            {
+                Location = new AVGeoPoint(double.Parse(locationData["latitude"].ToString()), double.Parse(locationData["longitude"].ToString()));
+            }
             return base.Deserialize(msgStr);
         }
     }

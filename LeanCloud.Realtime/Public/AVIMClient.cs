@@ -27,9 +27,18 @@ namespace LeanCloud.Realtime
         /// </summary>
         public struct Configuration
         {
+            /// <summary>
+            /// Gets or sets a value indicating whether this <see cref="T:LeanCloud.Realtime.AVIMClient.Configuration"/>
+            /// auto read.
+            /// </summary>
+            /// <value><c>true</c> if auto read; otherwise, <c>false</c>.</value>
             public bool AutoRead { get; set; }
         }
 
+        /// <summary>
+        /// Gets or sets the current configuration.
+        /// </summary>
+        /// <value>The current configuration.</value>
         public Configuration CurrentConfiguration
         {
             get; set;
@@ -427,7 +436,7 @@ namespace LeanCloud.Realtime
         /// Gets the conversatio builder.
         /// </summary>
         /// <returns>The conversatio builder.</returns>
-        public AVIMConversationBuilder GetConversatioBuilder()
+        public AVIMConversationBuilder GetConversationBuilder()
         {
             var builder = AVIMConversationBuilder.CreateDefaultBuilder();
             builder.Client = this;
@@ -460,7 +469,7 @@ namespace LeanCloud.Realtime
         /// </summary>
         /// <param name="chatroomName">聊天室名称</param>
         /// <returns></returns>
-        internal Task<AVIMConversation> CreateChatRoomAsync(string chatroomName)
+        public Task<AVIMConversation> CreateChatRoomAsync(string chatroomName)
         {
             var conversation = new AVIMConversation() { Name = chatroomName, IsTransient = true };
             return CreateConversationAsync(conversation);
@@ -719,6 +728,7 @@ namespace LeanCloud.Realtime
         }
 
         #region load message history
+
         /// <summary>
         /// 查询目标对话的历史消息
         /// <remarks>不支持聊天室（暂态对话）</remarks>
@@ -731,13 +741,14 @@ namespace LeanCloud.Realtime
         /// <param name="direction">查询方向，默认是 1，如果是 1 表示从新消息往旧消息方向， 0 则相反,其他值无效</param>
         /// <param name="limit">拉取消息条数，默认值 20 条，可设置为 1 - 1000 之间的任意整数</param>
         /// <returns></returns>
-        public Task<IEnumerable<IAVIMMessage>> QueryMessageAsync(AVIMConversation conversation,
+        public Task<IEnumerable<IAVIMMessage>> QueryMessageAsync<T>(AVIMConversation conversation,
             string beforeMessageId = null,
             string afterMessageId = null,
             DateTime? beforeTimeStampPoint = null,
             DateTime? afterTimeStampPoint = null,
             int direction = 1,
             int limit = 20)
+            where T : IAVIMMessage
         {
             var maxLimit = 1000;
             var actualLimit = limit > maxLimit ? maxLimit : limit;
@@ -769,6 +780,14 @@ namespace LeanCloud.Realtime
             if (direction == 0)
             {
                 logsCmd = logsCmd.Argument("direction", "NEW");
+            }
+
+            var subMessageType = typeof(T);
+            var subTypeInteger = subMessageType == typeof(AVIMTypedMessage) ? 0 : FreeStyleMessageClassInfo.GetTypedInteger(subMessageType.GetTypeInfo());
+
+            if (subTypeInteger != 0)
+            {
+                logsCmd = logsCmd.Argument("lctype", subTypeInteger);
             }
 
             return this.RunCommandAsync(logsCmd).OnSuccess(t =>
@@ -962,24 +981,43 @@ namespace LeanCloud.Realtime
 
         #region recall & modify
 
+        /// <summary>
+        /// Recalls the async.
+        /// </summary>
+        /// <returns>The async.</returns>
+        /// <param name="message">Message.</param>
         public Task RecallAsync(IAVIMMessage message)
         {
             var patchCmd = new PatchCommand().Recall(message);
             return this.RunCommandAsync(patchCmd);
         }
 
+        /// <summary>
+        /// Replaces the async.
+        /// </summary>
+        /// <returns>The async.</returns>
+        /// <param name="oldMessage">Old message.</param>
+        /// <param name="newMessage">New message.</param>
         public Task ReplaceAsync(IAVIMMessage oldMessage, IAVIMMessage newMessage)
         {
             var patchCmd = new PatchCommand().Modify(oldMessage, newMessage);
             return this.RunCommandAsync(patchCmd);
         }
 
+        /// <summary>
+        /// Modifies the aysnc.
+        /// </summary>
+        /// <returns>The aysnc.</returns>
+        /// <param name="message">Message.</param>
         public Task ModifyAysnc(IAVIMMessage message)
         {
             return this.ReplaceAsync(message, message);
         }
 
         internal EventHandler<AVIMMessagePatchEventArgs> m_OnMessageRecalled;
+        /// <summary>
+        /// Occurs when on message recalled.
+        /// </summary>
         public event EventHandler<AVIMMessagePatchEventArgs> OnMessageRecalled
         {
             add
@@ -992,6 +1030,9 @@ namespace LeanCloud.Realtime
             }
         }
         internal EventHandler<AVIMMessagePatchEventArgs> m_OnMessageModified;
+        /// <summary>
+        /// Occurs when on message modified.
+        /// </summary>
         public event EventHandler<AVIMMessagePatchEventArgs> OnMessageModified
         {
             add
@@ -1021,12 +1062,21 @@ namespace LeanCloud.Realtime
         }
         #endregion
 
+        /// <summary>
+        /// Run command async.
+        /// </summary>
+        /// <returns>The command async.</returns>
+        /// <param name="command">Command.</param>
         public Task<Tuple<int, IDictionary<string, object>>> RunCommandAsync(AVIMCommand command)
         {
             command.PeerId(this.ClientId);
             return this.LinkedRealtime.RunCommandAsync(command);
         }
 
+        /// <summary>
+        /// Run command.
+        /// </summary>
+        /// <param name="command">Command.</param>
         public void RunCommand(AVIMCommand command)
         {
             command.PeerId(this.ClientId);
@@ -1088,6 +1138,36 @@ namespace LeanCloud.Realtime
         {
             var conversation = client.GetConversation(conversationId);
             return client.LeaveAsync(conversation);
+        }
+
+        /// <summary>
+        /// Query messages.
+        /// </summary>
+        /// <returns>The message async.</returns>
+        /// <param name="client">Client.</param>
+        /// <param name="conversation">Conversation.</param>
+        /// <param name="beforeMessageId">Before message identifier.</param>
+        /// <param name="afterMessageId">After message identifier.</param>
+        /// <param name="beforeTimeStampPoint">Before time stamp point.</param>
+        /// <param name="afterTimeStampPoint">After time stamp point.</param>
+        /// <param name="direction">Direction.</param>
+        /// <param name="limit">Limit.</param>
+        public static Task<IEnumerable<IAVIMMessage>> QueryMessageAsync(this AVIMClient client, 
+                                                                        AVIMConversation conversation,
+                                                                        string beforeMessageId = null,
+                                                                        string afterMessageId = null,
+                                                                        DateTime? beforeTimeStampPoint = null,
+                                                                        DateTime? afterTimeStampPoint = null,
+                                                                        int direction = 1,
+                                                                        int limit = 20)
+        {
+            return client.QueryMessageAsync<IAVIMMessage>(conversation,
+                                                         beforeMessageId,
+                                                         afterMessageId,
+                                                         beforeTimeStampPoint,
+                                                         afterTimeStampPoint,
+                                                         direction,
+                                                          limit);
         }
     }
 }
