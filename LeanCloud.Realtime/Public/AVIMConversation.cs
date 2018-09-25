@@ -577,16 +577,17 @@ namespace LeanCloud.Realtime
         /// <param name="direction">查询方向，默认是 1，如果是 1 表示从新消息往旧消息方向， 0 则相反,其他值无效</param>
         /// <param name="limit">获取的消息数量</param>
         /// <returns></returns>
-        public Task<IEnumerable<IAVIMMessage>> QueryMessageAsync(
+        public Task<IEnumerable<IAVIMMessage>> QueryMessageAsync<T>(
            string beforeMessageId = null,
            string afterMessageId = null,
            DateTime? beforeTimeStampPoint = null,
            DateTime? afterTimeStampPoint = null,
            int direction = 1,
            int limit = 20)
+            where T : IAVIMMessage
         {
             return this.CurrentClient
-                .QueryMessageAsync(this, beforeMessageId, afterMessageId, beforeTimeStampPoint, afterTimeStampPoint, direction, limit)
+                .QueryMessageAsync<T>(this, beforeMessageId, afterMessageId, beforeTimeStampPoint, afterTimeStampPoint, direction, limit)
                 .OnSuccess(t =>
                 {
                     //OnMessageLoad(t.Result);
@@ -887,9 +888,9 @@ namespace LeanCloud.Realtime
             });
         }
 
-       
 
-       
+
+
         /// <summary>
         /// Send text message.
         /// </summary>
@@ -1105,6 +1106,95 @@ namespace LeanCloud.Realtime
 
             return conversation.SendFileMessageAsync<T>(fileName, new MemoryStream(data), mimeType, textTitle, metaData, customAttributes);
         }
+
+        /// <summary>
+        /// Send location async.
+        /// </summary>
+        /// <returns>The location async.</returns>
+        /// <param name="conversation">Conversation.</param>
+        /// <param name="point">Point.</param>
+        public static Task SendLocationAsync(this AVIMConversation conversation, AVGeoPoint point)
+        {
+            var locationMessage = new AVIMLocationMessage(point);
+            return conversation.SendAsync<AVIMLocationMessage>(locationMessage);
+        }
+
+        /// <summary>
+        /// Query the message async.
+        /// </summary>
+        /// <returns>The message async.</returns>
+        /// <param name="conversation">Conversation.</param>
+        /// <param name="beforeMessageId">Before message identifier.</param>
+        /// <param name="afterMessageId">After message identifier.</param>
+        /// <param name="beforeTimeStamp">Before time stamp.</param>
+        /// <param name="afterTimeStamp">After time stamp.</param>
+        /// <param name="direction">Direction.</param>
+        /// <param name="limit">Limit.</param>
+        public static Task<IEnumerable<IAVIMMessage>> QueryMessageAsync(
+            this AVIMConversation conversation,
+            string beforeMessageId = null,
+            string afterMessageId = null,
+            long? beforeTimeStamp = null,
+            long? afterTimeStamp = null,
+            int direction = 1,
+            int limit = 20)
+        {
+
+            return conversation.QueryMessageAsync<IAVIMMessage>(beforeMessageId,
+                                                  afterMessageId,
+                                                  beforeTimeStamp,
+                                                  afterTimeStamp,
+                                                  direction,
+                                                  limit);
+        }
+
+        /// <summary>
+        /// Query message with speciafic subclassing type.
+        /// </summary>
+        /// <returns>The message async.</returns>
+        /// <param name="conversation">Conversation.</param>
+        /// <param name="beforeMessageId">Before message identifier.</param>
+        /// <param name="afterMessageId">After message identifier.</param>
+        /// <param name="beforeTimeStamp">Before time stamp.</param>
+        /// <param name="afterTimeStamp">After time stamp.</param>
+        /// <param name="direction">Direction.</param>
+        /// <param name="limit">Limit.</param>
+        /// <typeparam name="T">The 1st type parameter.</typeparam>
+        public static Task<IEnumerable<IAVIMMessage>> QueryMessageAsync<T>(
+            this AVIMConversation conversation,
+            string beforeMessageId = null,
+            string afterMessageId = null,
+            long? beforeTimeStamp = null,
+            long? afterTimeStamp = null,
+            int direction = 1,
+            int limit = 20)
+            where T : IAVIMMessage
+        {
+
+            return conversation.QueryMessageAsync<T>(beforeMessageId,
+                                                  afterMessageId,
+                                                  beforeTimeStampPoint: beforeTimeStamp.HasValue ? beforeTimeStamp.Value.ToDateTime() : DateTime.MinValue,
+                                                  afterTimeStampPoint: afterTimeStamp.HasValue ? afterTimeStamp.Value.ToDateTime() : DateTime.MinValue,
+                                                  direction,
+                                                  limit);
+        }
+
+        public static Task<IEnumerable<IAVIMMessage>> QueryMessageAsync(
+            this AVIMConversation conversation,
+            string beforeMessageId = null,
+            string afterMessageId = null,
+            DateTime? beforeTimeStampPoint = null,
+            DateTime? afterTimeStampPoint = null,
+            int direction = 1,
+            int limit = 20)
+        {
+            return conversation.QueryMessageAsync<IAVIMMessage>(beforeMessageId,
+                                                afterMessageId,
+                                                beforeTimeStampPoint,
+                                                afterTimeStampPoint,
+                                                direction,
+                                                limit);
+        }
     }
 
     /// <summary>
@@ -1120,36 +1210,15 @@ namespace LeanCloud.Realtime
     /// </summary>
     public class AVIMConversationBuilder : IAVIMConversatioBuilder
     {
-        public AVIMClient Client { get; set; }
-        public bool IsUnique { get; set; }
-        public IEnumerable<string> Members
-        {
-            get
-            {
-                return members;
-            }
-            set
-            {
-                members = value.ToList();
-            }
-        }
-        private List<string> members { get; set; }
-        public IDictionary<string, object> Properties
-        {
-            get
-            {
-                return properties;
-            }
-            set
-            {
-                properties = new Dictionary<string, object>(value);
-            }
-        }
+        public AVIMClient Client { get; internal set; }
+        private bool isUnique;
         private Dictionary<string, object> properties;
 
-        public string Name { get; set; }
-        public bool IsTransient { get; set; }
-        public bool IsSystem { get; set; }
+        private string name;
+        private bool isTransient;
+        private bool isSystem;
+        private List<string> members;
+
 
         internal static AVIMConversationBuilder CreateDefaultBuilder()
         {
@@ -1160,10 +1229,10 @@ namespace LeanCloud.Realtime
         {
             var result = new AVIMConversation(
                 members: members,
-                name: Name,
-                isUnique: IsUnique,
-                isSystem: IsSystem,
-                isTransient: IsTransient,
+                name: name,
+                isUnique: isUnique,
+                isSystem: isSystem,
+                isTransient: isTransient,
                 client: Client);
 
             if (properties != null)
@@ -1177,27 +1246,33 @@ namespace LeanCloud.Realtime
             return result;
         }
 
-        public AVIMConversationBuilder UseUnique()
+        public AVIMConversationBuilder SetUnique(bool toggle = true)
         {
-            this.IsUnique = true;
+            this.isUnique = toggle;
             return this;
         }
 
-        public AVIMConversationBuilder UseSystem()
+        public AVIMConversationBuilder SetSystem(bool toggle = true)
         {
-            this.IsSystem = true;
+            this.isSystem = toggle;
             return this;
         }
 
-        public AVIMConversationBuilder UseTransien()
+        public AVIMConversationBuilder SetTransient(bool toggle = true)
         {
-            this.IsTransient = true;
+            this.isTransient = toggle;
             return this;
         }
 
-        public AVIMConversationBuilder UseName(string name)
+        public AVIMConversationBuilder SetName(string name)
         {
-            this.Name = name;
+            this.name = name;
+            return this;
+        }
+
+        public AVIMConversationBuilder SetMembers(IEnumerable<string> memberClientIds)
+        {
+            this.members = memberClientIds.ToList();
             return this;
         }
 

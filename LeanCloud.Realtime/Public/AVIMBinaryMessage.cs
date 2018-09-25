@@ -10,8 +10,12 @@ namespace LeanCloud.Realtime
     public class AVIMBinaryMessage : AVIMMessage
     {
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="T:LeanCloud.Realtime.AVIMBinaryMessage"/> class.
+        /// </summary>
         public AVIMBinaryMessage()
         {
+
         }
         /// <summary>
         /// create new instance of AVIMBinnaryMessage
@@ -22,6 +26,10 @@ namespace LeanCloud.Realtime
             this.BinaryData = data;
         }
 
+        /// <summary>
+        /// Gets or sets the binary data.
+        /// </summary>
+        /// <value>The binary data.</value>
         public byte[] BinaryData { get; set; }
 
         internal override MessageCommand BeforeSend(MessageCommand cmd)

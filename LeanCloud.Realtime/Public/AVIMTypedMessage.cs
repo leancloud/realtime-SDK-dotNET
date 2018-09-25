@@ -199,4 +199,6 @@ namespace LeanCloud.Realtime
         /// <returns>The decorator.</returns>
         public abstract IDictionary<string, object> EncodeDecorator();
     }
+
+
 }

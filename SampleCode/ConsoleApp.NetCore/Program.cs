@@ -5,6 +5,8 @@ using System.Reflection;
 using System.Threading.Tasks;
 using LeanCloud;
 using LeanCloud.Realtime;
+using System.Linq.Expressions;
+using System.Linq;
 
 namespace ConsoleApp.NetCore
 {
@@ -23,7 +25,7 @@ namespace ConsoleApp.NetCore
 
             AVIMClient tom = await realtime.CreateClientAsync(clientId);
 
-            var conversation = await tom.GetConversationAsync("5b83a01a5b90c830ff80aea4");
+            var conv = await tom.GetConversationAsync("5b83a01a5b90c830ff80aea4");
 
             //await conversation.SendImageAsync("http://ww3.sinaimg.cn/bmiddle/596b0666gw1ed70eavm5tg20bq06m7wi.gif", "Satomi_Ishihara", "萌妹子一枚", new Dictionary<string, object>
             //{
@@ -32,9 +34,30 @@ namespace ConsoleApp.NetCore
 
             //using (FileStream fileStream = new FileStream(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "石原里美就是最美哒.jpg"), FileMode.Open, FileAccess.Read))
             //{
-            //    await conversation.SendImageAsync("石原里美就是最美哒.jpg", fileStream);
+            //    var imageMessage = new AVIMImageMessage();
+            //    imageMessage.File = new AVFile("San_Francisco.png", fileStream);
+            //    imageMessage.TextContent = "发自我的 Windows";
+            //    await conversation.SendAsync(imageMessage);
             //}
-            tom.OnMessageReceived += OnMessageReceived;
+            //tom.OnMessageReceived += OnMessageReceived;
+            //var messages = await conversation.QueryMessageAsync(limit: 10);
+            //var oldestMessage = messages.ToList()[0];
+            //var imageMessages = await conv.QueryMessageAsync<AVIMImageMessage>();
+            ////var conversationBuilder = tom.GetConversationBuilder().SetProperty("type", "private").SetProperty("pinned", true);
+            //var conversationBuilder = tom.GetConversationBuilder().SetName("三年二班")
+            //                             .AddMember("Bob")
+            //                             .AddMember("Harry")
+            //                             .AddMember("William");
+            //var conversation = await tom.CreateConversationAsync(conversationBuilder);
+            //conversation.Name = "xx";
+            //await tom.CloseAsync();
+            await conv.SendLocationAsync(new AVGeoPoint(31.3753285, 120.9664658));
+
+            var chatRoomBuilder = tom.GetConversationBuilder().SetName("聊天室")
+                                         .SetTransient();
+            var chatRoom = await tom.CreateConversationAsync(chatRoomBuilder);
+            var query = tom.GetQuery();
+            await query.GetAsync("");
             Console.ReadKey();
         }
 
@@ -54,6 +77,26 @@ namespace ConsoleApp.NetCore
             {
                 Console.WriteLine(imageMessage.File.Url);
             }
+            else if (e.Message is AVIMAudioMessage audioMessage)
+            {
+
+            }
+            else if (e.Message is AVIMVideoMessage videoMessage)
+            {
+
+            }
+            else if (e.Message is AVIMFileMessage fileMessage)
+            {
+
+            }
+            else if (e.Message is AVIMLocationMessage locationMessage)
+            {
+
+            }
+            else if (e.Message is AVIMTypedMessage baseTypedMessage)
+            {
+
+            }// 这里可以继续添加自定义类型的判断条件
         }
 
 
