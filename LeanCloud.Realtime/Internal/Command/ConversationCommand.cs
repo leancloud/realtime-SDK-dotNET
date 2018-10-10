@@ -105,6 +105,11 @@ namespace LeanCloud.Realtime.Internal
             return new ConversationCommand(this.Argument("skip", skip));
         }
 
+        public ConversationCommand Count()
+        {
+            return new ConversationCommand(this.Argument("count", 1));
+        }
+
         public ConversationCommand Sort(string sort)
         {
             return new ConversationCommand(this.Argument("sort", sort));

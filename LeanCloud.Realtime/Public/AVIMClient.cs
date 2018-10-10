@@ -1009,7 +1009,7 @@ namespace LeanCloud.Realtime
         /// </summary>
         /// <returns>The aysnc.</returns>
         /// <param name="message">Message.</param>
-        public Task ModifyAysnc(IAVIMMessage message)
+        public Task ModifyAsync(IAVIMMessage message)
         {
             return this.ReplaceAsync(message, message);
         }
@@ -1152,7 +1152,7 @@ namespace LeanCloud.Realtime
         /// <param name="afterTimeStampPoint">After time stamp point.</param>
         /// <param name="direction">Direction.</param>
         /// <param name="limit">Limit.</param>
-        public static Task<IEnumerable<IAVIMMessage>> QueryMessageAsync(this AVIMClient client, 
+        public static Task<IEnumerable<IAVIMMessage>> QueryMessageAsync(this AVIMClient client,
                                                                         AVIMConversation conversation,
                                                                         string beforeMessageId = null,
                                                                         string afterMessageId = null,
@@ -1168,6 +1168,16 @@ namespace LeanCloud.Realtime
                                                          afterTimeStampPoint,
                                                          direction,
                                                           limit);
+        }
+
+        /// <summary>
+        /// Get the chat room query.
+        /// </summary>
+        /// <returns>The chat room query.</returns>
+        /// <param name="client">Client.</param>
+        public static AVIMConversationQuery GetChatRoomQuery(this AVIMClient client)
+        {
+            return client.GetQuery().WhereEqualTo("tr", true);
         }
     }
 }

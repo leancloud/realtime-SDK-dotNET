@@ -714,7 +714,7 @@ namespace LeanCloud.Realtime
             }
         }
 
-        private object receivedMutex = new object();
+        private readonly object receivedMutex = new object();
         public ReceivedState Received
         {
             get; set;
@@ -1172,13 +1172,24 @@ namespace LeanCloud.Realtime
         {
 
             return conversation.QueryMessageAsync<T>(beforeMessageId,
-                                                  afterMessageId,
-                                                  beforeTimeStampPoint: beforeTimeStamp.HasValue ? beforeTimeStamp.Value.ToDateTime() : DateTime.MinValue,
-                                                  afterTimeStampPoint: afterTimeStamp.HasValue ? afterTimeStamp.Value.ToDateTime() : DateTime.MinValue,
-                                                  direction,
-                                                  limit);
+                                                     afterMessageId,
+                                                     beforeTimeStampPoint: beforeTimeStamp.HasValue ? beforeTimeStamp.Value.ToDateTime() : DateTime.MinValue,
+                                                     afterTimeStampPoint: afterTimeStamp.HasValue ? afterTimeStamp.Value.ToDateTime() : DateTime.MinValue,
+                                                     direction: direction,
+                                                     limit: limit);
         }
 
+        /// <summary>
+        /// Query messages async.
+        /// </summary>
+        /// <returns>The message async.</returns>
+        /// <param name="conversation">Conversation.</param>
+        /// <param name="beforeMessageId">Before message identifier.</param>
+        /// <param name="afterMessageId">After message identifier.</param>
+        /// <param name="beforeTimeStampPoint">Before time stamp point.</param>
+        /// <param name="afterTimeStampPoint">After time stamp point.</param>
+        /// <param name="direction">Direction.</param>
+        /// <param name="limit">Limit.</param>
         public static Task<IEnumerable<IAVIMMessage>> QueryMessageAsync(
             this AVIMConversation conversation,
             string beforeMessageId = null,
@@ -1194,6 +1205,28 @@ namespace LeanCloud.Realtime
                                                 afterTimeStampPoint,
                                                 direction,
                                                 limit);
+        }
+
+        /// <summary>
+        /// Recall message async.
+        /// </summary>
+        /// <returns>The async.</returns>
+        /// <param name="conversation">Conversation.</param>
+        /// <param name="message">Message.</param>
+        public static Task RecallAsync(this AVIMConversation conversation, IAVIMMessage message)
+        {
+            return conversation.CurrentClient.RecallAsync(message);
+        }
+
+        /// <summary>
+        /// Modifiy message async.
+        /// </summary>
+        /// <returns>The async.</returns>
+        /// <param name="conversation">Conversation.</param>
+        /// <param name="message">Message.</param>
+        public static Task ModifyAsync(this AVIMConversation conversation, IAVIMMessage message)
+        {
+            return conversation.CurrentClient.ModifyAsync(message);
         }
     }
 

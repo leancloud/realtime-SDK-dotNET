@@ -32,4 +32,6 @@ namespace LeanCloud.Realtime
             this.expiredAt = DateTime.Now.AddDays(1);
         }
     }
+
+
 }
