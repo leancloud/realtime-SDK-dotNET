@@ -234,7 +234,7 @@ namespace SayHi
                 var textMessage = (AVIMTextMessage)this.selected.MetaData;
                 textMessage.TextContent = "fixed content";
             }
-            await this.client.ModifyAysnc(this.selected.MetaData);
+            await this.client.ModifyAsync(this.selected.MetaData);
         }
     }
 }
