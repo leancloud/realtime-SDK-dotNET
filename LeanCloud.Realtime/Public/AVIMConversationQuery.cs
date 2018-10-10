@@ -9,17 +9,10 @@ using System.Threading.Tasks;
 
 namespace LeanCloud.Realtime
 {
-#if !NETCOREAPP
     /// <summary>
     /// 对话查询类
     /// </summary>
-    public class AVIMConversationQuery : AVQueryBase<AVIMConversationQuery, AVIMConversation>
-#else
-    /// <summary>
-    /// 对话查询类
-    /// </summary>
-    public class AVIMConversationQuery : AVIMQueryBase<AVIMConversation>
-#endif
+    public class AVIMConversationQuery : AVQueryPair<AVIMConversationQuery, AVIMConversation>, IAVQuery
     {
         internal AVIMClient CurrentClient { get; set; }
         internal AVIMConversationQuery(AVIMClient _currentClient)
@@ -44,15 +37,14 @@ namespace LeanCloud.Realtime
         {
 
         }
-#if !NETCOREAPP
-        internal override AVIMConversationQuery CreateInstance(
-            AVQueryBase<AVIMConversationQuery, AVIMConversation> source,
-            IDictionary<string, object> where,
-            IEnumerable<string> replacementOrderBy,
-            IEnumerable<string> thenBy,
-            int? skip,
-            int? limit,
-            IEnumerable<string> includes,
+
+        public override AVIMConversationQuery CreateInstance(
+            IDictionary<string, object> where = null,
+            IEnumerable<string> replacementOrderBy = null,
+            IEnumerable<string> thenBy = null,
+            int? skip = null,
+            int? limit = null,
+            IEnumerable<string> includes = null,
             IEnumerable<string> selectedKeys = null,
             String redirectClassNameForKey = null)
         {
@@ -63,7 +55,7 @@ namespace LeanCloud.Realtime
             return rtn;
         }
 
-        internal override AVIMConversationQuery CreateInstance(AVIMConversationQuery source,
+        internal AVIMConversationQuery CreateInstance(AVIMConversationQuery source,
             IDictionary<string, object> where = null,
             IEnumerable<string> replacementOrderBy = null,
             IEnumerable<string> thenBy = null,
@@ -91,19 +83,9 @@ namespace LeanCloud.Realtime
             this.compact = enabled;
             return CreateInstance(this);
         }
-#else
-        internal override AVIMQueryBase<AVIMConversation> CreateInstance(AVIMQueryBase<AVIMConversation> source, IDictionary<string, object> where = null, IEnumerable<string> replacementOrderBy = null, IEnumerable<string> thenBy = null, int? skip = null, int? limit = null, IEnumerable<string> includes = null, IEnumerable<string> selectedKeys = null, string redirectClassNameForKey = null)
-        {
-            var rtn = new AVIMConversationQuery(this, where, replacementOrderBy, thenBy, skip, limit, includes, selectedKeys, redirectClassNameForKey);
-            rtn.CurrentClient = this.CurrentClient;
-            rtn.compact = this.compact;
-            rtn.withLastMessageRefreshed = this.withLastMessageRefreshed;
-            return rtn;
-        }
 
-#endif
 
-        internal AVIMCommand GenerateQueryCommand()
+        internal ConversationCommand GenerateQueryCommand()
         {
             var cmd = new ConversationCommand();
 
@@ -123,12 +105,25 @@ namespace LeanCloud.Realtime
                     cmd.Sort(queryParameters["order"].ToString());
             }
 
-            return cmd.Option("query").PeerId(CurrentClient.ClientId);
+            return cmd;
         }
 
         public override Task<int> CountAsync(CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            var convCmd = this.GenerateQueryCommand();
+            convCmd.Count();
+            convCmd.Limit(0);
+            var cmd = convCmd.Option("query");
+            return CurrentClient.RunCommandAsync(convCmd).OnSuccess(t =>
+            {
+                var result = t.Result.Item2;
+
+                if (result.ContainsKey("count"))
+                {
+                    return int.Parse(result["count"].ToString());
+                }
+                return 0;
+            });
         }
 
 
@@ -139,8 +134,8 @@ namespace LeanCloud.Realtime
         /// <returns></returns>
         public override Task<IEnumerable<AVIMConversation>> FindAsync(CancellationToken cancellationToken)
         {
-            var convCmd = this.GenerateQueryCommand();
-            return CurrentClient.LinkedRealtime.RunCommandAsync(convCmd).OnSuccess(t =>
+            var convCmd = this.GenerateQueryCommand().Option("query");
+            return CurrentClient.RunCommandAsync(convCmd).OnSuccess(t =>
             {
                 var result = t.Result.Item2;
 

@@ -25,7 +25,24 @@ namespace ConsoleApp.NetCore
 
             AVIMClient tom = await realtime.CreateClientAsync(clientId);
 
-            var conv = await tom.GetConversationAsync("5b83a01a5b90c830ff80aea4");
+            var conversation = await tom.GetConversationAsync("5b83a01a5b90c830ff80aea4");
+
+            var message = new AVIMTextMessage()
+            {
+                TextContent = "Jerry，今晚有比赛，我约了 Kate，咱们仨一起去酒吧看比赛啊？！"
+            };
+
+            AVIMSendOptions sendOptions = new AVIMSendOptions()
+            {
+                PushData = new Dictionary<string, object>()
+                {
+                    { "alert", "您有一条未读的消息"},
+                    { "category", "消息"},
+                    { "badge", 1},
+                    { "sound", "message.mp3//声音文件名，前提在应用里存在"},
+                    { "custom-key", "由用户添加的自定义属性，custom-key 仅是举例，可随意替换"}
+                }
+            };
 
             //await conversation.SendImageAsync("http://ww3.sinaimg.cn/bmiddle/596b0666gw1ed70eavm5tg20bq06m7wi.gif", "Satomi_Ishihara", "萌妹子一枚", new Dictionary<string, object>
             //{
@@ -51,15 +68,36 @@ namespace ConsoleApp.NetCore
             //var conversation = await tom.CreateConversationAsync(conversationBuilder);
             //conversation.Name = "xx";
             //await tom.CloseAsync();
-            await conv.SendLocationAsync(new AVGeoPoint(31.3753285, 120.9664658));
 
-            var chatRoomBuilder = tom.GetConversationBuilder().SetName("聊天室")
-                                         .SetTransient();
-            var chatRoom = await tom.CreateConversationAsync(chatRoomBuilder);
-            var query = tom.GetQuery();
-            await query.GetAsync("");
+            //var textMessage = new AVIMTextMessage("Hello")
+            //{
+            //    MentionAll = true
+            //};
+            //await conv.SendAsync(textMessage);
+            //await conv.SendLocationAsync(new AVGeoPoint(31.3753285, 120.9664658));
+
+
+            //var chatRoomBuilder = tom.GetConversationBuilder().SetName("聊天室")
+            //                  .SetTransient();
+            //var chatRoom = await tom.CreateConversationAsync(chatRoomBuilder);
+            //var query = tom.GetQuery().WhereEqualTo("name", "三年二班");
+            //var schoolmateGroup = await query.FirstAsync();
+            //await schoolmateGroup.JoinAsync();
+
+            //tom.OnMessageRecalled += Tom_OnMessageRecalled;
+            //tom.OnMessageModified += Tom_OnMessageModified;
             Console.ReadKey();
         }
+
+        static void Tom_OnMessageModified(object sender, AVIMMessagePatchEventArgs e)
+        {
+        }
+
+
+        static void Tom_OnMessageRecalled(object sender, AVIMMessagePatchEventArgs e)
+        {
+        }
+
 
         static void OnKicked(object sender, AVIMOnKickedEventArgs e)
         {
@@ -75,7 +113,7 @@ namespace ConsoleApp.NetCore
         {
             if (e.Message is AVIMImageMessage imageMessage)
             {
-                Console.WriteLine(imageMessage.File.Url);
+                var mentionedAll = e.Message.MentionAll;
             }
             else if (e.Message is AVIMAudioMessage audioMessage)
             {

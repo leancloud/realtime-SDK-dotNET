@@ -28,7 +28,7 @@ namespace LeanCloud.Realtime.Internal
             {
                 return new Dictionary<string, object>()
                 {
-                    {"cid",this.ConvId},
+                    { "cid",this.ConvId},
                     { "mid",this.MessageId},
                     { "from",this.From},
                     { "timestamp",this.MetaTimestamp},
@@ -38,7 +38,7 @@ namespace LeanCloud.Realtime.Internal
                     { "binaryMsg",this.BinaryData},
                     { "mentionAll",this.MentionAll},
                     { "meintonPids",this.MentionIds}
-                } as IDictionary<string,object>;
+                } as IDictionary<string, object>;
             }
         }
 
