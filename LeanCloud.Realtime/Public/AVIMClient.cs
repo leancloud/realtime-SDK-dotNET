@@ -719,10 +719,19 @@ namespace LeanCloud.Realtime
         #region Query && Message history && ack
 
         /// <summary>
-        /// 获取对话的查询
+        /// Get conversation query.
         /// </summary>
         /// <returns></returns>
         public AVIMConversationQuery GetQuery()
+        {
+            return GetConversationQuery();
+        }
+
+        /// <summary>
+        /// Get conversation query.
+        /// </summary>
+        /// <returns>The conversation query.</returns>
+        public AVIMConversationQuery GetConversationQuery()
         {
             return new AVIMConversationQuery(this);
         }
@@ -741,7 +750,7 @@ namespace LeanCloud.Realtime
         /// <param name="direction">查询方向，默认是 1，如果是 1 表示从新消息往旧消息方向， 0 则相反,其他值无效</param>
         /// <param name="limit">拉取消息条数，默认值 20 条，可设置为 1 - 1000 之间的任意整数</param>
         /// <returns></returns>
-        public Task<IEnumerable<IAVIMMessage>> QueryMessageAsync<T>(AVIMConversation conversation,
+        public Task<IEnumerable<T>> QueryMessageAsync<T>(AVIMConversation conversation,
             string beforeMessageId = null,
             string afterMessageId = null,
             DateTime? beforeTimeStampPoint = null,
@@ -812,7 +821,7 @@ namespace LeanCloud.Realtime
 
                 conversation.OnMessageLoad(rtn);
 
-                return rtn.AsEnumerable();
+                return rtn.AsEnumerable().OfType<T>();
             });
         }
         #endregion

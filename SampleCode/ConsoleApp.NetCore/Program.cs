@@ -23,26 +23,21 @@ namespace ConsoleApp.NetCore
 
             AVRealtime.WebSocketLog(Console.WriteLine);
 
-            AVIMClient tom = await realtime.CreateClientAsync(clientId);
+
+            AVIMClient tom = await realtime.CreateClientAsync(clientId, tag: "Mobile", deviceId: "xxxbbbxxx");
+            tom.OnSessionClosed += Tom_OnSessionClosed;
 
             var conversation = await tom.GetConversationAsync("5b83a01a5b90c830ff80aea4");
 
-            var message = new AVIMTextMessage()
-            {
-                TextContent = "Jerry，今晚有比赛，我约了 Kate，咱们仨一起去酒吧看比赛啊？！"
-            };
+            var messagePager = conversation.GetMessagePager().SetPageSize(2);
 
-            AVIMSendOptions sendOptions = new AVIMSendOptions()
-            {
-                PushData = new Dictionary<string, object>()
-                {
-                    { "alert", "您有一条未读的消息"},
-                    { "category", "消息"},
-                    { "badge", 1},
-                    { "sound", "message.mp3//声音文件名，前提在应用里存在"},
-                    { "custom-key", "由用户添加的自定义属性，custom-key 仅是举例，可随意替换"}
-                }
-            };
+            var pager1 = await messagePager.PreviousAsync();
+            var pager2 = await messagePager.PreviousAsync();
+            Console.WriteLine(pager1.Count());
+
+            var messageQuery = conversation.GetMessageQuery();
+            var latestImageMessageWithCount20 = await messageQuery.FindAsync<AVIMImageMessage>();
+            Console.WriteLine(latestImageMessageWithCount20.Count());
 
             //await conversation.SendImageAsync("http://ww3.sinaimg.cn/bmiddle/596b0666gw1ed70eavm5tg20bq06m7wi.gif", "Satomi_Ishihara", "萌妹子一枚", new Dictionary<string, object>
             //{
@@ -88,6 +83,11 @@ namespace ConsoleApp.NetCore
             //tom.OnMessageModified += Tom_OnMessageModified;
             Console.ReadKey();
         }
+
+        static void Tom_OnSessionClosed(object sender, AVIMSessionClosedEventArgs e)
+        {
+        }
+
 
         static void Tom_OnMessageModified(object sender, AVIMMessagePatchEventArgs e)
         {

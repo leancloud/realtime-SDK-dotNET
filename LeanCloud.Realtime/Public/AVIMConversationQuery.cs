@@ -55,33 +55,16 @@ namespace LeanCloud.Realtime
             return rtn;
         }
 
-        internal AVIMConversationQuery CreateInstance(AVIMConversationQuery source,
-            IDictionary<string, object> where = null,
-            IEnumerable<string> replacementOrderBy = null,
-            IEnumerable<string> thenBy = null,
-            int? skip = null,
-            int? limit = null,
-            IEnumerable<string> includes = null,
-            IEnumerable<string> selectedKeys = null,
-            String redirectClassNameForKey = null)
-        {
-            var rtn = new AVIMConversationQuery(this, where, replacementOrderBy, thenBy, skip, limit, includes, selectedKeys, redirectClassNameForKey);
-            rtn.CurrentClient = this.CurrentClient;
-            rtn.compact = this.compact;
-            rtn.withLastMessageRefreshed = this.withLastMessageRefreshed;
-            return rtn;
-        }
-
         public AVIMConversationQuery WithLastMessageRefreshed(bool enabled)
         {
             this.withLastMessageRefreshed = enabled;
-            return CreateInstance(this);
+            return this;
         }
 
         public AVIMConversationQuery Compact(bool enabled)
         {
             this.compact = enabled;
-            return CreateInstance(this);
+            return this;
         }
 
 

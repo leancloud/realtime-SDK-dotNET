@@ -577,7 +577,7 @@ namespace LeanCloud.Realtime
         /// <param name="direction">查询方向，默认是 1，如果是 1 表示从新消息往旧消息方向， 0 则相反,其他值无效</param>
         /// <param name="limit">获取的消息数量</param>
         /// <returns></returns>
-        public Task<IEnumerable<IAVIMMessage>> QueryMessageAsync<T>(
+        public Task<IEnumerable<T>> QueryMessageAsync<T>(
            string beforeMessageId = null,
            string afterMessageId = null,
            DateTime? beforeTimeStampPoint = null,
@@ -586,8 +586,7 @@ namespace LeanCloud.Realtime
            int limit = 20)
             where T : IAVIMMessage
         {
-            return this.CurrentClient
-                .QueryMessageAsync<T>(this, beforeMessageId, afterMessageId, beforeTimeStampPoint, afterTimeStampPoint, direction, limit)
+            return this.CurrentClient.QueryMessageAsync<T>(this, beforeMessageId, afterMessageId, beforeTimeStampPoint, afterTimeStampPoint, direction, limit)
                 .OnSuccess(t =>
                 {
                     //OnMessageLoad(t.Result);
@@ -596,17 +595,22 @@ namespace LeanCloud.Realtime
         }
 
         /// <summary>
-        /// 获取历史消息的迭代器
+        /// Gets the message query.
         /// </summary>
-        /// <returns></returns>
-        public HistoryMessageIterator GetHistoryMessageIterator()
+        /// <returns>The message query.</returns>
+        public AVIMMessageQuery GetMessageQuery()
         {
-            return new HistoryMessageIterator()
-            {
-                Convsersation = this
-            };
+            return new AVIMMessageQuery(this);
         }
 
+        /// <summary>
+        /// Gets the message pager.
+        /// </summary>
+        /// <returns>The message pager.</returns>
+        public AVIMMessagePager GetMessagePager()
+        {
+            return new AVIMMessagePager(this);
+        }
 
         #endregion
 
@@ -879,6 +883,43 @@ namespace LeanCloud.Realtime
     /// </summary>
     public static class AVIMConversationExtensions
     {
+
+        /// <summary>
+        /// Send message async.
+        /// </summary>
+        /// <returns>The async.</returns>
+        /// <param name="conversation">Conversation.</param>
+        /// <param name="message">Message.</param>
+        /// <param name="options">Options.</param>
+        public static Task SendAsync(this AVIMConversation conversation, IAVIMMessage message, AVIMSendOptions options)
+        {
+            return conversation.SendMessageAsync(message, options);
+        }
+
+        /// <summary>
+        /// Send message async.
+        /// </summary>
+        /// <returns>The async.</returns>
+        /// <param name="conversation">Conversation.</param>
+        /// <param name="message">Message.</param>
+        /// <param name="options">Options.</param>
+        /// <typeparam name="T">The 1st type parameter.</typeparam>
+        public static Task<T> SendAsync<T>(this AVIMConversation conversation, T message, AVIMSendOptions options)
+            where T : IAVIMMessage
+        {
+            return conversation.SendMessageAsync(message, options).OnSuccess(t =>
+            {
+                return (T)t.Result;
+            });
+        }
+
+        /// <summary>
+        /// Send message async.
+        /// </summary>
+        /// <returns>The async.</returns>
+        /// <param name="conversation">Conversation.</param>
+        /// <param name="message">Message.</param>
+        /// <typeparam name="T">The 1st type parameter.</typeparam>
         public static Task<T> SendAsync<T>(this AVIMConversation conversation, T message)
             where T : IAVIMMessage
         {
@@ -887,9 +928,6 @@ namespace LeanCloud.Realtime
                 return (T)t.Result;
             });
         }
-
-
-
 
         /// <summary>
         /// Send text message.
@@ -1160,7 +1198,7 @@ namespace LeanCloud.Realtime
         /// <param name="direction">Direction.</param>
         /// <param name="limit">Limit.</param>
         /// <typeparam name="T">The 1st type parameter.</typeparam>
-        public static Task<IEnumerable<IAVIMMessage>> QueryMessageAsync<T>(
+        public static Task<IEnumerable<T>> QueryMessageAsync<T>(
             this AVIMConversation conversation,
             string beforeMessageId = null,
             string afterMessageId = null,
@@ -1326,6 +1364,90 @@ namespace LeanCloud.Realtime
             if (this.properties == null) this.properties = new Dictionary<string, object>();
             this.properties[key] = value;
             return this;
+        }
+    }
+
+    /// <summary>
+    /// AVIMM essage emitter builder.
+    /// </summary>
+    public class AVIMMessageEmitterBuilder
+    {
+        private AVIMConversation _conversation;
+        /// <summary>
+        /// Sets the conversation.
+        /// </summary>
+        /// <returns>The conversation.</returns>
+        /// <param name="conversation">Conversation.</param>
+        public AVIMMessageEmitterBuilder SetConversation(AVIMConversation conversation)
+        {
+            _conversation = conversation;
+            return this;
+        }
+        /// <summary>
+        /// Gets the conversation.
+        /// </summary>
+        /// <value>The conversation.</value>
+        public AVIMConversation Conversation
+        {
+            get
+            {
+                return _conversation;
+            }
+        }
+
+        private AVIMSendOptions _sendOptions;
+        /// <summary>
+        /// Gets the send options.
+        /// </summary>
+        /// <value>The send options.</value>
+        public AVIMSendOptions SendOptions
+        {
+            get
+            {
+                return _sendOptions;
+            }
+        }
+        /// <summary>
+        /// Sets the send options.
+        /// </summary>
+        /// <returns>The send options.</returns>
+        /// <param name="sendOptions">Send options.</param>
+        public AVIMMessageEmitterBuilder SetSendOptions(AVIMSendOptions sendOptions)
+        {
+            _sendOptions = sendOptions;
+            return this;
+        }
+
+        private IAVIMMessage _message;
+        /// <summary>
+        /// Gets the message.
+        /// </summary>
+        /// <value>The message.</value>
+        public IAVIMMessage Message
+        {
+            get
+            {
+                return _message;
+            }
+        }
+        /// <summary>
+        /// Sets the message.
+        /// </summary>
+        /// <returns>The message.</returns>
+        /// <param name="message">Message.</param>
+        public AVIMMessageEmitterBuilder SetMessage(IAVIMMessage message)
+        {
+            _message = message;
+            return this;
+        }
+
+        /// <summary>
+        /// Send async.
+        /// </summary>
+        /// <returns>The async.</returns>
+        public Task SendAsync()
+        {
+            return this.Conversation.SendAsync(this.Message, this.SendOptions);
         }
     }
 }

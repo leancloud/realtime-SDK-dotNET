@@ -1,6 +1,59 @@
 
 # 更新日志
 
+
+## 2018-10-12
+
+### 新增消息记录翻页器 
+
+```cs
+var conversation = await tom.GetConversationAsync("5b83a01a5b90c830ff80aea4");
+
+var messagePager = conversation.GetMessagePager().SetPageSize(2);
+
+var pager1 = await messagePager.PreviousAsync();
+var pager2 = await messagePager.PreviousAsync();
+Console.WriteLine(pager1.Count());
+```
+
+### 新增消息查询类
+
+```cs
+var messageQuery = conversation.GetMessageQuery();
+// 查询最新的 20 条图像消息
+var latestImageMessageWithCount20 = await messageQuery.FindAsync<AVIMImageMessage>();
+Console.WriteLine(latestImageMessageWithCount20.Count());
+```
+
+## 2018-10-11
+
+### 新增 Builder 模式构建消息发送器
+
+`AVIMMessageEmitterBuilder` 的用法如下：
+
+```cs
+AVIMClient tom = await realtime.CreateClientAsync(clientId);
+
+var conversation = await tom.GetConversationAsync("5b83a01a5b90c830ff80aea4");
+
+var message = new AVIMTextMessage()
+{
+    TextContent = "Jerry，今晚有比赛，我约了 Kate，咱们仨一起去酒吧看比赛啊？！"
+};
+
+AVIMSendOptions sendOptions = new AVIMSendOptions()
+{
+    Will = true
+};
+
+var emitterBuilder = new AVIMMessageEmitterBuilder()
+    .SetConversation(conversation)
+    .SetMessage(message)
+    .SetSendOptions(sendOptions);
+await emitterBuilder.SendAsync();
+```
+
+
 ## 2018-09-25
 
 ### 支持使用 Builder 模式构建对话
