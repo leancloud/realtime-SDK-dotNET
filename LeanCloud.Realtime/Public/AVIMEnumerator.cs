@@ -15,8 +15,16 @@ namespace LeanCloud.Realtime
     /// </summary>
     public class AVIMMessagePager
     {
+        /// <summary>
+        /// Gets the query.
+        /// </summary>
+        /// <value>The query.</value>
         public AVIMMessageQuery Query { get; private set; }
 
+        /// <summary>
+        /// Gets the size of the page.
+        /// </summary>
+        /// <value>The size of the page.</value>
         public int PageSize
         {
             get
@@ -30,6 +38,10 @@ namespace LeanCloud.Realtime
             }
         }
 
+        /// <summary>
+        /// Gets the current message identifier flag.
+        /// </summary>
+        /// <value>The current message identifier flag.</value>
         public string CurrentMessageIdFlag
         {
             get
@@ -41,6 +53,11 @@ namespace LeanCloud.Realtime
                 Query.StartMessageId = value;
             }
         }
+
+        /// <summary>
+        /// Gets the current date time flag.
+        /// </summary>
+        /// <value>The current date time flag.</value>
         public DateTime CurrentDateTimeFlag
         {
             get
@@ -58,6 +75,10 @@ namespace LeanCloud.Realtime
 
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="T:LeanCloud.Realtime.AVIMMessagePager"/> class.
+        /// </summary>
+        /// <param name="conversation">Conversation.</param>
         public AVIMMessagePager(AVIMConversation conversation)
             : this()
         {
@@ -66,6 +87,11 @@ namespace LeanCloud.Realtime
             CurrentDateTimeFlag = DateTime.Now;
         }
 
+        /// <summary>
+        /// Sets the size of the page.
+        /// </summary>
+        /// <returns>The page size.</returns>
+        /// <param name="pageSize">Page size.</param>
         public AVIMMessagePager SetPageSize(int pageSize)
         {
             PageSize = pageSize;

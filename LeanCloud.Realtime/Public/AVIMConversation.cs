@@ -1218,31 +1218,69 @@ namespace LeanCloud.Realtime
         }
 
         /// <summary>
-        /// Query messages async.
+        /// Query message record before the given message async.
         /// </summary>
-        /// <returns>The message async.</returns>
+        /// <returns>The message before async.</returns>
         /// <param name="conversation">Conversation.</param>
-        /// <param name="beforeMessageId">Before message identifier.</param>
-        /// <param name="afterMessageId">After message identifier.</param>
-        /// <param name="beforeTimeStampPoint">Before time stamp point.</param>
-        /// <param name="afterTimeStampPoint">After time stamp point.</param>
-        /// <param name="direction">Direction.</param>
+        /// <param name="message">Message.</param>
         /// <param name="limit">Limit.</param>
-        public static Task<IEnumerable<IAVIMMessage>> QueryMessageAsync(
+        public static Task<IEnumerable<IAVIMMessage>> QueryMessageBeforeAsync(
             this AVIMConversation conversation,
-            string beforeMessageId = null,
-            string afterMessageId = null,
-            DateTime? beforeTimeStampPoint = null,
-            DateTime? afterTimeStampPoint = null,
-            int direction = 1,
+            IAVIMMessage message,
             int limit = 20)
         {
-            return conversation.QueryMessageAsync<IAVIMMessage>(beforeMessageId,
-                                                afterMessageId,
-                                                beforeTimeStampPoint,
-                                                afterTimeStampPoint,
-                                                direction,
-                                                limit);
+            return conversation.QueryMessageAsync(beforeMessageId: message.Id, beforeTimeStamp: message.ServerTimestamp, limit: limit);
+        }
+
+        /// <summary>
+        /// Query message record after the given message async.
+        /// </summary>
+        /// <returns>The message after async.</returns>
+        /// <param name="conversation">Conversation.</param>
+        /// <param name="message">Message.</param>
+        /// <param name="limit">Limit.</param>
+        public static Task<IEnumerable<IAVIMMessage>> QueryMessageAfterAsync(
+            this AVIMConversation conversation,
+            IAVIMMessage message,
+            int limit = 20)
+        {
+            return conversation.QueryMessageAsync(afterMessageId: message.Id, afterTimeStamp: message.ServerTimestamp, limit: limit);
+        }
+
+        /// <summary>
+        /// Query messages after conversation created.
+        /// </summary>
+        /// <returns>The message after async.</returns>
+        /// <param name="conversation">Conversation.</param>
+        /// <param name="limit">Limit.</param>
+        public static Task<IEnumerable<IAVIMMessage>> QueryMessageFromOldToNewAsync(
+            this AVIMConversation conversation,
+            int limit = 20)
+        {
+            return conversation.QueryMessageAsync(afterTimeStamp: conversation.CreatedAt.Value.ToUnixTimeStamp(), limit: limit);
+        }
+
+
+        /// <summary>
+        /// Query messages in interval async.
+        /// </summary>
+        /// <returns>The message interval async.</returns>
+        /// <param name="conversation">Conversation.</param>
+        /// <param name="start">Start.</param>
+        /// <param name="end">End.</param>
+        /// <param name="limit">Limit.</param>
+        public static Task<IEnumerable<IAVIMMessage>> QueryMessageInIntervalAsync(
+            this AVIMConversation conversation,
+            IAVIMMessage start,
+            IAVIMMessage end,
+            int limit = 20)
+        {
+            return conversation.QueryMessageAsync(
+                beforeMessageId: end.Id,
+                beforeTimeStamp: end.ServerTimestamp,
+                afterMessageId: start.Id,
+                afterTimeStamp: start.ServerTimestamp,
+                limit: limit);
         }
 
         /// <summary>
@@ -1273,6 +1311,10 @@ namespace LeanCloud.Realtime
     /// </summary>
     public interface IAVIMConversatioBuilder
     {
+        /// <summary>
+        /// Build this instance.
+        /// </summary>
+        /// <returns>The build.</returns>
         AVIMConversation Build();
     }
 
@@ -1281,6 +1323,10 @@ namespace LeanCloud.Realtime
     /// </summary>
     public class AVIMConversationBuilder : IAVIMConversatioBuilder
     {
+        /// <summary>
+        /// Gets or sets the client.
+        /// </summary>
+        /// <value>The client.</value>
         public AVIMClient Client { get; internal set; }
         private bool isUnique;
         private Dictionary<string, object> properties;
@@ -1296,6 +1342,10 @@ namespace LeanCloud.Realtime
             return new AVIMConversationBuilder();
         }
 
+        /// <summary>
+        /// Build this instance.
+        /// </summary>
+        /// <returns>The build.</returns>
         public AVIMConversation Build()
         {
             var result = new AVIMConversation(
@@ -1317,41 +1367,76 @@ namespace LeanCloud.Realtime
             return result;
         }
 
+        /// <summary>
+        /// Sets the unique.
+        /// </summary>
+        /// <returns>The unique.</returns>
+        /// <param name="toggle">If set to <c>true</c> toggle.</param>
         public AVIMConversationBuilder SetUnique(bool toggle = true)
         {
             this.isUnique = toggle;
             return this;
         }
 
+        /// <summary>
+        /// Sets the system.
+        /// </summary>
+        /// <returns>The system.</returns>
+        /// <param name="toggle">If set to <c>true</c> toggle.</param>
         public AVIMConversationBuilder SetSystem(bool toggle = true)
         {
             this.isSystem = toggle;
             return this;
         }
 
+        /// <summary>
+        /// Sets the transient.
+        /// </summary>
+        /// <returns>The transient.</returns>
+        /// <param name="toggle">If set to <c>true</c> toggle.</param>
         public AVIMConversationBuilder SetTransient(bool toggle = true)
         {
             this.isTransient = toggle;
             return this;
         }
 
+        /// <summary>
+        /// Sets the name.
+        /// </summary>
+        /// <returns>The name.</returns>
+        /// <param name="name">Name.</param>
         public AVIMConversationBuilder SetName(string name)
         {
             this.name = name;
             return this;
         }
 
+        /// <summary>
+        /// Sets the members.
+        /// </summary>
+        /// <returns>The members.</returns>
+        /// <param name="memberClientIds">Member client identifiers.</param>
         public AVIMConversationBuilder SetMembers(IEnumerable<string> memberClientIds)
         {
             this.members = memberClientIds.ToList();
             return this;
         }
 
+        /// <summary>
+        /// Adds the member.
+        /// </summary>
+        /// <returns>The member.</returns>
+        /// <param name="memberClientId">Member client identifier.</param>
         public AVIMConversationBuilder AddMember(string memberClientId)
         {
             return AddMembers(new string[] { memberClientId });
         }
 
+        /// <summary>
+        /// Adds the members.
+        /// </summary>
+        /// <returns>The members.</returns>
+        /// <param name="memberClientIds">Member client identifiers.</param>
         public AVIMConversationBuilder AddMembers(IEnumerable<string> memberClientIds)
         {
             if (this.members == null) this.members = new List<string>();
@@ -1359,6 +1444,12 @@ namespace LeanCloud.Realtime
             return this;
         }
 
+        /// <summary>
+        /// Sets the property.
+        /// </summary>
+        /// <returns>The property.</returns>
+        /// <param name="key">Key.</param>
+        /// <param name="value">Value.</param>
         public AVIMConversationBuilder SetProperty(string key, object value)
         {
             if (this.properties == null) this.properties = new Dictionary<string, object>();
