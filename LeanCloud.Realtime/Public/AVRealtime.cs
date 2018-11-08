@@ -108,7 +108,7 @@ namespace LeanCloud.Realtime
         /// <summary>
         /// 与云端通讯的状态
         /// </summary>
-        public enum Status : int
+        public enum Status
         {
             /// <summary>
             /// 未初始化
