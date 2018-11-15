@@ -38,6 +38,18 @@ namespace LeanCloud.Realtime
 
         }
 
+        /// <summary>
+        /// Creates the instance.
+        /// </summary>
+        /// <returns>The instance.</returns>
+        /// <param name="where">Where.</param>
+        /// <param name="replacementOrderBy">Replacement order by.</param>
+        /// <param name="thenBy">Then by.</param>
+        /// <param name="skip">Skip.</param>
+        /// <param name="limit">Limit.</param>
+        /// <param name="includes">Includes.</param>
+        /// <param name="selectedKeys">Selected keys.</param>
+        /// <param name="redirectClassNameForKey">Redirect class name for key.</param>
         public override AVIMConversationQuery CreateInstance(
             IDictionary<string, object> where = null,
             IEnumerable<string> replacementOrderBy = null,
@@ -55,6 +67,11 @@ namespace LeanCloud.Realtime
             return rtn;
         }
 
+        /// <summary>
+        /// Withs the last message refreshed.
+        /// </summary>
+        /// <returns>The last message refreshed.</returns>
+        /// <param name="enabled">If set to <c>true</c> enabled.</param>
         public AVIMConversationQuery WithLastMessageRefreshed(bool enabled)
         {
             this.withLastMessageRefreshed = enabled;
