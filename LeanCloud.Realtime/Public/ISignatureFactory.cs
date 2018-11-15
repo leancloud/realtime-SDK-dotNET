@@ -25,6 +25,7 @@ namespace LeanCloud.Realtime
         /// </summary>
         Remove
     }
+
     /// <summary>
     /// <see cref="https://leancloud.cn/docs/realtime_v2.html#群组功能的签名"/>
     /// </summary>

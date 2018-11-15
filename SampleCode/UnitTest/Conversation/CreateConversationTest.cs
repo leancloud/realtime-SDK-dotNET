@@ -2,9 +2,9 @@
 using System.Threading.Tasks;
 using Xunit;
 
-namespace UnitTest.Connection
+namespace UnitTest.Conversation
 {
-    public class ConnectTest : TestBase
+    public class CreateConversationTest: TestBase
     {
         string clientId = "wujun";
 
