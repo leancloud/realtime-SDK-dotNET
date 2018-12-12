@@ -746,15 +746,32 @@ namespace LeanCloud.Realtime
         /// </summary>
         public void KeepAlive()
         {
-            var cmd = new AVIMCommand();
-            RunCommandAsync(cmd).ContinueWith(t =>
+            try
             {
-                if (t.IsCanceled)
+                var cmd = new AVIMCommand();
+                RunCommandAsync(cmd).ContinueWith(t =>
                 {
-                    this.AVWebSocketClient.Close();
-                }
-            });
+                    if (t.IsCanceled || t.IsFaulted || t.Exception != null)
+                    {
+                        StartManualReconnect();
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                StartManualReconnect();
+            }
         }
+
+        /// <summary>
+        /// Starts manual reconnect.
+        /// </summary>
+        public void StartManualReconnect()
+        {
+            state = Status.Offline;
+            StartAutoReconnect();
+        }
+
         IAVTimer reconnectTimer;
         bool autoReconnectionStarted = false;
 
