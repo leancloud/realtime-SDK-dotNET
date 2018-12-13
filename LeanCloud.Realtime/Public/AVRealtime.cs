@@ -1251,18 +1251,16 @@ namespace LeanCloud.Realtime
         #region log out and clean event subscribtion
         private void WebsocketClient_OnClosed(int arg1, string arg2, string arg3)
         {
-            if (State != Status.Closed)
-            {
-                state = Status.Offline;
-                PrintLog(string.Format("websocket closed with code is {0},reason is {1} and detail is {2}", arg1, arg2, arg3));
-                var args = new AVIMDisconnectEventArgs(arg1, arg2, arg3);
-                m_OnDisconnected?.Invoke(this, args);
+            state = Status.Offline;
+            PrintLog(string.Format("websocket closed with code is {0},reason is {1} and detail is {2}", arg1, arg2, arg3));
+            var args = new AVIMDisconnectEventArgs(arg1, arg2, arg3);
+            m_OnDisconnected?.Invoke(this, args);
 
-                // 如果断线产生的原因是客户端掉线而不是服务端踢下线，则应该开始自动重连
-                if (arg1 == 0)
-                {
-                    StartAutoReconnect();
-                }
+            // 如果断线产生的原因是客户端掉线而不是服务端踢下线，则应该开始自动重连
+            var reasonShouldReconnect = new int[] { 0, 1006, 4107 };
+            if (reasonShouldReconnect.Contains(arg1))
+            {
+                StartAutoReconnect();
             }
         }
 
