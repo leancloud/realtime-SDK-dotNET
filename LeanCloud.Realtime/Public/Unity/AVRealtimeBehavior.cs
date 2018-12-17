@@ -29,10 +29,12 @@ namespace LeanCloud.Realtime
         {
             if (Application.internetReachability == NetworkReachability.NotReachable)
             {
-                AVRealtime.PrintLog("unity Application.internetReachability is NetworkReachability.NotReachable");
+                AVRealtime.PrintLog("Unity Application.internetReachability is NetworkReachability.NotReachable");
                 foreach (var item in AVRealtime.clients)
                 {
-                    item.Value.LinkedRealtime.StartAutoReconnect();
+                    if (item.Value != null)
+                        if (item.Value.LinkedRealtime != null)
+                            item.Value.LinkedRealtime.StartAutoReconnect();
                 }
             }
         }
