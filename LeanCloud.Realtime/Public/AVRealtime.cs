@@ -1047,12 +1047,12 @@ namespace LeanCloud.Realtime
                        };
                        m_OnReconnectFailed?.Invoke(this, reconnectFailedArgs);
                        state = Status.Offline;
+                       autoReconnectionStarted = false;
                    }
                    else
                    {
                        if (s.Result)
                        {
-                           autoReconnectionStarted = false;
                            reconnectTimer = null;
                            var reconnectedArgs = new AVIMReconnectedEventArgs()
                            {
@@ -1061,6 +1061,7 @@ namespace LeanCloud.Realtime
                                SessionToken = _sesstionToken,
                            };
                            state = Status.Online;
+                           autoReconnectionStarted = false;
                            m_OnReconnected?.Invoke(this, reconnectedArgs);
                        }
                    }

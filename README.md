@@ -1,4 +1,4 @@
-# LeanCloud 实时消息 C# & Unity SDK - realtime-SDK-dotNET
+# LeanCloud 实时消息 C# & Unity SDK - real-time-SDK-dotNET
 
 ## 安装和使用
 请阅读官网文档：[https://leancloud.cn/docs/realtime-unity.html#安装_SDK](https://leancloud.cn/docs/realtime-unity.html#安装_SDK)
@@ -20,6 +20,11 @@
 
 ### 代码风格
 遵照微软的官方标准即可，没有特殊要求
+
+### 源码解析
+
+
+
 
 
 
