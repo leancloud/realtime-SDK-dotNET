@@ -159,6 +159,20 @@ namespace LeanCloud.Realtime
             }
         }
 
+        private struct NetworkStateOptions
+        {
+            public bool Available { get; set; }
+        }
+
+        private NetworkStateOptions NetworkState { get; set; }
+
+        private struct WebSocketStateOptions
+        {
+            public int ClosedCode { get; set; }
+        }
+
+        private WebSocketStateOptions WebSocketState { get; set; }
+
         /// <summary>
         /// 
         /// </summary>
@@ -280,6 +294,31 @@ namespace LeanCloud.Realtime
             {
                 m_OnReconnectFailed -= value;
             }
+        }
+
+        /// <summary>
+        /// Invokes the state of the network.
+        /// </summary>
+        /// <param name="available">If set to <c>true</c> broken.</param>
+        internal void InvokeNetworkState(bool available = false)
+        {
+            if (this.NetworkState.Available == available) return;
+            SetNetworkState(available);
+            PrintLog(string.Format("network connectivity is {0} now", available));
+            // 如果断线产生的原因是客户端掉线而不是服务端踢下线，则应该开始自动重连
+            var reasonShouldReconnect = new int[] { 0, 1006, 4107 };
+            if (this.NetworkState.Available && reasonShouldReconnect.Contains(this.WebSocketState.ClosedCode))
+            {
+                StartAutoReconnect();
+            }
+        }
+
+        internal void SetNetworkState(bool available = true)
+        {
+            this.NetworkState = new NetworkStateOptions()
+            {
+                Available = available
+            };
         }
 
         private EventHandler<AVIMNotice> m_NoticeReceived;
@@ -508,7 +547,7 @@ namespace LeanCloud.Realtime
                           return Task.FromResult<AVIMCommand>(null);
                       }
                       AVRealtime.PrintLog("websocket server connected, begin to open sesstion.");
-
+                      SetNetworkState();
                       var cmd = new SessionCommand()
                          .UA(VersionString)
                          .Tag(tag)
@@ -753,13 +792,13 @@ namespace LeanCloud.Realtime
                 {
                     if (t.IsCanceled || t.IsFaulted || t.Exception != null)
                     {
-                        StartManualReconnect();
+                        InvokeNetworkState();
                     }
                 });
             }
             catch (Exception ex)
             {
-                StartManualReconnect();
+                InvokeNetworkState();
             }
         }
 
@@ -1003,7 +1042,7 @@ namespace LeanCloud.Realtime
                   else
                   {
                       state = Status.Opened;
-
+                      SetNetworkState();
                       if (this.IsSesstionTokenExpired)
                       {
                           AVRealtime.PrintLog("sesstion is expired, auto relogin with clientId :" + _clientId);
@@ -1047,12 +1086,12 @@ namespace LeanCloud.Realtime
                        };
                        m_OnReconnectFailed?.Invoke(this, reconnectFailedArgs);
                        state = Status.Offline;
+                       autoReconnectionStarted = false;
                    }
                    else
                    {
                        if (s.Result)
                        {
-                           autoReconnectionStarted = false;
                            reconnectTimer = null;
                            var reconnectedArgs = new AVIMReconnectedEventArgs()
                            {
@@ -1061,6 +1100,7 @@ namespace LeanCloud.Realtime
                                SessionToken = _sesstionToken,
                            };
                            state = Status.Online;
+                           autoReconnectionStarted = false;
                            m_OnReconnected?.Invoke(this, reconnectedArgs);
                        }
                    }
@@ -1088,8 +1128,6 @@ namespace LeanCloud.Realtime
         {
             return this.OpenAsync(secure, null);
         }
-
-
 
         /// <summary>
         /// Open websocket connection.
@@ -1251,22 +1289,16 @@ namespace LeanCloud.Realtime
         #region log out and clean event subscribtion
         private void WebsocketClient_OnClosed(int errorCode, string reason, string detail)
         {
-            if (State != Status.Closed)
+            PrintLog(string.Format("websocket closed with code is {0},reason is {1} and detail is {2}", errorCode, reason, detail));
+            state = Status.Offline;
+
+            var disconnectEventArgs = new AVIMDisconnectEventArgs(errorCode, reason, detail);
+            m_OnDisconnected?.Invoke(this, disconnectEventArgs);
+
+            this.WebSocketState = new WebSocketStateOptions()
             {
-                state = Status.Offline;
-
-                PrintLog(string.Format("websocket closed with code is {0},reason is {1} and detail is {2}", errorCode, reason, detail));
-
-                var disconnectEventArgs = new AVIMDisconnectEventArgs(errorCode, reason, detail);
-                m_OnDisconnected?.Invoke(this, disconnectEventArgs);
-
-                // 如果断线产生的原因是客户端掉线而不是服务端踢下线，则应该开始自动重连
-                var reasonShouldReconnect = new int[] { 0, 1006, 4107 };
-                if (reasonShouldReconnect.Contains(errorCode))
-                {
-                    StartAutoReconnect();
-                }
-            }
+                ClosedCode = errorCode
+            };
         }
 
         internal void LogOut()
