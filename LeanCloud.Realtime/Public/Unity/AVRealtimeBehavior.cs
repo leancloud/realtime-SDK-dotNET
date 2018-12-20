@@ -27,16 +27,14 @@ namespace LeanCloud.Realtime
 
         private void Update()
         {
-            if (Application.internetReachability == NetworkReachability.NotReachable)
-            {
-                AVRealtime.PrintLog("Unity Application.internetReachability is NetworkReachability.NotReachable");
+            var available = Application.internetReachability != NetworkReachability.NotReachable;
+            if (AVRealtime.clients != null)
                 foreach (var item in AVRealtime.clients)
                 {
                     if (item.Value != null)
                         if (item.Value.LinkedRealtime != null)
-                            item.Value.LinkedRealtime.StartAutoReconnect();
+                            item.Value.LinkedRealtime.InvokeNetworkState(available);
                 }
-            }
         }
 
         public override void Awake()
