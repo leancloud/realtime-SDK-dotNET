@@ -313,19 +313,24 @@ namespace LeanCloud.Realtime
                 NetworkType = networkType
             };
 
-            if (last.Available == current.Available && last.NetworkType == current.NetworkType) return;
-
-            PrintLog(string.Format("network connectivity is {0} now", available));
-            var networkTypeString = networkType == 2 ? "data carrie" : "wifi";
-            if (current.Available)
-                PrintLog(string.Format("network type is {0} now", networkTypeString));
             // 如果断线产生的原因是客户端掉线而不是服务端踢下线，则应该开始自动重连
             var reasonShouldReconnect = new int[] { 0, 1006, 4107 };
+
+            var fixWebsocket = state == Status.Offline && reasonShouldReconnect.Contains(this.WebSocketState.ClosedCode);
+
+            if (last.Available == current.Available && last.NetworkType == current.NetworkType && !fixWebsocket) return;
+
+            PrintLog(string.Format("network connectivity is {0} now", available));
+            var networkTypeString = networkType == 2 ? "data carrier" : "wifi";
+            if (current.Available)
+                PrintLog(string.Format("network type is {0} now", networkTypeString));
+
             var networkReborn = current.Available && last.Available == false;
             var networkMigrated = current.Available && (last.NetworkType != current.NetworkType);
-            if (networkReborn || networkMigrated)
+
+            if (networkReborn || networkMigrated || fixWebsocket)
             {
-                StartAutoReconnect();
+                StartManualReconnect();
             }
 
             SetNetworkState(available, networkType);
@@ -811,13 +816,13 @@ namespace LeanCloud.Realtime
                 {
                     if (t.IsCanceled || t.IsFaulted || t.Exception != null)
                     {
-                        InvokeNetworkState();
+                        InvokeNetworkState(false, this.NetworkState.NetworkType);
                     }
                 });
             }
             catch (Exception ex)
             {
-                InvokeNetworkState();
+                InvokeNetworkState(false, this.NetworkState.NetworkType);
             }
         }
 
@@ -1318,6 +1323,8 @@ namespace LeanCloud.Realtime
             {
                 ClosedCode = errorCode
             };
+
+            InvokeNetworkState(this.NetworkState.Available, this.NetworkState.NetworkType);
         }
 
         internal void LogOut()
