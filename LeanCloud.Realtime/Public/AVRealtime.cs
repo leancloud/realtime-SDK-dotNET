@@ -162,6 +162,8 @@ namespace LeanCloud.Realtime
         private struct NetworkStateOptions
         {
             public bool Available { get; set; }
+
+            public int NetworkType { get; set; }
         }
 
         private NetworkStateOptions NetworkState { get; set; }
@@ -299,25 +301,42 @@ namespace LeanCloud.Realtime
         /// <summary>
         /// Invokes the state of the network.
         /// </summary>
-        /// <param name="available">If set to <c>true</c> broken.</param>
-        internal void InvokeNetworkState(bool available = false)
+        /// <param name="available">If set to <c>true</c> available.</param>
+        /// <param name="networkType">Network type.</param>
+        internal void InvokeNetworkState(bool available = false, int networkType = 1)
         {
-            if (this.NetworkState.Available == available) return;
-            SetNetworkState(available);
+            var last = this.NetworkState;
+
+            var current = new NetworkStateOptions()
+            {
+                Available = available,
+                NetworkType = networkType
+            };
+
+            if (last.Available == current.Available && last.NetworkType == current.NetworkType) return;
+
             PrintLog(string.Format("network connectivity is {0} now", available));
+            var networkTypeString = networkType == 2 ? "data carrie" : "wifi";
+            if (current.Available)
+                PrintLog(string.Format("network type is {0} now", networkTypeString));
             // 如果断线产生的原因是客户端掉线而不是服务端踢下线，则应该开始自动重连
             var reasonShouldReconnect = new int[] { 0, 1006, 4107 };
-            if (this.NetworkState.Available && reasonShouldReconnect.Contains(this.WebSocketState.ClosedCode))
+            var networkReborn = current.Available && last.Available == false;
+            var networkMigrated = current.Available && (last.NetworkType != current.NetworkType);
+            if (networkReborn || networkMigrated)
             {
                 StartAutoReconnect();
             }
+
+            SetNetworkState(available, networkType);
         }
 
-        internal void SetNetworkState(bool available = true)
+        internal void SetNetworkState(bool available = true, int networkType = 1)
         {
             this.NetworkState = new NetworkStateOptions()
             {
-                Available = available
+                Available = available,
+                NetworkType = networkType
             };
         }
 

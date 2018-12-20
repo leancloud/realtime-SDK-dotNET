@@ -28,12 +28,13 @@ namespace LeanCloud.Realtime
         private void Update()
         {
             var available = Application.internetReachability != NetworkReachability.NotReachable;
+            var networkType = Application.internetReachability == NetworkReachability.ReachableViaCarrierDataNetwork ? 2 : 1;
             if (AVRealtime.clients != null)
                 foreach (var item in AVRealtime.clients)
                 {
                     if (item.Value != null)
                         if (item.Value.LinkedRealtime != null)
-                            item.Value.LinkedRealtime.InvokeNetworkState(available);
+                            item.Value.LinkedRealtime.InvokeNetworkState(available, networkType);
                 }
         }
 
