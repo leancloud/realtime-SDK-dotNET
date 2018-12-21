@@ -325,12 +325,9 @@ namespace LeanCloud.Realtime
                 // 如果断线产生的原因是客户端掉线而不是服务端踢下线，则应该开始自动重连
                 var reasonShouldReconnect = new int[] { 0, 1006, 4107 };
 
-                var fixWebsocket = state == Status.Offline && reasonShouldReconnect.Contains(this.WebSocketState.ClosedCode);
-
-                if (last.Available == current.Available && last.NetworkType == current.NetworkType && !fixWebsocket) return;
-
                 var networkReborn = current.Available && !last.Available;
                 var networkMigrated = current.Available && (last.NetworkType != current.NetworkType);
+                var fixWebsocket = current.Available && state == Status.Offline && reasonShouldReconnect.Contains(this.WebSocketState.ClosedCode);
 
                 var doReconnect = networkReborn || networkMigrated || fixWebsocket;
 
