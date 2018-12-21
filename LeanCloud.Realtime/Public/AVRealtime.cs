@@ -298,6 +298,10 @@ namespace LeanCloud.Realtime
             }
         }
 
+
+
+        private object networkMutexObject = new object();
+
         /// <summary>
         /// Invokes the state of the network.
         /// </summary>
@@ -305,35 +309,62 @@ namespace LeanCloud.Realtime
         /// <param name="networkType">Network type.</param>
         internal void InvokeNetworkState(bool available = false, int networkType = 1)
         {
-            var last = this.NetworkState;
-
-            var current = new NetworkStateOptions()
+            lock (networkMutexObject)
             {
-                Available = available,
-                NetworkType = networkType
-            };
+                var last = this.NetworkState;
 
-            // 如果断线产生的原因是客户端掉线而不是服务端踢下线，则应该开始自动重连
-            var reasonShouldReconnect = new int[] { 0, 1006, 4107 };
+                var current = new NetworkStateOptions()
+                {
+                    Available = available,
+                    NetworkType = networkType
+                };
 
-            var fixWebsocket = state == Status.Offline && reasonShouldReconnect.Contains(this.WebSocketState.ClosedCode);
+                if (!current.Available && last.Available)
+                    PrintLog("network is unreachable now");
 
-            if (last.Available == current.Available && last.NetworkType == current.NetworkType && !fixWebsocket) return;
+                // 如果断线产生的原因是客户端掉线而不是服务端踢下线，则应该开始自动重连
+                var reasonShouldReconnect = new int[] { 0, 1006, 4107 };
 
-            PrintLog(string.Format("network connectivity is {0} now", available));
-            var networkTypeString = networkType == 2 ? "data carrier" : "wifi";
-            if (current.Available)
-                PrintLog(string.Format("network type is {0} now", networkTypeString));
+                var fixWebsocket = state == Status.Offline && reasonShouldReconnect.Contains(this.WebSocketState.ClosedCode);
 
-            var networkReborn = current.Available && last.Available == false;
-            var networkMigrated = current.Available && (last.NetworkType != current.NetworkType);
+                if (last.Available == current.Available && last.NetworkType == current.NetworkType && !fixWebsocket) return;
 
-            if (networkReborn || networkMigrated || fixWebsocket)
-            {
-                StartManualReconnect();
+                var networkReborn = current.Available && !last.Available;
+                var networkMigrated = current.Available && (last.NetworkType != current.NetworkType);
+
+                var doReconnect = networkReborn || networkMigrated || fixWebsocket;
+
+                if (networkReborn)
+                {
+                    var currentNetworkTypeLogString = GetNetworkTypeLogString(current);
+                    PrintLog(string.Format("network has been recovered now, network type is {0}", currentNetworkTypeLogString));
+                }
+
+                if (networkMigrated)
+                {
+                    var lastNetworkTypeLogString = GetNetworkTypeLogString(last);
+                    var currentNetworkTypeLogString = GetNetworkTypeLogString(current);
+                    PrintLog(string.Format("network has been migrated, it is {0} now, the previous type is {1}", currentNetworkTypeLogString, lastNetworkTypeLogString));
+                }
+
+                if (doReconnect && fixWebsocket)
+                {
+                    PrintLog(string.Format("WebSocket state is {0} and ClosedCode is {1}", state.ToString(), this.WebSocketState.ClosedCode.ToString()));
+                }
+
+                if (doReconnect)
+                {
+                    StartManualReconnect();
+                }
+
+                SetNetworkState(available, networkType);
             }
+        }
 
-            SetNetworkState(available, networkType);
+        private string GetNetworkTypeLogString(NetworkStateOptions networkState)
+        {
+            var networkTypeLogString = networkState.NetworkType == 2 ? "data carrier" : "wifi";
+            return networkTypeLogString;
         }
 
         internal void SetNetworkState(bool available = true, int networkType = 1)
@@ -1024,6 +1055,7 @@ namespace LeanCloud.Realtime
         /// <returns></returns>
         public Task AutoReconnect()
         {
+            state = Status.Reconnecting;
             AVRealtime.PrintLog("AutoReconnect started.");
             var reconnectingArgs = new AVIMReconnectingEventArgs()
             {
@@ -1051,7 +1083,6 @@ namespace LeanCloud.Realtime
               {
                   if (!t.Result)
                   {
-                      state = Status.Reconnecting;
                       var reconnectFailedArgs = new AVIMReconnectFailedArgs()
                       {
                           ClientId = _clientId,
