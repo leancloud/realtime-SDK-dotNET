@@ -323,7 +323,7 @@ namespace LeanCloud.Realtime
                     PrintLog("network is unreachable now");
 
                 // 如果断线产生的原因是客户端掉线而不是服务端踢下线，则应该开始自动重连
-                var reasonShouldReconnect = new int[] { 0, 1006, 4107 };
+                var reasonShouldReconnect = new int[] { 0, 1, 1006, 4107 };
 
                 var networkReborn = current.Available && !last.Available;
                 var networkMigrated = current.Available && (last.NetworkType != current.NetworkType);
