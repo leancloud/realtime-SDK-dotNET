@@ -844,13 +844,13 @@ namespace LeanCloud.Realtime
                 {
                     if (t.IsCanceled || t.IsFaulted || t.Exception != null)
                     {
-                        InvokeNetworkState(false, this.NetworkState.NetworkType);
+                        InvokeWebSocketClosed(1, "heart beating was failed", "from KeepAlive");
                     }
                 });
             }
             catch (Exception ex)
             {
-                InvokeNetworkState(false, this.NetworkState.NetworkType);
+                InvokeWebSocketClosed(1, "heart beating was failed", "from KeepAlive");
             }
         }
 
@@ -1342,9 +1342,16 @@ namespace LeanCloud.Realtime
         private void WebsocketClient_OnClosed(int errorCode, string reason, string detail)
         {
             PrintLog(string.Format("websocket closed with code is {0},reason is {1} and detail is {2}", errorCode, reason, detail));
+
+            InvokeWebSocketClosed(errorCode, reason, detail);
+        }
+
+        private void InvokeWebSocketClosed(int errorCode, string reason, string detail)
+        {
             state = Status.Offline;
 
             var disconnectEventArgs = new AVIMDisconnectEventArgs(errorCode, reason, detail);
+
             m_OnDisconnected?.Invoke(this, disconnectEventArgs);
 
             this.WebSocketState = new WebSocketStateOptions()

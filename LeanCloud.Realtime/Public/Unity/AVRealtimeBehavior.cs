@@ -25,6 +25,17 @@ namespace LeanCloud.Realtime
             }
         }
 
+        void OnApplicationFocus(bool hasFocus)
+        {
+            if (AVRealtime.clients != null)
+                foreach (var item in AVRealtime.clients)
+                {
+                    if (item.Value != null)
+                        if (item.Value.LinkedRealtime != null)
+                            item.Value.LinkedRealtime.KeepAlive();
+                }
+        }
+
         private void Update()
         {
             var available = Application.internetReachability != NetworkReachability.NotReachable;
