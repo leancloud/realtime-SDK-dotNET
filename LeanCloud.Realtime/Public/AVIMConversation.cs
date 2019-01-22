@@ -776,6 +776,7 @@ namespace LeanCloud.Realtime
             }
             return this.CurrentClient.ReadAsync(this, message, readAt).OnSuccess(t =>
             {
+                Received = null;
                 _lastUnreadWhenOpenSession = null;
                 Read = new ReadState()
                 {
