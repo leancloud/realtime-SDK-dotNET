@@ -65,8 +65,13 @@ namespace LeanCloud.Realtime.Internal
 
         Task<PushRouterState> QueryAsync(string pushRouter, bool secure, CancellationToken cancellationToken)
         {
-            var appRouter = AVPlugins.Instance.AppRouterController.Get();
-            var routerHost = string.Format("https://{0}/v1/route?appId={1}", appRouter.RealtimeRouterServer, AVClient.CurrentConfiguration.ApplicationId) ?? appRouter.RealtimeRouterServer ?? string.Format(routerUrl, AVClient.CurrentConfiguration.ApplicationId);
+            var routerHost = pushRouter;
+            if (routerHost == null) {
+                var appRouter = AVPlugins.Instance.AppRouterController.Get();
+                routerHost = string.Format("https://{0}/v1/route?appId={1}", appRouter.RealtimeRouterServer, AVClient.CurrentConfiguration.ApplicationId) ?? appRouter.RealtimeRouterServer ?? string.Format(routerUrl, AVClient.CurrentConfiguration.ApplicationId);
+            }
+            AVRealtime.PrintLog($"router: {routerHost}");
+            AVRealtime.PrintLog($"push: {pushRouter}");
             if (!string.IsNullOrEmpty(pushRouter))
             {
                 var rtmUri = new Uri(pushRouter);

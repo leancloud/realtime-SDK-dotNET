@@ -14,6 +14,8 @@ namespace LeanCloud.Realtime
     /// </summary>
     public class AVRealtimeBehavior : AVInitializeBehaviour
     {
+        public string RTMRouter = null;
+
         void OnApplicationQuit()
         {
             if (AVRealtime.clients != null)
@@ -63,8 +65,12 @@ namespace LeanCloud.Realtime
 
         public IEnumerator FetchRouter()
         {
-            var state = AVPlugins.Instance.AppRouterController.Get();
-            var url = string.Format("https://{0}/v1/route?appId={1}", state.RealtimeRouterServer, applicationID);
+            var router = RTMRouter;
+            if (string.IsNullOrEmpty(router)) {
+                var state = AVPlugins.Instance.AppRouterController.Get();
+                router = state.RealtimeRouterServer;
+            }
+            var url = string.Format("https://{0}/v1/route?appId={1}", router, applicationID);
             if (secure)
             {
                 url += "&secure=1";
