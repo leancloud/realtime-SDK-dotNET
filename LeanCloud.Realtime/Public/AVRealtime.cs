@@ -1281,11 +1281,6 @@ namespace LeanCloud.Realtime
             });
         }
 
-        private void WebsocketClient_OnError(string obj)
-        {
-            PrintLog("error:" + obj);
-        }
-
         #region log out and clean event subscribtion
         private void WebsocketClient_OnClosed(int errorCode, string reason, string detail)
         {
@@ -1299,6 +1294,35 @@ namespace LeanCloud.Realtime
             {
                 ClosedCode = errorCode
             };
+
+            PrepareReconnect();
+        }
+
+        private void WebsocketClient_OnError(string obj)
+        {
+            PrintLog("error:" + obj);
+            // 如果遇到 WebSocket 错误之后，先关闭，再按断线处理
+            AVWebSocketClient.Close();
+            WebsocketClient_OnClosed(0, obj, string.Empty);
+        }
+
+        void PrepareReconnect() {
+            AVRealtime.PrintLog("Prepare Reconnect");
+            var checkNetAvailableTimer = new AVTimer();
+            checkNetAvailableTimer.Interval = 5000;
+            var handler = new EventHandler<TimerEventArgs>((object sender, TimerEventArgs e) => {
+                bool netAvailable = System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable();
+                AVRealtime.PrintLog($"current net available: {netAvailable}");
+                if (netAvailable)
+                {
+                    StartManualReconnect();
+                    AVTimer timer = (AVTimer)sender;
+                    timer.Stop();
+                }
+            });
+            checkNetAvailableTimer.Elapsed += handler;
+            checkNetAvailableTimer.Start();
+            checkNetAvailableTimer.Enabled = true;
         }
 
         internal void LogOut()

@@ -12,17 +12,14 @@ namespace LeanCloud.Realtime.Internal
     /// </summary>
     public class DefaultWebSocketClient : IWebSocketClient
     {
-        internal readonly IWebSocketConnection connection;
+        internal IWebSocketConnection connection;
         /// <summary>
         /// LeanCluod .NET Realtime SDK 内置默认的 WebSocketClient
         /// 开发者可以在初始化的时候指定自定义的 WebSocketClient
         /// </summary>
         public DefaultWebSocketClient()
         {
-            connection = WebSocketFactory.Create();
-            connection.OnOpened += Connection_OnOpened;
-            connection.OnMessage += Connection_OnMessage;
-            connection.OnClosed += Connection_OnClosed;
+           
         }
 
         public event Action<int, string, string> OnClosed;
@@ -35,7 +32,7 @@ namespace LeanCloud.Realtime.Internal
         {
             get
             {
-                return connection.IsOpen;
+                return connection != null && connection.IsOpen;
             }
         }
 
@@ -47,19 +44,23 @@ namespace LeanCloud.Realtime.Internal
                 connection.OnOpened -= Connection_OnOpened;
                 connection.OnMessage -= Connection_OnMessage;
                 connection.OnClosed -= Connection_OnClosed;
+                connection.OnError -= Connection_OnError;
             }
         }
 
         public void Open(string url, string protocol = null)
         {
-            if (connection != null)
+            // 在每次打开时，重新创建 WebSocket 对象
+            connection = WebSocketFactory.Create();
+            connection.OnOpened += Connection_OnOpened;
+            connection.OnMessage += Connection_OnMessage;
+            connection.OnClosed += Connection_OnClosed;
+            connection.OnError += Connection_OnError;
+            if (!string.IsNullOrEmpty(protocol))
             {
-                if (!string.IsNullOrEmpty(protocol))
-                {
-                    url = string.Format("{0}?subprotocol={1}", url, protocol);
-                }
-                connection.Open(url, protocol);
+                url = string.Format("{0}?subprotocol={1}", url, protocol);
             }
+            connection.Open(url, protocol);
         }
 
         private void Connection_OnOpened()
@@ -81,6 +82,12 @@ namespace LeanCloud.Realtime.Internal
                 this.OnClosed(0, "", "");
         }
 
+        private void Connection_OnError(string obj)
+        {
+            AVRealtime.PrintLog($"PCL websocket error:  {obj}");
+            OnError?.Invoke(obj);
+        }
+
         public void Send(string message)
         {
             if (connection != null)
@@ -89,6 +96,15 @@ namespace LeanCloud.Realtime.Internal
                 {
                     connection.Send(message);
                 }
+                else
+                {
+                    var log = "Connection is NOT open when send message";
+                    AVRealtime.PrintLog(log);
+                    Connection_OnError(log);
+                }
+            }
+            else {
+                AVRealtime.PrintLog("Connection is NULL");
             }
         }
     }
