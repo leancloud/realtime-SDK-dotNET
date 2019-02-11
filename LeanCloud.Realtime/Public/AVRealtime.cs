@@ -821,7 +821,7 @@ namespace LeanCloud.Realtime
         {
             get
             {
-                return !sessionConflict && !loggedOut;
+                return !sessionConflict && !loggedOut && state == Status.Offline;
             }
         }
 
