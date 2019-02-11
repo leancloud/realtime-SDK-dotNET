@@ -162,6 +162,8 @@ namespace LeanCloud.Realtime
         private struct NetworkStateOptions
         {
             public bool Available { get; set; }
+
+            public int NetworkType { get; set; }
         }
 
         private NetworkStateOptions NetworkState { get; set; }
@@ -296,28 +298,78 @@ namespace LeanCloud.Realtime
             }
         }
 
+
+
+        private object networkMutexObject = new object();
+
         /// <summary>
         /// Invokes the state of the network.
         /// </summary>
-        /// <param name="available">If set to <c>true</c> broken.</param>
-        internal void InvokeNetworkState(bool available = false)
+        /// <param name="available">If set to <c>true</c> available.</param>
+        /// <param name="networkType">Network type.</param>
+        internal void InvokeNetworkState(bool available = false, int networkType = 1)
         {
-            if (this.NetworkState.Available == available) return;
-            SetNetworkState(available);
-            PrintLog(string.Format("network connectivity is {0} now", available));
-            // 如果断线产生的原因是客户端掉线而不是服务端踢下线，则应该开始自动重连
-            var reasonShouldReconnect = new int[] { 0, 1006, 4107 };
-            if (this.NetworkState.Available && reasonShouldReconnect.Contains(this.WebSocketState.ClosedCode))
+            lock (networkMutexObject)
             {
-                StartAutoReconnect();
+                var last = this.NetworkState;
+
+                var current = new NetworkStateOptions()
+                {
+                    Available = available,
+                    NetworkType = networkType
+                };
+
+                if (!current.Available && last.Available)
+                    PrintLog("network is unreachable now");
+
+                // 如果断线产生的原因是客户端掉线而不是服务端踢下线，则应该开始自动重连
+                var reasonShouldReconnect = new int[] { 0, 1, 1006, 4107 };
+
+                var networkReborn = current.Available && !last.Available;
+                var networkMigrated = current.Available && (last.NetworkType != current.NetworkType);
+                var fixWebsocket = current.Available && state == Status.Offline && reasonShouldReconnect.Contains(this.WebSocketState.ClosedCode);
+
+                var doReconnect = networkReborn || networkMigrated || fixWebsocket;
+
+                if (networkReborn)
+                {
+                    var currentNetworkTypeLogString = GetNetworkTypeLogString(current);
+                    PrintLog(string.Format("network has been recovered now, network type is {0}", currentNetworkTypeLogString));
+                }
+
+                if (networkMigrated)
+                {
+                    var lastNetworkTypeLogString = GetNetworkTypeLogString(last);
+                    var currentNetworkTypeLogString = GetNetworkTypeLogString(current);
+                    PrintLog(string.Format("network has been migrated, it is {0} now, the previous type is {1}", currentNetworkTypeLogString, lastNetworkTypeLogString));
+                }
+
+                if (doReconnect && fixWebsocket)
+                {
+                    PrintLog(string.Format("WebSocket state is {0} and ClosedCode is {1}", state.ToString(), this.WebSocketState.ClosedCode.ToString()));
+                }
+
+                if (doReconnect)
+                {
+                    StartManualReconnect();
+                }
+
+                SetNetworkState(available, networkType);
             }
         }
 
-        internal void SetNetworkState(bool available = true)
+        private string GetNetworkTypeLogString(NetworkStateOptions networkState)
+        {
+            var networkTypeLogString = networkState.NetworkType == 2 ? "data carrier" : "wifi";
+            return networkTypeLogString;
+        }
+
+        internal void SetNetworkState(bool available = true, int networkType = 1)
         {
             this.NetworkState = new NetworkStateOptions()
             {
-                Available = available
+                Available = available,
+                NetworkType = networkType
             };
         }
 
@@ -792,13 +844,13 @@ namespace LeanCloud.Realtime
                 {
                     if (t.IsCanceled || t.IsFaulted || t.Exception != null)
                     {
-                        InvokeNetworkState();
+                        InvokeWebSocketClosed(1, "heart beating was failed", "from KeepAlive");
                     }
                 });
             }
             catch (Exception ex)
             {
-                InvokeNetworkState();
+                InvokeWebSocketClosed(1, "heart beating was failed", "from KeepAlive");
             }
         }
 
@@ -1000,6 +1052,7 @@ namespace LeanCloud.Realtime
         /// <returns></returns>
         public Task AutoReconnect()
         {
+            state = Status.Reconnecting;
             AVRealtime.PrintLog("AutoReconnect started.");
             var reconnectingArgs = new AVIMReconnectingEventArgs()
             {
@@ -1027,7 +1080,6 @@ namespace LeanCloud.Realtime
               {
                   if (!t.Result)
                   {
-                      state = Status.Reconnecting;
                       var reconnectFailedArgs = new AVIMReconnectFailedArgs()
                       {
                           ClientId = _clientId,
@@ -1290,15 +1342,24 @@ namespace LeanCloud.Realtime
         private void WebsocketClient_OnClosed(int errorCode, string reason, string detail)
         {
             PrintLog(string.Format("websocket closed with code is {0},reason is {1} and detail is {2}", errorCode, reason, detail));
+
+            InvokeWebSocketClosed(errorCode, reason, detail);
+        }
+
+        private void InvokeWebSocketClosed(int errorCode, string reason, string detail)
+        {
             state = Status.Offline;
 
             var disconnectEventArgs = new AVIMDisconnectEventArgs(errorCode, reason, detail);
+
             m_OnDisconnected?.Invoke(this, disconnectEventArgs);
 
             this.WebSocketState = new WebSocketStateOptions()
             {
                 ClosedCode = errorCode
             };
+
+            InvokeNetworkState(this.NetworkState.Available, this.NetworkState.NetworkType);
         }
 
         internal void LogOut()
