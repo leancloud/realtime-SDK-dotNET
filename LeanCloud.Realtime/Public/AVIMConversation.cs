@@ -1302,9 +1302,9 @@ namespace LeanCloud.Realtime
         /// <param name="conversation">Conversation.</param>
         /// <param name="oldMessage">要修改的消息对象</param>
         /// <param name="newMessage">新的消息对象</param>
-        public static Task<IAVIMMessage> ModifyAsync(this AVIMConversation conversation, IAVIMMessage oldMessage, IAVIMMessage newMessage)
+        public static Task<IAVIMMessage> UpdateAsync(this AVIMConversation conversation, IAVIMMessage oldMessage, IAVIMMessage newMessage)
         {
-            return conversation.CurrentClient.ModifyAsync(oldMessage, newMessage);
+            return conversation.CurrentClient.UpdateAsync(oldMessage, newMessage);
         }
     }
 

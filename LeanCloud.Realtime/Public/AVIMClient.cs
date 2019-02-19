@@ -1010,7 +1010,7 @@ namespace LeanCloud.Realtime
         /// <returns>The aysnc.</returns>
         /// <param name="oldMessage">要修改的消息对象</param>
         /// <param name="newMessage">新的消息对象</param>
-        public Task<IAVIMMessage> ModifyAsync(IAVIMMessage oldMessage, IAVIMMessage newMessage)
+        public Task<IAVIMMessage> UpdateAsync(IAVIMMessage oldMessage, IAVIMMessage newMessage)
         {
             var tcs = new TaskCompletionSource<IAVIMMessage>();
             var patchCmd = new PatchCommand().Modify(oldMessage, newMessage);
