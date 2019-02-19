@@ -217,7 +217,11 @@ namespace LeanCloud.Realtime
             messagePatchListener.OnReceived = (messages) =>
             {
                 foreach (var message in messages) {
-                    this.m_OnMessageModified.Invoke(this, new AVIMMessagePatchEventArgs(message));
+                    if (message is AVIMRecalledMessage) {
+                        m_OnMessageRecalled?.Invoke(this, new AVIMMessagePatchEventArgs(message));
+                    } else {
+                        m_OnMessageModified?.Invoke(this, new AVIMMessagePatchEventArgs(message));
+                    }
                 }
             };
             this.RegisterListener(messagePatchListener);
