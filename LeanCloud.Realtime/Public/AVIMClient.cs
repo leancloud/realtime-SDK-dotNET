@@ -997,13 +997,8 @@ namespace LeanCloud.Realtime
             var patchCmd = new PatchCommand().Recall(message);
             RunCommandAsync(patchCmd)
                 .OnSuccess(t => {
-                    var recalledMsg = new AVIMRecalledMessage {
-                        ConversationId = message.ConversationId,
-                        FromClientId = message.FromClientId,
-                        Id = message.Id,
-                        ServerTimestamp = message.ServerTimestamp,
-                        RcpTimestamp = message.RcpTimestamp
-                    };
+                    var recalledMsg = new AVIMRecalledMessage();
+                    AVIMMessage.CopyMetaData(message, recalledMsg);
                     tcs.SetResult(recalledMsg);
                 });
             return tcs.Task;
@@ -1021,18 +1016,14 @@ namespace LeanCloud.Realtime
             var patchCmd = new PatchCommand().Modify(oldMessage, newMessage);
             this.RunCommandAsync(patchCmd)
                 .OnSuccess(t => {
-                    var response = t.Result.Item2;
+                    // 从旧消息对象中拷贝数据
+                    AVIMMessage.CopyMetaData(oldMessage, newMessage);
                     // 获取更新时间戳
+                    var response = t.Result.Item2;
                     if (response.TryGetValue("lastPatchTime", out object updatedAtObj) && 
                         long.TryParse(updatedAtObj.ToString(), out long updatedAt)) {
                         newMessage.UpdatedAt = updatedAt;
                     }
-                    // 从旧消息对象中拷贝数据
-                    newMessage.ConversationId = oldMessage.ConversationId;
-                    newMessage.FromClientId = oldMessage.FromClientId;
-                    newMessage.Id = oldMessage.Id;
-                    newMessage.ServerTimestamp = oldMessage.ServerTimestamp;
-                    newMessage.RcpTimestamp = oldMessage.RcpTimestamp;
                     tcs.SetResult(newMessage);
                 });
             return tcs.Task;

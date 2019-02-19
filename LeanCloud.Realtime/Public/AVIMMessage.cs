@@ -115,6 +115,19 @@ namespace LeanCloud.Realtime
             return cmd;
         }
 
+        internal static IAVIMMessage CopyMetaData(IAVIMMessage srcMsg, IAVIMMessage desMsg) {
+            if (srcMsg == null)
+                return desMsg;
+
+            desMsg.ConversationId = srcMsg.ConversationId;
+            desMsg.FromClientId = srcMsg.FromClientId;
+            desMsg.Id = srcMsg.Id;
+            desMsg.ServerTimestamp = srcMsg.ServerTimestamp;
+            desMsg.RcpTimestamp = srcMsg.RcpTimestamp;
+            desMsg.UpdatedAt = srcMsg.UpdatedAt;
+            return desMsg;
+        }
+
         #endregion
     }
 
