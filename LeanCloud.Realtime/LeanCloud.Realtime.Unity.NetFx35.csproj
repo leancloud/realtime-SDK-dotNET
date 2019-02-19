@@ -121,6 +121,7 @@
     <Compile Include="Public\Listener\OfflineMessageListener.cs" />
     <Compile Include="Public\Listener\SessionListener.cs" />
     <Compile Include="Public\Unity\AVRealtimeBehavior.cs" />
+    <Compile Include="Public\AVIMRecalledMessage.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Internal\WebSocket\Unity\websocket-sharp.dll" />

@@ -112,6 +112,7 @@
     <Compile Include="Public\AVIMTypedMessageTypeIntAttribute.cs" />
     <Compile Include="Public\Unity\AVRealtimeBehavior.cs" />
     <Compile Include="Public\AVIMBinaryMessage.cs" />
+    <Compile Include="Public\AVIMRecalledMessage.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Internal\Encoding\" />
