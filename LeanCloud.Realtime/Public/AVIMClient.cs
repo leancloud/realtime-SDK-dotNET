@@ -991,21 +991,51 @@ namespace LeanCloud.Realtime
         /// </summary>
         /// <returns>The async.</returns>
         /// <param name="message">Message.</param>
-        public Task RecallAsync(IAVIMMessage message)
+        public Task<AVIMRecalledMessage> RecallAsync(IAVIMMessage message)
         {
+            var tcs = new TaskCompletionSource<AVIMRecalledMessage>();
             var patchCmd = new PatchCommand().Recall(message);
-            return this.RunCommandAsync(patchCmd);
+            RunCommandAsync(patchCmd)
+                .OnSuccess(t => {
+                    var recalledMsg = new AVIMRecalledMessage {
+                        ConversationId = message.ConversationId,
+                        FromClientId = message.FromClientId,
+                        Id = message.Id,
+                        ServerTimestamp = message.ServerTimestamp,
+                        RcpTimestamp = message.RcpTimestamp
+                    };
+                    tcs.SetResult(recalledMsg);
+                });
+            return tcs.Task;
         }
 
         /// <summary>
         /// Modifies the aysnc.
         /// </summary>
         /// <returns>The aysnc.</returns>
-        /// <param name="message">Message.</param>
-        public Task ModifyAsync(IAVIMMessage oldMessage, IAVIMMessage newMessage)
+        /// <param name="oldMessage">要修改的消息对象</param>
+        /// <param name="newMessage">新的消息对象</param>
+        public Task<IAVIMMessage> ModifyAsync(IAVIMMessage oldMessage, IAVIMMessage newMessage)
         {
+            var tcs = new TaskCompletionSource<IAVIMMessage>();
             var patchCmd = new PatchCommand().Modify(oldMessage, newMessage);
-            return this.RunCommandAsync(patchCmd);
+            this.RunCommandAsync(patchCmd)
+                .OnSuccess(t => {
+                    var response = t.Result.Item2;
+                    // 获取更新时间戳
+                    if (response.TryGetValue("lastPatchTime", out object updatedAtObj) && 
+                        long.TryParse(updatedAtObj.ToString(), out long updatedAt)) {
+                        newMessage.UpdatedAt = updatedAt;
+                    }
+                    // 从旧消息对象中拷贝数据
+                    newMessage.ConversationId = oldMessage.ConversationId;
+                    newMessage.FromClientId = oldMessage.FromClientId;
+                    newMessage.Id = oldMessage.Id;
+                    newMessage.ServerTimestamp = oldMessage.ServerTimestamp;
+                    newMessage.RcpTimestamp = oldMessage.RcpTimestamp;
+                    tcs.SetResult(newMessage);
+                });
+            return tcs.Task;
         }
 
         internal EventHandler<AVIMMessagePatchEventArgs> m_OnMessageRecalled;

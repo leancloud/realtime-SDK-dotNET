@@ -1290,7 +1290,7 @@ namespace LeanCloud.Realtime
         /// <returns>The async.</returns>
         /// <param name="conversation">Conversation.</param>
         /// <param name="message">Message.</param>
-        public static Task RecallAsync(this AVIMConversation conversation, IAVIMMessage message)
+        public static Task<AVIMRecalledMessage> RecallAsync(this AVIMConversation conversation, IAVIMMessage message)
         {
             return conversation.CurrentClient.RecallAsync(message);
         }
@@ -1300,8 +1300,9 @@ namespace LeanCloud.Realtime
         /// </summary>
         /// <returns>The async.</returns>
         /// <param name="conversation">Conversation.</param>
-        /// <param name="message">Message.</param>
-        public static Task ModifyAsync(this AVIMConversation conversation, IAVIMMessage oldMessage, IAVIMMessage newMessage)
+        /// <param name="oldMessage">要修改的消息对象</param>
+        /// <param name="newMessage">新的消息对象</param>
+        public static Task<IAVIMMessage> ModifyAsync(this AVIMConversation conversation, IAVIMMessage oldMessage, IAVIMMessage newMessage)
         {
             return conversation.CurrentClient.ModifyAsync(oldMessage, newMessage);
         }
