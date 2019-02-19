@@ -482,6 +482,7 @@ namespace LeanCloud.Realtime
                 RegisterMessageType<AVIMVideoMessage>();
                 RegisterMessageType<AVIMFileMessage>();
                 RegisterMessageType<AVIMLocationMessage>();
+                RegisterMessageType<AVIMRecalledMessage>();
             }
         }
 

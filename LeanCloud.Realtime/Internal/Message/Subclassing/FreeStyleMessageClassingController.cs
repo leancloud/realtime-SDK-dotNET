@@ -111,6 +111,11 @@ namespace LeanCloud.Realtime.Internal
             {
                 message.MentionList = AVDecoder.Instance.DecodeList<string>(buildInData["mentionPids"]);
             }
+            if (buildInData.TryGetValue("patchTimestamp", out object patchTimestampObj)) {
+                if (long.TryParse(patchTimestampObj.ToString(), out long patchTimestamp)) {
+                    message.UpdatedAt = patchTimestamp;
+                }
+            }
 
             bool mentionAll;
             if (buildInData.ContainsKey("mentionAll"))

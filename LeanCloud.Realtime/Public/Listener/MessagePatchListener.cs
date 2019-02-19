@@ -6,15 +6,14 @@ using System.Threading.Tasks;
 
 namespace LeanCloud.Realtime
 {
-    internal delegate void OnMessagePatch(bool recall, IEnumerable<IAVIMMessage> messages);
+    internal delegate void OnMessagePatch(IEnumerable<IAVIMMessage> messages);
     internal class MessagePatchListener : IAVIMListener
     {
         public OnMessagePatch OnReceived { get; set; }
 
         public void OnNoticeReceived(AVIMNotice notice)
         {
-            ICollection<IAVIMMessage> recalled = new List<IAVIMMessage>();
-            ICollection<IAVIMMessage> modified = new List<IAVIMMessage>();
+            ICollection<IAVIMMessage> patchedMessages = new List<IAVIMMessage>();
             var msgObjs = notice.RawData["patches"] as IList<object>;
             if (msgObjs != null)
             {
@@ -25,31 +24,15 @@ namespace LeanCloud.Realtime
                     {
                         var msgStr = msgData["data"] as string;
                         var message = AVRealtime.FreeStyleMessageClassingController.Instantiate(msgStr, msgData);
-                        if (msgData.ContainsKey("recall"))
-                        {
-                            var recall = false;
-                            bool.TryParse(msgData["recall"].ToString(), out recall);
-                            if (recall)
-                            {
-                                recalled.Add(message);
-                            }
-                            else
-                            {
-                                modified.Add(message);
-                            }
-                        }
+                        patchedMessages.Add(message);
                     }
                 }
             }
             if (OnReceived != null)
             {
-                if (recalled.Count > 0)
+                if (patchedMessages.Count > 0)
                 {
-                    this.OnReceived(true, recalled);
-                }
-                if (modified.Count > 0)
-                {
-                    this.OnReceived(false, recalled);
+                    this.OnReceived(patchedMessages);
                 }
             }
         }

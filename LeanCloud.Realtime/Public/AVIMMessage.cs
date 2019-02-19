@@ -59,6 +59,8 @@ namespace LeanCloud.Realtime
         /// </summary>
         public long RcpTimestamp { get; set; }
 
+        public long UpdatedAt { get; set; }
+
         internal string cmdId { get; set; }
 
         #region

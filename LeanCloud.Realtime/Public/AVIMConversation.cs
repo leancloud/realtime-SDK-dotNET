@@ -1301,9 +1301,9 @@ namespace LeanCloud.Realtime
         /// <returns>The async.</returns>
         /// <param name="conversation">Conversation.</param>
         /// <param name="message">Message.</param>
-        public static Task ModifyAsync(this AVIMConversation conversation, IAVIMMessage message)
+        public static Task ModifyAsync(this AVIMConversation conversation, IAVIMMessage oldMessage, IAVIMMessage newMessage)
         {
-            return conversation.CurrentClient.ModifyAsync(message);
+            return conversation.CurrentClient.ModifyAsync(oldMessage, newMessage);
         }
     }
 

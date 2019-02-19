@@ -214,19 +214,11 @@ namespace LeanCloud.Realtime
 
             #region 消息补丁（修改或者撤回）
             var messagePatchListener = new MessagePatchListener();
-            messagePatchListener.OnReceived = (recall, messages) =>
+            messagePatchListener.OnReceived = (messages) =>
             {
-                if (recall && this.m_OnMessageRecalled != null)
-                {
-                    var e = new AVIMMessagePatchEventArgs(messages);
-                    this.m_OnMessageRecalled.Invoke(this, e);
+                foreach (var message in messages) {
+                    this.m_OnMessageModified.Invoke(this, new AVIMMessagePatchEventArgs(message));
                 }
-                if (!recall && this.m_OnMessageModified != null)
-                {
-                    var e = new AVIMMessagePatchEventArgs(messages);
-                    this.m_OnMessageModified.Invoke(this, e);
-                }
-
             };
             this.RegisterListener(messagePatchListener);
             #endregion
@@ -1002,25 +994,14 @@ namespace LeanCloud.Realtime
         }
 
         /// <summary>
-        /// Replaces the async.
-        /// </summary>
-        /// <returns>The async.</returns>
-        /// <param name="oldMessage">Old message.</param>
-        /// <param name="newMessage">New message.</param>
-        public Task ReplaceAsync(IAVIMMessage oldMessage, IAVIMMessage newMessage)
-        {
-            var patchCmd = new PatchCommand().Modify(oldMessage, newMessage);
-            return this.RunCommandAsync(patchCmd);
-        }
-
-        /// <summary>
         /// Modifies the aysnc.
         /// </summary>
         /// <returns>The aysnc.</returns>
         /// <param name="message">Message.</param>
-        public Task ModifyAsync(IAVIMMessage message)
+        public Task ModifyAsync(IAVIMMessage oldMessage, IAVIMMessage newMessage)
         {
-            return this.ReplaceAsync(message, message);
+            var patchCmd = new PatchCommand().Modify(oldMessage, newMessage);
+            return this.RunCommandAsync(patchCmd);
         }
 
         internal EventHandler<AVIMMessagePatchEventArgs> m_OnMessageRecalled;

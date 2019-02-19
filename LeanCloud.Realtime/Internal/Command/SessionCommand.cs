@@ -11,7 +11,7 @@ namespace LeanCloud.Realtime.Internal
         public SessionCommand() 
             : base(cmd: "session")
         {
-
+            arguments.Add("configBitmap", 1);
         }
 
         public SessionCommand(AVIMCommand source)
