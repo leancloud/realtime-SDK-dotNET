@@ -49,6 +49,7 @@ namespace LeanCloud.Realtime
         {
             if (notice.CommandName != "session") return false;
             if (!notice.RawData.ContainsKey("op")) return false;
+            if (notice.RawData.ContainsKey("i")) return false;
             if (notice.RawData["op"].ToString() != "closed") return false;
 
             return true;

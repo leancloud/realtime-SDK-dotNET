@@ -25,6 +25,8 @@ namespace LeanCloud.Realtime.Internal
             if (Enabled)
                 return Task.Delay(Interval).ContinueWith(t =>
                 {
+                    if (!Enabled)
+                        return null;
                     exe();
                     return this.Execute();
                 });

@@ -678,6 +678,13 @@ namespace LeanCloud.Realtime
         internal void AfterLogIn(AVIMClient client)
         {
             if (clients == null) clients = new Dictionary<string, AVIMClient>();
+            client.OnSessionClosed += (sender, e) => {
+                string clientId = (sender as AVIMClient).ClientId;
+                clients.Remove(clientId);
+                if (clients.Count == 0) {
+                    LogOut();
+                }
+            };
             clients[client.ClientId] = client;
         }
 
@@ -759,7 +766,7 @@ namespace LeanCloud.Realtime
         /// <param name="toggle">是否开启</param>
         /// <param name="interval">时间间隔</param>
         /// <param name="beatPacket">心跳包的内容，默认是个空的 {}</param>
-        public void ToggleHeartBeating(bool toggle = true, double interval = 60000, string beatPacket = "{}")
+        public void ToggleHeartBeating(bool toggle = true, double interval = 6000, string beatPacket = "{}")
         {
             this._heartBeatingToggle = toggle;
             if (!string.Equals(_beatPacket, beatPacket)) _beatPacket = beatPacket;
