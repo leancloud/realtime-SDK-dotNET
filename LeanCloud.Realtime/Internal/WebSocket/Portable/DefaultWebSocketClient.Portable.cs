@@ -48,6 +48,10 @@ namespace LeanCloud.Realtime.Internal
             }
         }
 
+        public void Disconnect() {
+            connection?.Close();
+        }
+
         public void Open(string url, string protocol = null)
         {
             // 在每次打开时，重新创建 WebSocket 对象

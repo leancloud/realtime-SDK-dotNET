@@ -33,6 +33,27 @@ namespace LeanCloud.Realtime.Internal
              }).Unwrap();
         }
 
+        /// <summary>
+        /// 清理地址缓存
+        /// </summary>
+        /// <returns>The cache.</returns>
+        public Task ClearCache() {
+            var tcs = new TaskCompletionSource<bool>();
+            AVPlugins.Instance.StorageController.LoadAsync().ContinueWith(t => {
+                if (t.IsFaulted) {
+                    tcs.SetResult(true);
+                } else {
+                    var storage = t.Result;
+                    if (storage.ContainsKey(routerKey)) {
+                        storage.RemoveAsync(routerKey).ContinueWith(_ => tcs.SetResult(true));
+                    } else {
+                        tcs.SetResult(true);
+                    }
+                }
+            });
+            return tcs.Task;
+        }
+
         Task<PushRouterState> LoadAysnc(CancellationToken cancellationToken)
         {
             try
@@ -49,7 +70,8 @@ namespace LeanCloud.Realtime.Internal
                              groupId = routeCache["groupId"] as string,
                              server = routeCache["server"] as string,
                              secondary = routeCache["secondary"] as string,
-                             ttl = long.Parse((routeCache["ttl"].ToString())),
+                             ttl = long.Parse(routeCache["ttl"].ToString()),
+                             expire = long.Parse(routeCache["expire"].ToString()),
                              source = "localCache"
                          };
                          return routerState;

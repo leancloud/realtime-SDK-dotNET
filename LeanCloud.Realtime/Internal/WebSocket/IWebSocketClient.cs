@@ -46,6 +46,8 @@ namespace LeanCloud.Realtime.Internal
         /// </summary>
         void Close();
 
+        void Disconnect();
+
         /// <summary>
         /// 打开连接
         /// </summary>
