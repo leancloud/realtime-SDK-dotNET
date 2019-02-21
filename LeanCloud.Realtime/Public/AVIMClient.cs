@@ -220,7 +220,7 @@ namespace LeanCloud.Realtime
                     if (message is AVIMRecalledMessage) {
                         m_OnMessageRecalled?.Invoke(this, new AVIMMessagePatchEventArgs(message));
                     } else {
-                        m_OnMessageModified?.Invoke(this, new AVIMMessagePatchEventArgs(message));
+                        m_OnMessageUpdated?.Invoke(this, new AVIMMessagePatchEventArgs(message));
                     }
                 }
             };
@@ -1044,19 +1044,19 @@ namespace LeanCloud.Realtime
                 this.m_OnMessageRecalled -= value;
             }
         }
-        internal EventHandler<AVIMMessagePatchEventArgs> m_OnMessageModified;
+        internal EventHandler<AVIMMessagePatchEventArgs> m_OnMessageUpdated;
         /// <summary>
         /// Occurs when on message modified.
         /// </summary>
-        public event EventHandler<AVIMMessagePatchEventArgs> OnMessageModified
+        public event EventHandler<AVIMMessagePatchEventArgs> OnMessageUpdated
         {
             add
             {
-                this.m_OnMessageModified += value;
+                this.m_OnMessageUpdated += value;
             }
             remove
             {
-                this.m_OnMessageModified -= value;
+                this.m_OnMessageUpdated -= value;
             }
         }
 

@@ -8,10 +8,12 @@ namespace LeanCloud.Realtime.Internal
 {
     internal class SessionCommand : AVIMCommand
     {
+        static readonly int MESSAGE_RECALL_AND_MODIFY = 0x1;
+
         public SessionCommand() 
             : base(cmd: "session")
         {
-            arguments.Add("configBitmap", 1);
+            arguments.Add("configBitmap", MESSAGE_RECALL_AND_MODIFY);
         }
 
         public SessionCommand(AVIMCommand source)
