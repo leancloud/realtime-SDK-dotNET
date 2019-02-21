@@ -1072,7 +1072,7 @@ namespace LeanCloud.Realtime
             var cmd = new SessionCommand().Option("close");
             return this.RunCommandAsync(cmd).ContinueWith(t =>
             {
-                this.LinkedRealtime.LogOut();
+                m_OnSessionClosed(this, null);
             });
         }
         #endregion
