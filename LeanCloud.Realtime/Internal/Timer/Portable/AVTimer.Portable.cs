@@ -25,6 +25,8 @@ namespace LeanCloud.Realtime.Internal
             if (Enabled)
                 return Task.Delay(Interval).ContinueWith(t =>
                 {
+                    if (!Enabled)
+                        return null;
                     exe();
                     return this.Execute();
                 });
@@ -32,9 +34,14 @@ namespace LeanCloud.Realtime.Internal
                 return Task.FromResult(0);
         }
 
+        volatile bool enabled;
         public bool Enabled
         {
-            get; set;
+            get {
+                return enabled;
+            } set {
+                enabled = value;
+            }
         }
     }
 

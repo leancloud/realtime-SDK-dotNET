@@ -482,6 +482,17 @@ namespace LeanCloud.Realtime
                 RegisterMessageType<AVIMVideoMessage>();
                 RegisterMessageType<AVIMFileMessage>();
                 RegisterMessageType<AVIMLocationMessage>();
+
+                // 注册服务端 goaway 指令
+                var goAwayListener = new GoAwayListener();
+                goAwayListener.OnGoAway += () => {
+                    RouterController.ClearCache().ContinueWith(_ => {
+                        reborn = true;
+                        // 关闭 WebSocket
+                        AVWebSocketClient.Disconnect();
+                    });
+                };
+                SubscribeNoticeReceived(goAwayListener);
             }
         }
 
@@ -667,6 +678,13 @@ namespace LeanCloud.Realtime
         internal void AfterLogIn(AVIMClient client)
         {
             if (clients == null) clients = new Dictionary<string, AVIMClient>();
+            client.OnSessionClosed += (sender, e) => {
+                string clientId = (sender as AVIMClient).ClientId;
+                clients.Remove(clientId);
+                if (clients.Count == 0) {
+                    LogOut();
+                }
+            };
             clients[client.ClientId] = client;
         }
 
@@ -1013,14 +1031,16 @@ namespace LeanCloud.Realtime
             if (useSecondary)
             {
                 websocketServer = _secondaryWss;
-                AVRealtime.PrintLog(string.Format("preferred websocket server ({0}) network broken, take secondary server({1}) :", _wss, _secondaryWss));
             }
 
-            var task = OpenAsync(websocketServer, Subprotocol, true);
+            Task<bool> task;
             if (reborn)
             {
-                task = OpenAsync(this._secure, Subprotocol, true);
                 AVRealtime.PrintLog("both preferred and secondary websockets are expired, so try to request RTM router to get a new pair");
+                task = OpenAsync(this._secure, Subprotocol, true);
+            } else {
+                AVRealtime.PrintLog(string.Format("preferred websocket server ({0}) network broken, take secondary server({1}) :", _wss, _secondaryWss));
+                task = OpenAsync(websocketServer, Subprotocol, true);
             }
 
             return task.ContinueWith(t =>

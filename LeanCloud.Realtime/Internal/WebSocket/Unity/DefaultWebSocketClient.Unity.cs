@@ -56,6 +56,10 @@ namespace LeanCloud.Realtime.Internal
             ws.OnClose -= OnClose;
         }
 
+        public void Disconnect() {
+            ws.CloseAsync();
+        }
+
         public void Open(string url, string protocol = null)
         {
             if (!string.IsNullOrEmpty(protocol))
