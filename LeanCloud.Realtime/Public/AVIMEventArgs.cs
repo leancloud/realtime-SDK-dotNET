@@ -130,18 +130,21 @@ namespace LeanCloud.Realtime
         public IAVIMMessage Message { get; internal set; }
     }
 
+    /// <summary>
+    /// AVIMMessage event arguments.
+    /// </summary>
     public class AVIMMessagePatchEventArgs : EventArgs
     {
-        public AVIMMessagePatchEventArgs(IEnumerable<IAVIMMessage> messages)
+        public AVIMMessagePatchEventArgs(IAVIMMessage message)
         {
-            Messages = messages;
+            Message = message;
         }
 
         /// <summary>
         /// Gets or sets the message.
         /// </summary>
         /// <value>The message.</value>
-        public IEnumerable<IAVIMMessage> Messages { get; internal set; }
+        public IAVIMMessage Message { get; internal set; }
     }
 
     /// <summary>

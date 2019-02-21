@@ -482,6 +482,7 @@ namespace LeanCloud.Realtime
                 RegisterMessageType<AVIMVideoMessage>();
                 RegisterMessageType<AVIMFileMessage>();
                 RegisterMessageType<AVIMLocationMessage>();
+                RegisterMessageType<AVIMRecalledMessage>();
 
                 // 注册服务端 goaway 指令
                 var goAwayListener = new GoAwayListener();

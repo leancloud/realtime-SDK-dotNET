@@ -214,19 +214,15 @@ namespace LeanCloud.Realtime
 
             #region 消息补丁（修改或者撤回）
             var messagePatchListener = new MessagePatchListener();
-            messagePatchListener.OnReceived = (recall, messages) =>
+            messagePatchListener.OnReceived = (messages) =>
             {
-                if (recall && this.m_OnMessageRecalled != null)
-                {
-                    var e = new AVIMMessagePatchEventArgs(messages);
-                    this.m_OnMessageRecalled.Invoke(this, e);
+                foreach (var message in messages) {
+                    if (message is AVIMRecalledMessage) {
+                        m_OnMessageRecalled?.Invoke(this, new AVIMMessagePatchEventArgs(message));
+                    } else {
+                        m_OnMessageUpdated?.Invoke(this, new AVIMMessagePatchEventArgs(message));
+                    }
                 }
-                if (!recall && this.m_OnMessageModified != null)
-                {
-                    var e = new AVIMMessagePatchEventArgs(messages);
-                    this.m_OnMessageModified.Invoke(this, e);
-                }
-
             };
             this.RegisterListener(messagePatchListener);
             #endregion
@@ -995,32 +991,42 @@ namespace LeanCloud.Realtime
         /// </summary>
         /// <returns>The async.</returns>
         /// <param name="message">Message.</param>
-        public Task RecallAsync(IAVIMMessage message)
+        public Task<AVIMRecalledMessage> RecallAsync(IAVIMMessage message)
         {
+            var tcs = new TaskCompletionSource<AVIMRecalledMessage>();
             var patchCmd = new PatchCommand().Recall(message);
-            return this.RunCommandAsync(patchCmd);
-        }
-
-        /// <summary>
-        /// Replaces the async.
-        /// </summary>
-        /// <returns>The async.</returns>
-        /// <param name="oldMessage">Old message.</param>
-        /// <param name="newMessage">New message.</param>
-        public Task ReplaceAsync(IAVIMMessage oldMessage, IAVIMMessage newMessage)
-        {
-            var patchCmd = new PatchCommand().Modify(oldMessage, newMessage);
-            return this.RunCommandAsync(patchCmd);
+            RunCommandAsync(patchCmd)
+                .OnSuccess(t => {
+                    var recalledMsg = new AVIMRecalledMessage();
+                    AVIMMessage.CopyMetaData(message, recalledMsg);
+                    tcs.SetResult(recalledMsg);
+                });
+            return tcs.Task;
         }
 
         /// <summary>
         /// Modifies the aysnc.
         /// </summary>
         /// <returns>The aysnc.</returns>
-        /// <param name="message">Message.</param>
-        public Task ModifyAsync(IAVIMMessage message)
+        /// <param name="oldMessage">要修改的消息对象</param>
+        /// <param name="newMessage">新的消息对象</param>
+        public Task<IAVIMMessage> UpdateAsync(IAVIMMessage oldMessage, IAVIMMessage newMessage)
         {
-            return this.ReplaceAsync(message, message);
+            var tcs = new TaskCompletionSource<IAVIMMessage>();
+            var patchCmd = new PatchCommand().Modify(oldMessage, newMessage);
+            this.RunCommandAsync(patchCmd)
+                .OnSuccess(t => {
+                    // 从旧消息对象中拷贝数据
+                    AVIMMessage.CopyMetaData(oldMessage, newMessage);
+                    // 获取更新时间戳
+                    var response = t.Result.Item2;
+                    if (response.TryGetValue("lastPatchTime", out object updatedAtObj) && 
+                        long.TryParse(updatedAtObj.ToString(), out long updatedAt)) {
+                        newMessage.UpdatedAt = updatedAt;
+                    }
+                    tcs.SetResult(newMessage);
+                });
+            return tcs.Task;
         }
 
         internal EventHandler<AVIMMessagePatchEventArgs> m_OnMessageRecalled;
@@ -1038,19 +1044,19 @@ namespace LeanCloud.Realtime
                 this.m_OnMessageRecalled -= value;
             }
         }
-        internal EventHandler<AVIMMessagePatchEventArgs> m_OnMessageModified;
+        internal EventHandler<AVIMMessagePatchEventArgs> m_OnMessageUpdated;
         /// <summary>
         /// Occurs when on message modified.
         /// </summary>
-        public event EventHandler<AVIMMessagePatchEventArgs> OnMessageModified
+        public event EventHandler<AVIMMessagePatchEventArgs> OnMessageUpdated
         {
             add
             {
-                this.m_OnMessageModified += value;
+                this.m_OnMessageUpdated += value;
             }
             remove
             {
-                this.m_OnMessageModified -= value;
+                this.m_OnMessageUpdated -= value;
             }
         }
 

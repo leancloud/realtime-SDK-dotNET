@@ -97,6 +97,7 @@
     <Compile Include="Internal\Timer\Portable\AVTimer.Portable.cs" />
     <Compile Include="Public\AVIMTypedMessageTypeIntAttribute.cs" />
     <Compile Include="Public\AVIMBinaryMessage.cs" />
+    <Compile Include="Public\AVIMRecalledMessage.cs" />
     <Compile Include="Public\Listener\GoAwayListener.cs" />
   </ItemGroup>
   <ItemGroup>
