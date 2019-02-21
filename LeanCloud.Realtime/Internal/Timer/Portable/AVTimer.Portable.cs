@@ -34,9 +34,14 @@ namespace LeanCloud.Realtime.Internal
                 return Task.FromResult(0);
         }
 
+        volatile bool enabled;
         public bool Enabled
         {
-            get; set;
+            get {
+                return enabled;
+            } set {
+                enabled = value;
+            }
         }
     }
 
