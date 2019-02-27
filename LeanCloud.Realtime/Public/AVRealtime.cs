@@ -1316,7 +1316,10 @@ namespace LeanCloud.Realtime
                 ClosedCode = errorCode
             };
 
+#if UNITY
+#else
             PrepareReconnect();
+#endif
         }
 
         private void WebsocketClient_OnError(string obj)
