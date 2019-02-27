@@ -8,15 +8,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LeanCloud.Realtime.Unity", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SampleCode", "SampleCode", "{E93AA0BB-3800-4995-AC3D-C95251362FE1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MockConsole", "..\SampleCode\MockConsole\MockConsole.csproj", "{A3B45AAC-BCC9-47ED-8292-F7CC74F77839}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SayHi", "..\SampleCode\SayHi\SayHi.csproj", "{CF9C74F8-FDF1-483C-B4C0-964A1296F05A}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LeanCloud.Realtime.Unity.NetFx35", "LeanCloud.Realtime.Unity.NetFx35.csproj", "{4442C93D-060D-4CE9-8062-4DBCB58541B6}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{F24A5744-E022-41C8-BE20-312322E30262}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LeanCloud.Realtime.UnitTest.Mono", "Test\LeanCloud.Realtime.UnitTest.Mono\LeanCloud.Realtime.UnitTest.Mono.csproj", "{1B8C3AB0-D406-4701-B3B0-D95265B4BFA3}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Rx", "Rx", "{4C1E2836-1A6F-45CD-8CE7-8E755B1BC7FA}"
 EndProject
