@@ -1378,7 +1378,7 @@ namespace LeanCloud.Realtime
                 }
             }
         }
-#endregion
+        #endregion
 
         static AVRealtime()
         {
