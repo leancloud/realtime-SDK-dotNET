@@ -40,11 +40,15 @@ namespace LeanCloud.Realtime.Internal
         {
             if (connection != null)
             {
-                connection.Close();
                 connection.OnOpened -= Connection_OnOpened;
                 connection.OnMessage -= Connection_OnMessage;
                 connection.OnClosed -= Connection_OnClosed;
                 connection.OnError -= Connection_OnError;
+                try {
+                    connection.Close();
+                } catch (Exception e) {
+                    AVRealtime.PrintLog(string.Format("close websocket error: {0}", e.Message));
+                }
             }
         }
 
@@ -110,6 +114,55 @@ namespace LeanCloud.Realtime.Internal
             else {
                 AVRealtime.PrintLog("Connection is NULL");
             }
+        }
+
+        public Task<bool> Connect(string url, string protocol = null) {
+            var tcs = new TaskCompletionSource<bool>();
+            Action onOpen = null;
+            Action onClose = null;
+            Action<string> onError = null;
+            onOpen = () => {
+                AVRealtime.PrintLog("PCL websocket opened");
+                connection.OnOpened -= onOpen;
+                connection.OnClosed -= onClose;
+                connection.OnError -= onError;
+                // 注册事件
+                connection.OnMessage += Connection_OnMessage;
+                connection.OnClosed += Connection_OnClosed;
+                connection.OnError += Connection_OnError;
+                tcs.SetResult(true);
+            };
+            onClose = () => {
+                connection.OnOpened -= onOpen;
+                connection.OnClosed -= onClose;
+                connection.OnError -= onError;
+                tcs.SetException(new Exception("连接关闭"));
+            };
+            onError = (err) => {
+                AVRealtime.PrintLog(string.Format("连接错误：{0}", err));
+                connection.OnOpened -= onOpen;
+                connection.OnClosed -= onClose;
+                connection.OnError -= onError;
+                try {
+                    connection.Close();
+                } catch (Exception e) {
+                    AVRealtime.PrintLog(string.Format("关闭错误的 WebSocket 异常：{0}", e.Message));
+                } finally {
+                    tcs.SetException(new Exception(string.Format("连接错误：{0}", err)));
+                }
+            };
+
+            // 在每次打开时，重新创建 WebSocket 对象
+            connection = WebSocketFactory.Create();
+            connection.OnOpened += onOpen;
+            connection.OnClosed += onClose;
+            connection.OnError += onError;
+            // 
+            if (!string.IsNullOrEmpty(protocol)) {
+                url = string.Format("{0}?subprotocol={1}", url, protocol);
+            }
+            connection.Open(url, protocol);
+            return tcs.Task;
         }
     }
 }

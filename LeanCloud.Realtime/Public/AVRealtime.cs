@@ -586,7 +586,7 @@ namespace LeanCloud.Realtime
                        }
                        AVRealtime.PrintLog("sesstion opened.");
                        state = Status.Online;
-                       ToggleHeartBeating(_heartBeatingToggle);
+                       ToggleHeartBeating(true);
                        var response = s.Result.Item2;
                        if (response.ContainsKey("st"))
                        {
@@ -646,7 +646,7 @@ namespace LeanCloud.Realtime
                  return this.OpenSessionAsync(clientId, tag, deviceId, nonce, ts, singnature, secure);
              }).Unwrap().OnSuccess(s =>
              {
-                 ToggleHeartBeating(_heartBeatingToggle);
+                 ToggleHeartBeating(true);
                  AfterLogIn(client);
                  return client;
              });
@@ -767,7 +767,7 @@ namespace LeanCloud.Realtime
         /// <param name="toggle">是否开启</param>
         /// <param name="interval">时间间隔</param>
         /// <param name="beatPacket">心跳包的内容，默认是个空的 {}</param>
-        public void ToggleHeartBeating(bool toggle = true, double interval = 60000, string beatPacket = "{}")
+        public void ToggleHeartBeating(bool toggle = true, double interval = 6000, string beatPacket = "{}")
         {
             this._heartBeatingToggle = toggle;
             if (!string.Equals(_beatPacket, beatPacket)) _beatPacket = beatPacket;
@@ -783,6 +783,7 @@ namespace LeanCloud.Realtime
             if (!this._heartBeatingToggle)
             {
                 _heartBeatingTimer.Stop();
+                _heartBeatingTimer = null;
             }
         }
 
@@ -821,18 +822,6 @@ namespace LeanCloud.Realtime
             }
         }
 
-        /// <summary>
-        /// Starts manual reconnect.
-        /// </summary>
-        public void StartManualReconnect()
-        {
-            state = Status.Offline;
-            StartAutoReconnect();
-        }
-
-        IAVTimer reconnectTimer;
-        bool autoReconnectionStarted = false;
-
         internal bool sessionConflict = false;
         internal bool loggedOut = false;
 
@@ -844,87 +833,15 @@ namespace LeanCloud.Realtime
             }
         }
 
-        internal void ClearReconnectTimer()
-        {
-            if (reconnectTimer != null)
-            {
-                reconnectTimer.Stop();
-                reconnectTimer = null;
-            }
-        }
-
         /// <summary>
         /// 开始自动重连
         /// </summary>
         public void StartAutoReconnect()
         {
-            if (!autoReconnectionStarted && CanReconnect)
-            {
-                autoReconnectionStarted = true;
-                AutoReconnect();
-                reconnectTimer = new AVTimer();
-                reconnectTimer.Interval = this.ReconnectOptions.Interval * 1000;
-                reconnectTimer.Elapsed += ReconnectTimer_Elapsed;
-                reconnectTimer.Start();
-                reconnectTimer.Enabled = true;
-            }
+
         }
         internal bool useSecondary = false;
         internal bool reborn = false;
-        private void ReconnectTimer_Elapsed(object sender, TimerEventArgs e)
-        {
-            var _timer = sender as AVTimer;
-            if (state == Status.Offline)
-            {
-                if (_timer != null)
-                {
-                    if (_timer.Executed <= this.ReconnectOptions.Retry && CanReconnect)
-                    {
-                        AutoReconnect();
-                        PrintLog(string.Format("reconnect for {0} times,", _timer.Executed));
-                        _timer.Executed += 1;
-                        if (_timer.Executed == 3)
-                        {
-                            useSecondary = true;
-                        }
-                        if (_timer.Executed == 6)
-                        {
-                            reborn = true;
-                        }
-                    }
-                    else
-                    {
-                        _timer.Stop();
-                        _timer = null;
-                        autoReconnectionStarted = false;
-
-                        var reconnectFailedArgs = new AVIMReconnectFailedArgs()
-                        {
-                            ClientId = _clientId,
-                            IsAuto = true,
-                            SessionToken = _sesstionToken,
-                            FailedCode = -1
-                        };
-                        m_OnReconnectFailed?.Invoke(this, reconnectFailedArgs);
-                        state = Status.Offline;
-                    }
-                }
-                else
-                {
-                    if (CanReconnect)
-                        AutoReconnect();
-                }
-            }
-            else if (state == Status.Online)
-            {
-                if (_timer != null)
-                {
-                    _timer.Stop();
-                    _timer = null;
-                }
-
-            }
-        }
 
         internal Task LogInAsync(string clientId,
             string tag = null,
@@ -1017,7 +934,7 @@ namespace LeanCloud.Realtime
         /// 自动重连
         /// </summary>
         /// <returns></returns>
-        public Task AutoReconnect()
+        Task AutoReconnect()
         {
             AVRealtime.PrintLog("AutoReconnect started.");
             var reconnectingArgs = new AVIMReconnectingEventArgs()
@@ -1034,6 +951,7 @@ namespace LeanCloud.Realtime
                 websocketServer = _secondaryWss;
             }
 
+            var tcs = new TaskCompletionSource<bool>();
             Task<bool> task;
             if (reborn)
             {
@@ -1044,88 +962,74 @@ namespace LeanCloud.Realtime
                 task = OpenAsync(websocketServer, Subprotocol, true);
             }
 
-            return task.ContinueWith(t =>
-              {
-                  if (!t.Result)
-                  {
-                      state = Status.Reconnecting;
-                      var reconnectFailedArgs = new AVIMReconnectFailedArgs()
-                      {
-                          ClientId = _clientId,
-                          IsAuto = true,
-                          SessionToken = _sesstionToken,
-                          FailedCode = 0// network broken.
-                      };
-                      m_OnReconnectFailed?.Invoke(this, reconnectFailedArgs);
-                      state = Status.Offline;
-                      return Task.FromResult(false);
-                  }
-                  else
-                  {
-                      state = Status.Opened;
-                      SetNetworkState();
-                      if (this.IsSesstionTokenExpired)
-                      {
-                          AVRealtime.PrintLog("sesstion is expired, auto relogin with clientId :" + _clientId);
-                          return this.LogInAsync(_clientId, this._tag, this._deviceId, this._secure).OnSuccess(o =>
-                          {
-                              ClearReconnectTimer();
-                              return true;
-                          });
-                      }
-                      else
-                      {
-                          var sessionCMD = new SessionCommand().UA(VersionString).R(1);
+            task.ContinueWith(t =>
+            {
+                if (t.IsFaulted) {
+                    state = Status.Reconnecting;
+                    var reconnectFailedArgs = new AVIMReconnectFailedArgs() {
+                        ClientId = _clientId,
+                        IsAuto = true,
+                        SessionToken = _sesstionToken,
+                        FailedCode = 0// network broken.
+                    };
+                    m_OnReconnectFailed?.Invoke(this, reconnectFailedArgs);
+                    state = Status.Offline;
+                    tcs.SetException(t.Exception);
+                    throw t.Exception;
+                } else {
+                    state = Status.Opened;
+                    SetNetworkState();
+                    if (this.IsSesstionTokenExpired) {
+                        AVRealtime.PrintLog("sesstion is expired, auto relogin with clientId :" + _clientId);
+                        return this.LogInAsync(_clientId, this._tag, this._deviceId, this._secure).OnSuccess(o => {
+                            return true;
+                        });
+                    } else {
+                        var sessionCMD = new SessionCommand().UA(VersionString).R(1);
 
-                          if (string.IsNullOrEmpty(_tag))
-                          {
-                              sessionCMD = sessionCMD.Tag(_tag).SessionToken(this._sesstionToken);
-                          }
+                        if (string.IsNullOrEmpty(_tag)) {
+                            sessionCMD = sessionCMD.Tag(_tag).SessionToken(this._sesstionToken);
+                        }
 
-                          var cmd = sessionCMD.Option("open")
-                           .PeerId(_clientId);
+                        var cmd = sessionCMD.Option("open")
+                         .PeerId(_clientId);
 
-                          AVRealtime.PrintLog("reopen sesstion with sesstion token :" + _sesstionToken);
-                          return RunCommandAsync(cmd).OnSuccess(c =>
-                          {
-                              ClearReconnectTimer();
-                              return true;
-                          });
-                      }
-                  }
+                        AVRealtime.PrintLog("reopen session with session token :" + _sesstionToken);
+                        return RunCommandAsync(cmd).OnSuccess(c => {
+                            return true;
+                        });
+                    }
+                }
+            }).Unwrap().ContinueWith(s =>
+            {
+                if (s.IsFaulted || s.Exception != null)
+                {
+                    var reconnectFailedArgs = new AVIMReconnectFailedArgs()
+                    {
+                        ClientId = _clientId,
+                        IsAuto = true,
+                        SessionToken = _sesstionToken,
+                        FailedCode = 1
+                    };
+                    m_OnReconnectFailed?.Invoke(this, reconnectFailedArgs);
+                    state = Status.Offline;
+                    tcs.SetException(s.Exception);
+                }
+                else
+                {
+                    var reconnectedArgs = new AVIMReconnectedEventArgs() {
+                        ClientId = _clientId,
+                        IsAuto = true,
+                        SessionToken = _sesstionToken,
+                    };
+                    state = Status.Online;
+                    m_OnReconnected?.Invoke(this, reconnectedArgs);
+                    ToggleHeartBeating(true);
+                    tcs.SetResult(true);
+                }
+            });
 
-              }).Unwrap().ContinueWith(s =>
-               {
-                   if (s.IsFaulted || s.Exception != null)
-                   {
-                       var reconnectFailedArgs = new AVIMReconnectFailedArgs()
-                       {
-                           ClientId = _clientId,
-                           IsAuto = true,
-                           SessionToken = _sesstionToken,
-                           FailedCode = 1
-                       };
-                       m_OnReconnectFailed?.Invoke(this, reconnectFailedArgs);
-                       state = Status.Offline;
-                       autoReconnectionStarted = false;
-                   }
-                   else
-                   {
-                       if (s.Result)
-                       {
-                           reconnectTimer = null;
-                           var reconnectedArgs = new AVIMReconnectedEventArgs()
-                           {
-                               ClientId = _clientId,
-                               IsAuto = true,
-                               SessionToken = _sesstionToken,
-                           };
-                           state = Status.Online;
-                           autoReconnectionStarted = false;
-                           m_OnReconnected?.Invoke(this, reconnectedArgs);
-                       }
-                   }
-               });
+            return tcs.Task;
         }
 
 
@@ -1206,56 +1110,8 @@ namespace LeanCloud.Realtime
 
             AVRealtime.PrintLog("websocket try to connect url :" + url + " with subprotocol: " + subprotocol);
             AVRealtime.PrintLog(url + " connecting...");
-            var tcs = new TaskCompletionSource<bool>();
-            Action<string> onError = null;
-            onError = ((reason) =>
-            {
-                AVWebSocketClient.OnError -= onError;
 
-                if (tcs.Task.IsCanceled || tcs.Task.IsCompleted)
-                {
-                    return;
-                }
-
-                tcs.SetResult(false);
-
-                AVRealtime.PrintLog(reason);
-                //tcs.TrySetException(new AVIMException(AVIMException.ErrorCode.FromServer, "try to open websocket at " + url + "failed.The reason is " + reason, null));
-            });
-
-            Action onOpend = null;
-            onOpend = (() =>
-            {
-                AVWebSocketClient.OnError -= onError;
-                AVWebSocketClient.OnOpened -= onOpend;
-                if (tcs.Task.IsCanceled || tcs.Task.IsCompleted)
-                {
-                    return;
-                }
-                tcs.SetResult(true);
-                AVRealtime.PrintLog(url + " connected.");
-            });
-
-            Action<int, string, string> onClosed = null;
-            onClosed = (reason, arg0, arg1) =>
-            {
-                AVWebSocketClient.OnError -= onError;
-                AVWebSocketClient.OnOpened -= onOpend;
-                AVWebSocketClient.OnClosed -= onClosed;
-                if (tcs.Task.IsCanceled || tcs.Task.IsCompleted)
-                {
-                    return;
-                }
-                tcs.SetResult(true);
-                //tcs.TrySetException(new AVIMException(AVIMException.ErrorCode.FromServer, "try to open websocket at " + url + "failed.The reason is " + reason, null));
-            };
-
-            AVWebSocketClient.OnOpened += onOpend;
-            AVWebSocketClient.OnClosed += onClosed;
-            AVWebSocketClient.OnError += onError;
-            AVWebSocketClient.Open(url, subprotocol);
-
-            return tcs.Task;
+            return AVWebSocketClient.Connect(url, subprotocol);
         }
 
         /// <summary>
@@ -1307,6 +1163,7 @@ namespace LeanCloud.Realtime
         {
             PrintLog(string.Format("websocket closed with code is {0},reason is {1} and detail is {2}", errorCode, reason, detail));
             state = Status.Offline;
+            ToggleHeartBeating(false);
 
             var disconnectEventArgs = new AVIMDisconnectEventArgs(errorCode, reason, detail);
             m_OnDisconnected?.Invoke(this, disconnectEventArgs);
@@ -1332,21 +1189,18 @@ namespace LeanCloud.Realtime
 
         void PrepareReconnect() {
             AVRealtime.PrintLog("Prepare Reconnect");
-            var checkNetAvailableTimer = new AVTimer();
-            checkNetAvailableTimer.Interval = 5000;
-            var handler = new EventHandler<TimerEventArgs>((object sender, TimerEventArgs e) => {
-                bool netAvailable = System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable();
-                AVRealtime.PrintLog($"current net available: {netAvailable}");
-                if (netAvailable)
-                {
-                    StartManualReconnect();
-                    AVTimer timer = (AVTimer)sender;
-                    timer.Stop();
-                }
+            Task.Delay(5000).ContinueWith(_ => {
+                // 开启重连
+                AutoReconnect().ContinueWith(t => { 
+                    if (t.IsFaulted) {
+                        // 重连失败，延迟再次重连
+                        PrepareReconnect();
+                    } else {
+                        // 重连成功
+                           
+                    }
+                });
             });
-            checkNetAvailableTimer.Elapsed += handler;
-            checkNetAvailableTimer.Start();
-            checkNetAvailableTimer.Enabled = true;
         }
 
         internal void LogOut()

@@ -99,19 +99,17 @@ namespace SayHi
             client = await realtime.CreateClientAsync(clientId: txb_clientId.Text.Trim());
             client.OnMessageReceived += Client_OnMessageReceived;
             client.OnMessageRecalled += Client_OnMessageRecalled;
-            client.OnMessageModified += Client_OnMessageModified;
+            client.OnMessageUpdated += Client_OnMessageModified;
         }
 
         private void Client_OnMessageRecalled(object sender, AVIMMessagePatchEventArgs e)
         {
-            var list = e.Messages.ToList();
-            Console.WriteLine(list[0].Id + " has been recalled.");
+            Console.WriteLine(e.Message.Id + " has been recalled.");
         }
 
         private void Client_OnMessageModified(object sender, AVIMMessagePatchEventArgs e)
         {
-            var list = e.Messages.ToList();
-            Console.WriteLine(list[0].Id + " has been modified.");
+            Console.WriteLine(e.Message.Id + " has been modified.");
         }
 
         private void Client_OnMessageReceived(object sender, AVIMMessageEventArgs e)
@@ -234,7 +232,7 @@ namespace SayHi
                 var textMessage = (AVIMTextMessage)this.selected.MetaData;
                 textMessage.TextContent = "fixed content";
             }
-            await this.client.ModifyAsync(this.selected.MetaData);
+            await this.client.UpdateAsync(this.selected.MetaData);
         }
     }
 }
