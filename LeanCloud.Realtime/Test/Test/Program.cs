@@ -29,10 +29,10 @@ namespace Test {
             AVClient.Initialize(appId, appKey);
             AVRealtime realtime = new AVRealtime(new AVRealtime.Configuration {
                 ApplicationId = appId,
-                ApplicationKey = appKey
+                ApplicationKey = appKey,
                 //RealtimeServer = new Uri("wss://rtm51.leancloud.cn/"),
             });
-            realtime.CreateClientAsync("leancloud").ContinueWith(t => {
+            realtime.CreateClientAsync("leancloud ").ContinueWith(t => {
                 if (t.IsFaulted) {
                     Console.WriteLine($"create client failed at {Thread.CurrentThread.ManagedThreadId}");
                     throw t.Exception;

@@ -73,21 +73,19 @@ namespace LeanCloud.Realtime.Internal
 
         private void Connection_OnOpened()
         {
-            if (this.OnOpened != null)
-                this.OnOpened();
+            OnOpened?.Invoke();
         }
 
         private void Connection_OnMessage(string obj)
         {
-            if (this.OnMessage != null)
-                this.OnMessage(obj);
+            AVRealtime.PrintLog("websocket<=" + obj);
+            OnMessage?.Invoke(obj);
         }
 
         private void Connection_OnClosed()
         {
             AVRealtime.PrintLog("PCL websocket closed without parameters.");
-            if (this.OnClosed != null)
-                this.OnClosed(0, "", "");
+            OnClosed?.Invoke(0, "", "");
         }
 
         private void Connection_OnError(string obj)

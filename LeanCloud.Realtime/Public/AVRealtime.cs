@@ -336,7 +336,6 @@ namespace LeanCloud.Realtime
 
         private void WebSocketClient_OnMessage(string obj)
         {
-            PrintLog("websocket<=" + obj);
             try
             {
                 var estimatedData = Json.Parse(obj) as IDictionary<string, object>;
@@ -767,7 +766,7 @@ namespace LeanCloud.Realtime
         /// <param name="toggle">是否开启</param>
         /// <param name="interval">时间间隔</param>
         /// <param name="beatPacket">心跳包的内容，默认是个空的 {}</param>
-        public void ToggleHeartBeating(bool toggle = true, double interval = 6000, string beatPacket = "{}")
+        public void ToggleHeartBeating(bool toggle = true, double interval = 60000, string beatPacket = "{}")
         {
             this._heartBeatingToggle = toggle;
             if (!string.Equals(_beatPacket, beatPacket)) _beatPacket = beatPacket;
@@ -780,7 +779,7 @@ namespace LeanCloud.Realtime
                 _heartBeatingTimer.Start();
                 PrintLog("auto heart beating started.");
             }
-            if (!this._heartBeatingToggle)
+            if (!this._heartBeatingToggle && _heartBeatingTimer != null)
             {
                 _heartBeatingTimer.Stop();
                 _heartBeatingTimer = null;
@@ -979,6 +978,15 @@ namespace LeanCloud.Realtime
                 } else {
                     state = Status.Opened;
                     SetNetworkState();
+
+                    void onClose(int code, string reason, string detail) {
+                        var ex = new Exception("connection is closed");
+                        tcs.SetException(ex);
+                        AVWebSocketClient.OnClosed -= onClose;
+                        throw ex;
+                    };
+                    AVWebSocketClient.OnClosed += onClose;
+
                     if (this.IsSesstionTokenExpired) {
                         AVRealtime.PrintLog("sesstion is expired, auto relogin with clientId :" + _clientId);
                         return this.LogInAsync(_clientId, this._tag, this._deviceId, this._secure).OnSuccess(o => {
@@ -1024,6 +1032,7 @@ namespace LeanCloud.Realtime
                     };
                     state = Status.Online;
                     m_OnReconnected?.Invoke(this, reconnectedArgs);
+                    ToggleNotification(true);
                     ToggleHeartBeating(true);
                     tcs.SetResult(true);
                 }
@@ -1163,6 +1172,8 @@ namespace LeanCloud.Realtime
         {
             PrintLog(string.Format("websocket closed with code is {0},reason is {1} and detail is {2}", errorCode, reason, detail));
             state = Status.Offline;
+
+            ToggleNotification(false);
             ToggleHeartBeating(false);
 
             var disconnectEventArgs = new AVIMDisconnectEventArgs(errorCode, reason, detail);
