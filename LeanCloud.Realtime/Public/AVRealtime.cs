@@ -726,14 +726,12 @@ namespace LeanCloud.Realtime
             if (toggle && !_listening)
             {
                 AVWebSocketClient.OnClosed += WebsocketClient_OnClosed;
-                AVWebSocketClient.OnError += WebsocketClient_OnError;
                 AVWebSocketClient.OnMessage += WebSocketClient_OnMessage;
                 _listening = true;
             }
             else if (!toggle && _listening)
             {
                 AVWebSocketClient.OnClosed -= WebsocketClient_OnClosed;
-                AVWebSocketClient.OnError -= WebsocketClient_OnError;
                 AVWebSocketClient.OnMessage -= WebSocketClient_OnMessage;
                 _listening = false;
             }
@@ -980,6 +978,7 @@ namespace LeanCloud.Realtime
                     SetNetworkState();
 
                     void onClose(int code, string reason, string detail) {
+                        AVRealtime.PrintLog("disconnect when open session");
                         var ex = new Exception("connection is closed");
                         tcs.SetException(ex);
                         AVWebSocketClient.OnClosed -= onClose;
@@ -988,7 +987,7 @@ namespace LeanCloud.Realtime
                     AVWebSocketClient.OnClosed += onClose;
 
                     if (this.IsSesstionTokenExpired) {
-                        AVRealtime.PrintLog("sesstion is expired, auto relogin with clientId :" + _clientId);
+                        AVRealtime.PrintLog("session is expired, auto relogin with clientId :" + _clientId);
                         return this.LogInAsync(_clientId, this._tag, this._deviceId, this._secure).OnSuccess(o => {
                             return true;
                         });
@@ -1004,6 +1003,7 @@ namespace LeanCloud.Realtime
 
                         AVRealtime.PrintLog("reopen session with session token :" + _sesstionToken);
                         return RunCommandAsync(cmd).OnSuccess(c => {
+                            AVWebSocketClient.OnClosed -= onClose;
                             return true;
                         });
                     }

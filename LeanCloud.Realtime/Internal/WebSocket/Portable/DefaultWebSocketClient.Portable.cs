@@ -84,14 +84,13 @@ namespace LeanCloud.Realtime.Internal
 
         private void Connection_OnClosed()
         {
-            AVRealtime.PrintLog("PCL websocket closed without parameters.");
+            AVRealtime.PrintLog("PCL websocket closed without parameters..");
             OnClosed?.Invoke(0, "", "");
         }
 
         private void Connection_OnError(string obj)
         {
             AVRealtime.PrintLog($"PCL websocket error:  {obj}");
-            OnError?.Invoke(obj);
         }
 
         public void Send(string message)
@@ -106,7 +105,6 @@ namespace LeanCloud.Realtime.Internal
                 {
                     var log = "Connection is NOT open when send message";
                     AVRealtime.PrintLog(log);
-                    Connection_OnError(log);
                 }
             }
             else {

@@ -7,12 +7,24 @@ using System.Linq;
 
 namespace Test {
     class MainClass {
+        static event Action action;
+
         public static void Main(string[] args) {
             Console.WriteLine("Hello World!");
             AVRealtime.WebSocketLog(Console.WriteLine);
             Websockets.Net.WebsocketConnection.Link();
             Test();
             Console.ReadKey(true);
+        }
+
+        static void TestAction() {
+            void Func() {
+                Console.WriteLine("call func");
+            }
+            action += Func;
+            action += Func;
+            action -= Func;
+            action?.Invoke();
         }
 
         static void Test() {
@@ -32,7 +44,7 @@ namespace Test {
                 ApplicationKey = appKey,
                 //RealtimeServer = new Uri("wss://rtm51.leancloud.cn/"),
             });
-            realtime.CreateClientAsync("leancloud ").ContinueWith(t => {
+            realtime.CreateClientAsync("leancloud").ContinueWith(t => {
                 if (t.IsFaulted) {
                     Console.WriteLine($"create client failed at {Thread.CurrentThread.ManagedThreadId}");
                     throw t.Exception;
