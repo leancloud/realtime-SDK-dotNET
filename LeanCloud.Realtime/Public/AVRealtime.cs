@@ -594,7 +594,7 @@ namespace LeanCloud.Realtime
                        if (response.ContainsKey("stTtl"))
                        {
                            var stTtl = long.Parse(response["stTtl"].ToString());
-                           _sesstionTokenExpire = DateTime.Now.ToUnixTimeStamp() + stTtl;
+                           _sesstionTokenExpire = DateTime.Now.ToUnixTimeStamp() + stTtl * 1000;
                        }
                        AfterLogIn(client);
                        return client;
@@ -875,7 +875,7 @@ namespace LeanCloud.Realtime
                     if (response.ContainsKey("stTtl"))
                     {
                         var stTtl = long.Parse(response["stTtl"].ToString());
-                        _sesstionTokenExpire = DateTime.Now.ToUnixTimeStamp() + stTtl;
+                        _sesstionTokenExpire = DateTime.Now.ToUnixTimeStamp() + stTtl * 1000;
                     }
                     return t.Result;
                 });
@@ -920,7 +920,7 @@ namespace LeanCloud.Realtime
                 if (response.ContainsKey("stTtl"))
                 {
                     var stTtl = long.Parse(response["stTtl"].ToString());
-                    _sesstionTokenExpire = DateTime.Now.ToUnixTimeStamp() + stTtl;
+                    _sesstionTokenExpire = DateTime.Now.ToUnixTimeStamp() + stTtl * 1000;
                 }
                 return t.Result;
             });
@@ -988,8 +988,9 @@ namespace LeanCloud.Realtime
 
                     if (this.IsSesstionTokenExpired) {
                         AVRealtime.PrintLog("session is expired, auto relogin with clientId :" + _clientId);
-                        return this.LogInAsync(_clientId, this._tag, this._deviceId, this._secure).OnSuccess(o => {
-                            return true;
+                        return this.LogInAsync(_clientId, this._tag, this._deviceId, this._secure).ContinueWith(o => {
+                            AVWebSocketClient.OnClosed -= onClose;
+                            return !o.IsFaulted;
                         });
                     } else {
                         var sessionCMD = new SessionCommand().UA(VersionString).R(1);
@@ -998,13 +999,13 @@ namespace LeanCloud.Realtime
                             sessionCMD = sessionCMD.Tag(_tag).SessionToken(this._sesstionToken);
                         }
 
-                        var cmd = sessionCMD.Option("open")
+                        var cmd = sessionCMD.Option("open") 
                          .PeerId(_clientId);
 
                         AVRealtime.PrintLog("reopen session with session token :" + _sesstionToken);
-                        return RunCommandAsync(cmd).OnSuccess(c => {
+                        return RunCommandAsync(cmd).ContinueWith(o => {
                             AVWebSocketClient.OnClosed -= onClose;
-                            return true;
+                            return !o.IsFaulted;
                         });
                     }
                 }
