@@ -36,6 +36,12 @@ namespace LeanCloud.Realtime
         private string _tag;
         private string subprotocolPrefix = "lc.json.";
 
+        static readonly int RECONNECT_DELAY = 5 * 1000;
+        static readonly int RECONNECT_USE_SECONDARY_TIMES = 6;
+        static readonly int RECONNECT_FROM_APP_ROUTER = 12;
+
+        int reconnectTimes;
+
         public bool IsSesstionTokenExpired
         {
             get
@@ -493,6 +499,8 @@ namespace LeanCloud.Realtime
                     });
                 };
                 SubscribeNoticeReceived(goAwayListener);
+
+                reconnectTimes = 0;
             }
         }
 
@@ -942,12 +950,6 @@ namespace LeanCloud.Realtime
             };
             m_OnReconnecting?.Invoke(this, reconnectingArgs);
 
-            var websocketServer = _wss;
-            if (useSecondary)
-            {
-                websocketServer = _secondaryWss;
-            }
-
             var tcs = new TaskCompletionSource<bool>();
             Task<bool> task;
             if (reborn)
@@ -955,13 +957,17 @@ namespace LeanCloud.Realtime
                 AVRealtime.PrintLog("both preferred and secondary websockets are expired, so try to request RTM router to get a new pair");
                 task = OpenAsync(this._secure, Subprotocol, true);
             } else {
-                AVRealtime.PrintLog(string.Format("preferred websocket server ({0}) network broken, take secondary server({1}) :", _wss, _secondaryWss));
+                var websocketServer = _wss;
+                if (useSecondary) {
+                    AVRealtime.PrintLog(string.Format("preferred websocket server ({0}) network broken, take secondary server({1}) :", _wss, _secondaryWss));
+                    websocketServer = _secondaryWss;
+                }
                 task = OpenAsync(websocketServer, Subprotocol, true);
             }
 
             task.ContinueWith(t =>
             {
-                if (t.IsFaulted) {
+                if (t.IsFaulted || t.IsCanceled) {
                     state = Status.Reconnecting;
                     var reconnectFailedArgs = new AVIMReconnectFailedArgs() {
                         ClientId = _clientId,
@@ -1201,15 +1207,32 @@ namespace LeanCloud.Realtime
 
         void PrepareReconnect() {
             AVRealtime.PrintLog("Prepare Reconnect");
-            Task.Delay(5000).ContinueWith(_ => {
+            Task.Delay(RECONNECT_DELAY).ContinueWith(_ => {
                 // 开启重连
-                AutoReconnect().ContinueWith(t => { 
+                AutoReconnect().ContinueWith(t => {
                     if (t.IsFaulted) {
                         // 重连失败，延迟再次重连
-                        PrepareReconnect();
+                        reconnectTimes++;
+                        AVRealtime.PrintLog(String.Format("reconnect {0} times", reconnectTimes));
+                        if (reconnectTimes >= RECONNECT_FROM_APP_ROUTER) {
+                            // 如果大于当前服务地址的最大重连次数，则清空 Router 后重新重连
+                            RouterController.ClearCache().ContinueWith(__ => {
+                                reborn = true;
+                                PrepareReconnect();
+                            });
+
+                        } else if (reconnectTimes >= RECONNECT_USE_SECONDARY_TIMES) {
+                            // 如果大于单台 IM 服务器的重连次数，则启用备用服务器
+                            useSecondary = true;
+                            PrepareReconnect();
+                        } else {
+                            PrepareReconnect();
+                        }
                     } else {
                         // 重连成功
-                           
+                        reconnectTimes = 0;
+                        reborn = false;
+                        useSecondary = false;
                     }
                 });
             });

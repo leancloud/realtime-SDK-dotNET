@@ -123,12 +123,9 @@ namespace LeanCloud.Realtime.Internal
                 {
                     if (t.Exception != null)
                     {
-                        var innnerException = t.Exception.InnerException.InnerException.InnerException;
-                        if (innnerException != null)
-                        {
-                            AVRealtime.PrintLog(innnerException.Message);
-                            return null;
-                        }
+                        var innnerException = t.Exception.InnerException;
+                        AVRealtime.PrintLog(innnerException.Message);
+                        throw innnerException;
                     }
                     var httpStatus = (int)t.Result.Item1;
                     if (httpStatus != 200)
