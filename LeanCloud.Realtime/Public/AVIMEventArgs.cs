@@ -214,7 +214,7 @@ namespace LeanCloud.Realtime
     public class AVIMOnInvitedEventArgs : EventArgs
     {
         /// <summary>
-        /// 踢出的操作人
+        /// 邀请的操作人
         /// </summary>
         public string InvitedBy { get; internal set; }
 
