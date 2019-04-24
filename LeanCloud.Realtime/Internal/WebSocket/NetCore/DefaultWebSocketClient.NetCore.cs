@@ -126,6 +126,10 @@ namespace LeanCloud.Realtime.Internal
             }
         }
 
+        public void Disconnect() {
+            _ws?.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
+        }
+
         public async void Open(string url, string protocol = null)
         {
             _uri = new Uri(url);
