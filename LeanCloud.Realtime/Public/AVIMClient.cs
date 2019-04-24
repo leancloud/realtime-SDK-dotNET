@@ -467,8 +467,7 @@ namespace LeanCloud.Realtime
         /// <returns></returns>
         public Task<AVIMConversation> CreateChatRoomAsync(string chatroomName)
         {
-            var conversation = new AVIMConversation() { Name = chatroomName, IsTransient = true };
-            return CreateConversationAsync(conversation);
+            return CreateConversationAsync(name: chatroomName, isTransient: true);
         }
 
         /// <summary>
