@@ -183,7 +183,13 @@ namespace LeanCloud.Realtime
     public class AVIMInvitedListener : IAVIMListener
     {
         private EventHandler<AVIMOnInvitedEventArgs> m_OnInvited;
-        public event EventHandler<AVIMOnInvitedEventArgs> OnInvited;
+        public event EventHandler<AVIMOnInvitedEventArgs> OnInvited { 
+            add {
+                m_OnInvited += value;
+            } remove {
+                m_OnInvited -= value;
+            }
+        }
         public void OnNoticeReceived(AVIMNotice notice)
         {
             if (m_OnInvited != null)
@@ -214,7 +220,13 @@ namespace LeanCloud.Realtime
     public class AVIMKickedListener : IAVIMListener
     {
         private EventHandler<AVIMOnKickedEventArgs> m_OnKicked;
-        public event EventHandler<AVIMOnKickedEventArgs> OnKicked;
+        public event EventHandler<AVIMOnKickedEventArgs> OnKicked { 
+            add {
+                m_OnKicked += value;
+            } remove {
+                m_OnKicked -= value;
+            }
+        }
         public void OnNoticeReceived(AVIMNotice notice)
         {
             if (m_OnKicked != null)
