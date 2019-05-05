@@ -53,5 +53,13 @@ namespace Test.Portable {
 
             mre.WaitOne();
         }
+
+        [Test]
+        public async Task TempotaryConversation() {
+            var r = Utils.NewRealtime();
+            var c = await r.CreateClientAsync("ct3");
+            var tempConv = await c.CreateTemporaryConversationAsync(ttl: 100);
+            Assert.AreEqual(tempConv.ConversationId.StartsWith("_tmp:", StringComparison.Ordinal), true);
+        }
     }
 }
