@@ -64,6 +64,7 @@
     <Compile Include="BasicTest.cs" />
     <Compile Include="Utils.cs" />
     <Compile Include="ConversationTest.cs" />
+    <Compile Include="MessageTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
