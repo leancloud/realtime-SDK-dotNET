@@ -398,6 +398,8 @@ namespace LeanCloud.Realtime
             bool isSystem = false,
             bool isTransient = false,
             bool isUnique = true,
+            bool isTemporary = false,
+            int ttl = 86400,
             IDictionary<string, object> options = null)
         {
             if (member == null) member = ClientId;
@@ -406,7 +408,10 @@ namespace LeanCloud.Realtime
                 name: name,
                 isUnique: isUnique,
                 isSystem: isSystem,
-                isTransient: isTransient, client: this);
+                isTransient: isTransient, 
+                isTemporary: isTemporary,
+                ttl: ttl,
+                client: this);
             if (options != null)
             {
                 foreach (var key in options.Keys)
@@ -447,17 +452,11 @@ namespace LeanCloud.Realtime
         /// <param name="ttl">过期时间，默认是一天(86400 秒)，单位是秒</param>
         /// <returns></returns>
         public Task<AVIMConversation> CreateTemporaryConversationAsync(string member = null,
-            IEnumerable<string> members = null, long ttl = 86400)
+            IEnumerable<string> members = null, int ttl = 86400)
         {
             if (member == null) member = ClientId;
             var membersAsList = Concat<string>(member, members, "创建对话时被操作的 member(s) 不可以为空。");
-
-            var conversation = new AVIMTemporaryConversation(ttl)
-            {
-                MemberIds = membersAsList
-            };
-
-            return CreateConversationAsync(conversation);
+            return CreateConversationAsync(member, membersAsList, isTemporary: true, ttl: ttl);
         }
 
         /// <summary>
