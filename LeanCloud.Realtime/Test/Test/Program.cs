@@ -44,7 +44,7 @@ namespace Test {
                 ApplicationKey = appKey,
                 //RealtimeServer = new Uri("wss://rtm51.leancloud.cn/"),
             });
-            realtime.CreateClientAsync("leancloud").ContinueWith(t => {
+            realtime.CreateClientAsync("lean").ContinueWith(t => {
                 if (t.IsFaulted) {
                     Console.WriteLine($"create client failed at {Thread.CurrentThread.ManagedThreadId}");
                     throw t.Exception;

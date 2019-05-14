@@ -1125,7 +1125,7 @@ namespace LeanCloud.Realtime
             }
 
             AVRealtime.PrintLog("websocket try to connect url :" + url + " with subprotocol: " + subprotocol);
-            AVRealtime.PrintLog(url + " connecting...");
+            AVRealtime.PrintLog(url + " \tconnecting...");
 
             return AVWebSocketClient.Connect(url, subprotocol);
         }
@@ -1190,11 +1190,7 @@ namespace LeanCloud.Realtime
             {
                 ClosedCode = errorCode
             };
-
-#if UNITY
-#else
             PrepareReconnect();
-#endif
         }
 
         private void WebsocketClient_OnError(string obj)
