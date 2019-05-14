@@ -59,5 +59,7 @@ namespace LeanCloud.Realtime.Internal
         /// </summary>
         /// <param name="message"></param>
         void Send(string message);
+
+        Task<bool> Connect(string url, string protocol = null);
     }
 }
