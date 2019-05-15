@@ -44,7 +44,7 @@
 		<file src="LeanCloud.Realtime\bin\Release\LeanCloud.Realtime.xml" target="lib\portable-net45+win+wp80+MonoAndroid10+xamarinios10+MonoTouch10"/>
 
         <!--NetCore-->
-        <file src="LeanCloud.Realtime\bin\Release\netcoreapp2.0\*.dll" target="lib\netcoreapp2.0"/>
-        <file src="LeanCloud.Realtime\bin\Release\netcoreapp2.0\*.xml" target="lib\netcoreapp2.0"/>
+        <!-- <file src="LeanCloud.Realtime\bin\Release\netcoreapp2.0\*.dll" target="lib\netcoreapp2.0"/>
+        <file src="LeanCloud.Realtime\bin\Release\netcoreapp2.0\*.xml" target="lib\netcoreapp2.0"/> -->
 	</files>
 </package>
