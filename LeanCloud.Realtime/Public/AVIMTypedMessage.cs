@@ -112,8 +112,10 @@ namespace LeanCloud.Realtime
         {
             get
             {
-                var value = estimatedData[key];
-                return value;
+                if (estimatedData.TryGetValue(key, out object value)) {
+                    return value;
+                }
+                return null;
             }
             set
             {
