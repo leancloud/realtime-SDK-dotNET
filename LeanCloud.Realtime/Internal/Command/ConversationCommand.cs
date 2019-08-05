@@ -53,7 +53,7 @@ namespace LeanCloud.Realtime.Internal
 
         public ConversationCommand TempConvTTL(double tempConvTTL)
         {
-            return new ConversationCommand(this.Argument("tempConvTTL", tempConvTTL));
+            return new ConversationCommand(this.Argument("tempConvTTL", (long)tempConvTTL));
         }
 
         public ConversationCommand Attr(IDictionary<string, object> attr)
