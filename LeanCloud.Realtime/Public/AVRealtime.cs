@@ -1093,7 +1093,8 @@ namespace LeanCloud.Realtime
                 AVRealtime.PrintLog("use configuration realtime server with url: " + _wss);
                 return OpenAsync(_wss, subprotocol, enforce);
             }
-            var routerUrl = CurrentConfiguration.RTMRouter != null ? CurrentConfiguration.RTMRouter.ToString() : null;
+            var routerUrl = CurrentConfiguration.RTMRouter != null ? CurrentConfiguration.RTMRouter.ToString() :
+                (AVClient.CurrentConfiguration.PushServer != null ? AVClient.CurrentConfiguration.PushServer.ToString() : null);
             return RouterController.GetAsync(routerUrl, secure, cancellationToken).OnSuccess(r =>
                 {
                     var routerState = r.Result;

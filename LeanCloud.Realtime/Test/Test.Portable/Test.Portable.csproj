@@ -51,13 +51,13 @@
       <HintPath>..\..\packages\PCLStorage.1.0.2\lib\net45\PCLStorage.dll</HintPath>
     </Reference>
     <Reference Include="AssemblyLister">
-      <HintPath>..\..\packages\LeanCloud.Storage.2019.5.17.1\lib\net45\AssemblyLister.dll</HintPath>
+      <HintPath>..\..\packages\LeanCloud.Storage.2019.9.17.1\lib\net45\AssemblyLister.dll</HintPath>
     </Reference>
     <Reference Include="LeanCloud.Core">
-      <HintPath>..\..\packages\LeanCloud.Storage.2019.5.17.1\lib\net45\LeanCloud.Core.dll</HintPath>
+      <HintPath>..\..\packages\LeanCloud.Storage.2019.9.17.1\lib\net45\LeanCloud.Core.dll</HintPath>
     </Reference>
     <Reference Include="LeanCloud.Storage">
-      <HintPath>..\..\packages\LeanCloud.Storage.2019.5.17.1\lib\net45\LeanCloud.Storage.dll</HintPath>
+      <HintPath>..\..\packages\LeanCloud.Storage.2019.9.17.1\lib\net45\LeanCloud.Storage.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

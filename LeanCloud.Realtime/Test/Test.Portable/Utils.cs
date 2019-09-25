@@ -9,8 +9,12 @@ namespace Test.Portable {
             Websockets.Net.WebsocketConnection.Link();
             var appId = "Eohx7L4EMfe4xmairXeT7q1w-gzGzoHsz";
             var appKey = "GSBSGpYH9FsRdCss8TGQed0F";
-            AVClient.Initialize(appId, appKey);
-            return new AVRealtime(appId, appKey);
+            var server = "https://eohx7l4e.lc-cn-n1-shared.com";
+            AVClient.Initialize(appId, appKey, server);
+            return new AVRealtime(new AVRealtime.Configuration {
+                ApplicationId = appId,
+                ApplicationKey = appKey
+            });
         }
     }
 }
