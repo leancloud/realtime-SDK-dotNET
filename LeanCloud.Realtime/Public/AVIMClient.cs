@@ -352,7 +352,7 @@ namespace LeanCloud.Realtime
         /// 创建对话
         /// </summary>
         /// <param name="conversation">对话</param>
-        /// <param name="isUnique">是否创建唯一对话，当 isUnique 为 true 时，如果当前已经有相同成员的对话存在则返回该对话，否则会创建新的对话。该值默认为 false。</param>
+        /// <param name="isUnique">是否创建唯一对话，当 isUnique 为 true 时，如果当前已经有相同成员的对话存在则返回该对话，否则会创建新的对话。该值默认为 true。</param>
         /// <returns></returns>
         internal Task<AVIMConversation> CreateConversationAsync(AVIMConversation conversation, bool isUnique = true)
         {

@@ -73,8 +73,9 @@ namespace Test.Portable {
         public async Task TempotaryConversation() {
             var r = Utils.NewRealtime();
             var c = await r.CreateClientAsync("ct3");
-            var tempConv = await c.CreateTemporaryConversationAsync(ttl: 100);
+            var tempConv = await c.CreateTemporaryConversationAsync();
             Assert.AreEqual(tempConv.ConversationId.StartsWith("_tmp:", StringComparison.Ordinal), true);
+            await tempConv.SendTextAsync("hello, leancloud");
         }
     }
 }
