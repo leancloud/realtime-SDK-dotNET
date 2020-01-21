@@ -9,12 +9,27 @@ using LeanCloud.Realtime;
 namespace Test.Portable {
     [TestFixture]
     public class ConversationTest {
+        [SetUp]
+        public void SetUp() {
+            AVClient.HttpLog(Console.WriteLine);
+            AVRealtime.WebSocketLog(Console.WriteLine);
+        }
+
         [Test]
         public async Task ChatRoom() {
             var r = Utils.NewRealtime();
             var c = await r.CreateClientAsync("ct0_c0");
             var chatroom = await c.CreateChatRoomAsync("ct0_conv0");
             Assert.AreEqual(chatroom.Name, "ct0_conv0");
+        }
+
+        [Test]
+        public async Task GetConversation() {
+            var r = Utils.NewRealtime();
+            var c = await r.CreateClientAsync("ct0_c0");
+            var conv = await c.GetConversationAsync("5e25b614fbf47f0067298de1");
+            conv["hello"] = "haha";
+            await conv.SaveAsync();
         }
 
         [Test]

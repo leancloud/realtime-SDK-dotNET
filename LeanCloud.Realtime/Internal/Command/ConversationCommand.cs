@@ -32,7 +32,7 @@ namespace LeanCloud.Realtime.Internal
 
         public ConversationCommand Members(IEnumerable<string> members)
         {
-            this.members = members.ToList();
+            this.members = members?.ToList();
             return new ConversationCommand(this.Argument("m", members));
         }
 
