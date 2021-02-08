@@ -1,5 +1,9 @@
 # LeanCloud 实时消息 C# & Unity SDK - real-time-SDK-dotNET
 
+## Deprecation Announcement
+
+This project is deprecated, please refer to [Standard SDK](https://github.com/leancloud/csharp-sdk) for the latest updates.
+
 ## 安装和使用
 请阅读官网文档：[https://leancloud.cn/docs/realtime-unity.html#安装_SDK](https://leancloud.cn/docs/realtime-unity.html#安装_SDK)
 
